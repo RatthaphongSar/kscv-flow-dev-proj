@@ -7,7 +7,16 @@
     "start": "node src/server.js",
     "lint": "eslint .",
     "seed:user": "node scripts/seed-user.js",
-    "backfill:pwd": "node scripts/backfill-password-hash.js"
+    "backfill:pwd": "node scripts/backfill-password-hash.js",
+    "db:init": "node scripts/init-db.js",
+    "docker:db:up": "docker run --name kvcdb -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=kvc2025! -e POSTGRES_DB=kvcdb -p 5432:5432 -d postgres:15",
+    "docker:db:down": "docker stop kvcdb && docker rm kvcdb",
+    "prisma:migrate": "npx prisma migrate deploy"
+  },
+  "devDependencies": {
+    "@prisma/client": "^6.16.2",
+    "nodemon": "^3.0.3",
+    "prisma": "^6.16.2"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -25,9 +34,5 @@
     "socket.io": "^4.8.1",
     "swagger-ui-express": "^5.0.1",
     "yamljs": "^0.3.0"
-  },
-  "devDependencies": {
-    "@prisma/client": "^6.16.2",
-    "prisma": "^6.16.2"
   }
 }

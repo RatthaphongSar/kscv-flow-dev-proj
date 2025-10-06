@@ -29,13 +29,15 @@ export const createApp = () => {
 
   // --- Core middlewares ---
   app.use(helmet({
-    crossOriginResourcePolicy: { policy: 'cross-origin' } 
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false
   }))
 
   // CORS allowlist
   const corsOrigins = parseCorsOrigins(process.env.CORS_ORIGIN)
   app.use(cors({
-    origin: corsOrigins === '*' ? true : corsOrigins,
+    origin: true, // Allow all origins in development
     credentials: true,
     maxAge: 86400 // preflight cache 24h
   }))
@@ -43,7 +45,25 @@ export const createApp = () => {
   // ประสิทธิภาพ network
   app.use(compression()) 
   app.use(express.urlencoded({ extended: true }))
-  app.use(express.json({ limit: '1mb' }))
+  app.use((req, res, next) => {
+    console.log('[DEBUG] Incoming request:', {
+      method: req.method,
+      path: req.path,
+      headers: req.headers
+    });
+    next();
+  });
+
+  app.use(express.json({ limit: '1mb' }));
+
+  app.use((req, res, next) => {
+    console.log('[DEBUG] After JSON parse:', {
+      method: req.method,
+      path: req.path,
+      body: req.body
+    });
+    next();
+  });
 
   app.use(morgan(process.env.NODE_ENV === 'production' ? 'tiny' : 'dev'))
 
@@ -62,6 +82,15 @@ export const createApp = () => {
     }
     next()
   })
+
+  // JSON parsing error handler
+  app.use((err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+      console.error('[DEBUG] JSON Parse Error:', err);
+      return res.status(400).json({ error: 'Invalid JSON format' });
+    }
+    next();
+  });
 
   // Root welcome
   app.get('/', (_req, res) => {
@@ -115,6 +144,19 @@ export const registerPostHandlers = (app) => {
   // Error handler สุดท้าย
   app.use((err, _req, res, _next) => {
     console.error(err)
-    res.status(err.status || 500).json({ error: err.message || 'Server Error' })
+    
+    // จัดการ ValidationError
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({
+        error: 'Validation Error',
+        details: err.errors
+      })
+    }
+    
+    // จัดการ Error ทั่วไป
+    res.status(err.status || 500).json({ 
+      error: err.message || 'Server Error',
+      ...(process.env.NODE_ENV === 'development' ? { stack: err.stack } : {})
+    })
   })
 }

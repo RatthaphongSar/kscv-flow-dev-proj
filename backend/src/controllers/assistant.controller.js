@@ -50,7 +50,9 @@ export async function statusHandler(_req, res) {
 
 export async function chatHandler(req, res) {
   try {
+    console.log('[DEBUG] chatHandler - req.body:', req.body);
     const { message, userId, roomId, roomName } = req.body
+    console.log('[DEBUG] chatHandler - parsed values:', { message, userId, roomId, roomName });
     if (!message) return res.status(400).json({ error: 'message is required' })
 
     // 1) ensure user

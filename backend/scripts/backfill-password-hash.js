@@ -4,7 +4,6 @@ import { prisma } from '../src/db.js' // ปรับ path ให้ตรงโ
 
 async function main() {
   const users = await prisma.user.findMany({
-    where: { passwordHash: null },
     select: { id: true, username: true }
   })
 

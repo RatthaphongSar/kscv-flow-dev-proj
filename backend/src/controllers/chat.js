@@ -1,17 +1,22 @@
 // backend/src/controllers/chat.js
 import { prisma } from "../db.js"
 import { getIO } from '../socket.js'
+
 /**
  * POST /rooms
- * body: { name: string, memberIds?: string[] }
+ * body: { name: string, description?: string, type?: string, memberIds?: string[] }
  */
 export const createRoom = async (req, res, next) => {
   try {
-    const { name, memberIds = [] } = req.body
+    const { name, description, type = 'group', memberIds } = req.body
     if (!name) return res.status(400).json({ error: "Room name is required" })
+    if (!['group', 'private', 'public'].includes(type)) {
+      return res.status(400).json({ error: "Invalid room type" })
+    }
 
     // ตรวจว่ามี user จริงกี่คน
-    const users = memberIds.length
+    const userIds = memberIds || []
+    const users = userIds.length
       ? await prisma.user.findMany({
           where: { id: { in: memberIds } },
           select: { id: true },
@@ -26,13 +31,27 @@ export const createRoom = async (req, res, next) => {
     const room = await prisma.room.create({
       data: {
         name,
-        type: "manual",
+        description,
+        type,
         members: {
-          create: [...existingIds].map(userId => ({ userId })),
+          create: [...existingIds].map(userId => ({
+            userId,
+            role: type === 'private' ? 'member' : userId === req.user.id ? 'admin' : 'member'
+          })),
         },
       },
       include: {
-        members: { include: { user: true } },
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                role: true
+              }
+            }
+          }
+        },
       },
     })
 
@@ -91,60 +110,211 @@ export const autoRooms = async (_req, res, next) => {
 }
 
 /**
- * GET /rooms?userId=xxx
- * รายการห้องที่ user เป็นสมาชิก + ข้อความล่าสุด
+ * GET /rooms
+ * Query: search?: string
  */
-export const listRooms = async (req, res, next) => {
+export const getRooms = async (req, res, next) => {
   try {
-    const { userId } = req.query
-    if (!userId) return res.status(400).json({ error: "userId is required" })
-
+    const search = req.query.search?.toString()
     const rooms = await prisma.room.findMany({
-      where: { members: { some: { userId } } },
+      where: search ? {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } }
+        ]
+      } : undefined,
       include: {
-        members: { include: { user: true } },
-        messages: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-          include: { user: true },
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                role: true
+              }
+            }
+          }
         },
+        _count: {
+          select: { messages: true }
+        }
       },
-      orderBy: { name: "asc" },
     })
-
     return res.json(rooms)
   } catch (err) {
-    console.error("listRooms error:", err)
+    console.error("getRooms error:", err)
     return next(err)
   }
 }
 
-export const listMessages = async (req, res, next) => {
+/**
+ * GET /rooms/:roomId/messages
+ */
+export const getRoomMessages = async (req, res, next) => {
   try {
     const { roomId } = req.params
-    const limit = Number(req.query.limit ?? 50)
-    const msgs = await prisma.message.findMany({
+    const messages = await prisma.message.findMany({
       where: { roomId },
-      orderBy: { createdAt: 'asc' },
-      take: Math.min(Math.max(limit, 1), 200),
-      include: { user: true },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            role: true
+          }
+        },
+        readBy: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true
+              }
+            }
+          }
+        },
+        replyTo: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true
+              }
+            }
+          }
+        }
+      },
+      take: 50,
     })
-    res.json(msgs)
-  } catch (e) {
-    next(e)
+    return res.json(messages)
+  } catch (err) {
+    console.error("getRoomMessages error:", err)
+    return next(err)
   }
 }
 
+/**
+ * POST /rooms/:roomId/messages/:messageId/read
+ * Mark a message as read by the current user
+ */
+export const markMessageAsRead = async (req, res, next) => {
+  try {
+    const { roomId, messageId } = req.params
+    const userId = req.user.id
+
+    // Check if user is member of room
+    const member = await prisma.roomMember.findUnique({
+      where: { roomId_userId: { roomId, userId } }
+    })
+    if (!member) {
+      return res.status(403).json({ error: "Not a member of this room" })
+    }
+
+    // Mark message as read
+    const messageRead = await prisma.messageRead.create({
+      data: {
+        messageId,
+        userId
+      },
+      include: {
+        message: true
+      }
+    })
+
+    // Notify other users
+    getIO().to(roomId).emit('messageRead', { messageId, userId })
+
+    return res.json(messageRead)
+  } catch (err) {
+    if (err?.code === 'P2002') {
+      // Already marked as read
+      return res.status(409).json({ error: "Message already marked as read" })
+    }
+    console.error("markMessageAsRead error:", err)
+    return next(err)
+  }
+}
+
+/**
+ * POST /rooms/:roomId/messages/:messageId/reply
+ * Reply to a message
+ * body: { content: string, type?: string }
+ */
+export const replyToMessage = async (req, res, next) => {
+  try {
+    const { roomId, messageId } = req.params
+    const { content, type = 'text' } = req.body
+    const userId = req.user.id
+
+    if (!content) {
+      return res.status(400).json({ error: "Message content is required" })
+    }
+
+    // Check if user is member of room
+    const member = await prisma.roomMember.findUnique({
+      where: { roomId_userId: { roomId, userId } }
+    })
+    if (!member) {
+      return res.status(403).json({ error: "Not a member of this room" })
+    }
+
+    // Create reply message
+    const message = await prisma.message.create({
+      data: {
+        content,
+        type,
+        userId,
+        roomId,
+        replyToId: messageId
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true
+          }
+        },
+        replyTo: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true
+              }
+            }
+          }
+        }
+      }
+    })
+
+    // Notify room members
+    getIO().to(roomId).emit('newMessage', message)
+
+    return res.status(201).json(message)
+  } catch (err) {
+    console.error("replyToMessage error:", err)
+    return next(err)
+  }
+}
+
+/**
+ * POST /rooms/:roomId/messages
+ * body: { content: string, type?: string, fileUrl?: string }
+ */
 export const sendMessage = async (req, res, next) => {
   try {
     const { roomId } = req.params
-    const { userId, content } = req.body
-    if (!userId || !content) {
-      return res.status(400).json({ error: 'userId and content are required' })
+    const { content, type = 'text', fileUrl } = req.body
+    const userId = req.user.id
+
+    if (!content) {
+      return res.status(400).json({ error: 'Content is required' })
     }
 
-    const room = await prisma.room.findUnique({ where: { id: roomId } })
-    if (!room) return res.status(404).json({ error: 'Room not found' })
+    if (!['text', 'image', 'file'].includes(type)) {
+      return res.status(400).json({ error: 'Invalid message type' })
+    }
 
     const member = await prisma.roomMember.findUnique({
       where: { roomId_userId: { roomId, userId } },
@@ -152,15 +322,33 @@ export const sendMessage = async (req, res, next) => {
     if (!member) return res.status(403).json({ error: 'Not a member of this room' })
 
     const message = await prisma.message.create({
-      data: { content, userId, roomId },
-      include: { user: true },
+      data: {
+        content,
+        type,
+        fileUrl,
+        userId,
+        roomId
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            role: true
+          }
+        },
+        readBy: true
+      },
     })
 
-    // ส่ง realtime ถ้ามี socket.io
-    try {
-      const io = getIO()
-      io.to(roomId).emit('chatMessage', message)
-    } catch (_) {}
+    // Update last seen
+    await prisma.roomMember.update({
+      where: { roomId_userId: { roomId, userId } },
+      data: { lastSeen: new Date() }
+    })
+
+    // Notify room members
+    getIO().to(roomId).emit('newMessage', message)
 
     return res.status(201).json(message)
   } catch (err) {

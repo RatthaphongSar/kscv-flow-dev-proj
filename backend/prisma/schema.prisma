@@ -17,18 +17,38 @@ model User {
   major        String
   rooms        RoomMember[]
   messages     Message[]
+  readMessages MessageRead[]
 }
 
 
 model Room {
-  id        String       @id @default(cuid())
-  name      String       @unique
-  type      String
-  members   RoomMember[]
-  messages  Message[]
+  id          String       @id @default(cuid())
+  name        String       @unique
+  type        String       // group, private, public
+  description String?      
+  avatar      String?      // URL ของรูปห้อง
+  members     RoomMember[]
+  messages    Message[]
+  isActive    Boolean      @default(true)
 
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([type])
+  @@index([isActive])
+}
+
+model MessageRead {
+  id        String   @id @default(cuid())
+  message   Message  @relation(fields: [messageId], references: [id])
+  messageId String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  readAt    DateTime @default(now())
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+  @@index([userId])
 }
 
 
@@ -38,20 +58,34 @@ model RoomMember {
   userId String
   room   Room   @relation(fields: [roomId], references: [id])
   roomId String
+  role   String @default("member") // admin, moderator, member
+  joinedAt DateTime @default(now())
+  lastSeen DateTime @default(now())
 
   @@unique([roomId, userId], name: "roomId_userId")
   @@index([userId])
   @@index([roomId])
+  @@index([role])
 }
 
 model Message {
   id        String   @id @default(cuid())
   content   String
+  type      String   @default("text") // text, image, file
+  fileUrl   String?  // URL สำหรับไฟล์หรือรูปภาพ
+  status    String   @default("sent") // sent, delivered, read
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id])
   userId    String
   room      Room     @relation(fields: [roomId], references: [id])
   roomId    String
+  readBy    MessageRead[]
+  replyTo   Message?  @relation("Replies", fields: [replyToId], references: [id])
+  replyToId String?
+  replies   Message[] @relation("Replies")
 
   @@index([roomId, createdAt])
+  @@index([userId])
+  @@index([type])
 }

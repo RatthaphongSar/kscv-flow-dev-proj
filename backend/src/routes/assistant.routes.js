@@ -1,4 +1,3 @@
-// backend/src/routes/assistant.routes.js
 import { Router } from 'express'
 import { body } from 'express-validator'
 import { validate } from '../middleware/validate.js'
