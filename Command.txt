@@ -1,0 +1,11 @@
+node scripts/seed-chat-users.js
+node backend/scripts/backfill-password-hash.js
+
+COMMAND
+npm run dev
+
+
+Run Server PostgreSQL command
+
+& "C:\Program Files\PostgreSQL\17\bin\psql.exe" -U postgres -h localhost -p 5432 kvcdb
+& "C:\Program Files\PostgreSQL\17\bin\psql.exe" -U postgres -h localhost -p 5432 kvcdb

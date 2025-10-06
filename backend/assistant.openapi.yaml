@@ -1,0 +1,40 @@
+openapi: 3.0.3
+info:
+  title: KVC Assistant API
+  version: 1.0.0
+paths:
+  /chat:
+    post:
+      summary: Send a message to Assistant and get a reply
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                roomId: { type: string }
+                userId: { type: string }
+                message: { type: string }
+              required: [message]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reply: { type: string }
+                  sources:
+                    type: array
+                    items: { type: object }
+                  meta:
+                    type: object
+                  persisted: { type: boolean }
+  /status:
+    get:
+      summary: Assistant status
+      responses:
+        '200':
+          description: OK

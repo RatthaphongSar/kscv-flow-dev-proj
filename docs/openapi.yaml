@@ -1,0 +1,37 @@
+
+openapi: 3.0.3
+info:
+  title: KVC API
+  version: 0.1.0
+servers:
+  - url: http://localhost:4000/api
+paths:
+  /auth/login:
+    post:
+      summary: Login (JWT)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username: { type: string }
+                password: { type: string }
+              required: [username, password]
+      responses:
+        '501': { description: Not Implemented }
+  /leaves:
+    post:
+      summary: Request leave (sick/personal/ordination/other)
+      responses:
+        '501': { description: Not Implemented }
+    get:
+      summary: List leaves (by role)
+      responses:
+        '501': { description: Not Implemented }
+  /chat/rooms/auto:
+    get:
+      summary: Auto-generate rooms by year & major
+      responses:
+        '501': { description: Not Implemented }

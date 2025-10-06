@@ -1,0 +1,100 @@
+// src/utils/api.js
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:4000/api';
+
+// refresh stampede guard — ทุกแท็บ/คำขอแชร์ Promise เดียวกัน
+let refreshPromise = null;
+
+function jsonOrNull(res) {
+  const ct = res.headers.get('content-type') || '';
+  if (res.status === 204) return null;
+  if (ct.includes('application/json')) return res.json();
+  return res.text().then(t => (t?.length ? { raw: t } : null));
+}
+
+export async function api(path, options = {}) {
+  // default
+  const {
+    method = 'GET',
+    headers = {},
+    body,
+    timeout = 15000, // 15s
+    retryOn401 = true, // ให้รีเฟรชและรีทราย
+    signal: externalSignal,
+    ...rest
+  } = options;
+
+  // build request
+  const finalHeaders = new Headers(headers);
+  let finalBody = body;
+
+  if (body && !(body instanceof FormData) && !finalHeaders.has('Content-Type')) {
+    finalHeaders.set('Content-Type', 'application/json');
+  }
+  if (body && finalHeaders.get('Content-Type')?.includes('application/json')) {
+    finalBody = JSON.stringify(body);
+  }
+
+  // timeout
+  const ctrl = new AbortController();
+  const id = setTimeout(() => ctrl.abort(new Error('Request timeout')), timeout);
+  if (externalSignal) {
+    externalSignal.addEventListener('abort', () => ctrl.abort(externalSignal.reason));
+  }
+
+  const doFetch = () =>
+    fetch(`${API_BASE}${path}`, {
+      method,
+      headers: finalHeaders,
+      body: finalBody,
+      credentials: 'include', // สำคัญ: ให้คุกกี้ติดไป-กลับ
+      signal: ctrl.signal,
+      ...rest,
+    });
+
+  try {
+    let res = await doFetch();
+    if (res.status === 401 && retryOn401) {
+      // เรียก refresh แค่ครั้งเดียวทั่วแอป
+      if (!refreshPromise) {
+        refreshPromise = fetch(`${API_BASE}/auth/refresh`, {
+          method: 'POST',
+          credentials: 'include',
+        })
+          .then(r => {
+            refreshPromise = null;
+            if (!r.ok) throw new Error('Refresh failed');
+            return r.json().catch(() => ({}));
+          })
+          .catch((e) => {
+            refreshPromise = null;
+            throw e;
+          });
+      }
+      await refreshPromise;         // รอให้รีเฟรชเสร็จ
+      res = await doFetch();        // retry คำขอเดิม
+    }
+
+    clearTimeout(id);
+
+    if (!res.ok) {
+      const data = await jsonOrNull(res);
+      const err = new Error(data?.error || `HTTP ${res.status}`);
+      err.status = res.status;
+      err.data = data;
+      err.url = `${API_BASE}${path}`;
+      throw err;
+    }
+
+    return await jsonOrNull(res);
+  } catch (e) {
+    clearTimeout(id);
+    // แปลง Abort ให้ข้อความชัดเจน
+    if (e.name === 'AbortError') {
+      const err = new Error('Network aborted/timeout');
+      err.cause = e;
+      err.status = 0;
+      throw err;
+    }
+    throw e;
+  }
+}
