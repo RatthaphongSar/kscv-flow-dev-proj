@@ -1,16 +1,57 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AssistantAPI } from '../services/assistant';
+import { useChatSocket } from '../context/ChatSocketContext';
 
 export function useAssistantChat({ userId, roomId, roomName }) {
-  const [items, setItems] = useState([]);           // {id, role, text, ts}
+  const [items, setItems] = useState([]);           // {id, role, text, ts, seen}
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const abortRef = useRef(null);
+  const socket = useChatSocket();
   const inflightRef = useRef(false);
+
+  useEffect(() => {
+    if (!roomId) return;
+    
+    // Join room
+    socket.joinRoom(roomId);
+
+    // Listen for new messages
+    const removeMessageHandler = socket.on('chat:message', (message) => {
+      setItems(prev => [...prev, {
+        ...message,
+        id: message.id || crypto.randomUUID(),
+        ts: message.ts || Date.now(),
+        seen: false
+      }]);
+      setLoading(false);
+      inflightRef.current = false;
+    });
+
+    // Listen for typing indicator
+    const removeTypingHandler = socket.on('chat:typing', ({ userId: typingUserId, isTyping }) => {
+      if (typingUserId !== userId) {
+        // TODO: handle typing indicator if needed
+      }
+    });
+
+    // Listen for seen status
+    const removeSeenHandler = socket.on('chat:seen', ({ messageId }) => {
+      setItems(prev => prev.map(m => 
+        m.id === messageId ? { ...m, seen: true } : m
+      ));
+    });
+
+    return () => {
+      socket.leaveRoom(roomId);
+      removeMessageHandler();
+      removeTypingHandler();
+      removeSeenHandler();
+    };
+  }, [roomId, socket, userId]);
 
   async function send(text) {
     if (!text?.trim()) return;
-    if (inflightRef.current) return; // กันกดรัว
+    if (inflightRef.current) return; // prevent rapid clicks
     inflightRef.current = true;
     setError('');
 
@@ -19,30 +60,35 @@ export function useAssistantChat({ userId, roomId, roomName }) {
     setItems(prev => [...prev, userMsg]);
     setLoading(true);
 
-    abortRef.current?.abort?.();
-    const ctl = new AbortController();
-    abortRef.current = ctl;
-
     try {
-      const res = await AssistantAPI.chat({ message: text, userId, roomId, roomName, signal: ctl.signal });
-      const botMsg = {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        text: res?.reply || '…',
-        ts: Date.now(),
-      };
-      setItems(prev => [...prev, botMsg]);
+      // Send via socket
+      socket.emit('chat:message', {
+        roomId,
+        message: text,
+        userId,
+        messageId: userMsg.id
+      });
     } catch (e) {
       setError(e.message || 'ส่งไม่สำเร็จ');
       // mark failed
       setItems(prev => prev.map(m => m.id === userMsg.id ? { ...m, failed: true } : m));
-    } finally {
       setLoading(false);
       inflightRef.current = false;
     }
   }
 
-  function reset() { setItems([]); setError(''); }
+  function reset() {
+    setItems([]);
+    setError('');
+  }
 
-  return { items, send, loading, error, reset };
+  function onTyping(isTyping) {
+    socket.emitTyping(roomId, isTyping);
+  }
+
+  function seenMessage(messageId) {
+    socket.emitSeen(roomId, messageId);
+  }
+
+  return { items, send, loading, error, reset, onTyping, seenMessage };
 }
