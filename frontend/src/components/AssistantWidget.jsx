@@ -6,12 +6,17 @@ export default function AssistantWidget({ userId = 'student-123', roomId, roomNa
   const [open, setOpen] = useState(true);
   const [text, setText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [connectionError, setConnectionError] = useState(false);
   const listRef = useRef(null);
-  const { items, send, loading, error, onTyping, seenMessage } = useAssistantChat({ userId, roomId, roomName });
+  const { items, send, loading, error, onTyping, seenMessage, connected } = useAssistantChat({ userId, roomId, roomName });
   
   useEffect(() => {
     listRef.current?.lastElementChild?.scrollIntoView({ block: 'end', behavior: 'smooth' });
   }, [items, open]);
+
+  useEffect(() => {
+    setConnectionError(!connected);
+  }, [connected]);
 
   // Handle typing indicator
   useEffect(() => {

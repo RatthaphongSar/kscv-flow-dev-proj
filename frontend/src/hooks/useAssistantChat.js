@@ -6,7 +6,7 @@ export function useAssistantChat({ userId, roomId, roomName }) {
   const [items, setItems] = useState([]);           // {id, role, text, ts, seen}
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const socket = useChatSocket();
+  const { socket, connected } = useChatSocket();
   const inflightRef = useRef(false);
 
   useEffect(() => {
@@ -90,5 +90,5 @@ export function useAssistantChat({ userId, roomId, roomName }) {
     socket.emitSeen(roomId, messageId);
   }
 
-  return { items, send, loading, error, reset, onTyping, seenMessage };
+  return { items, send, loading, error, reset, onTyping, seenMessage, connected };
 }
