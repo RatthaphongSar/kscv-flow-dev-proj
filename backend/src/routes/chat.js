@@ -47,11 +47,41 @@ router.get('/rooms/:roomId/messages', [
   query('limit').optional().isInt({min:1,max:200})
 ], validate, ctrl.listMessages)
 
-router.get(
-  '/rooms/:roomId/messages',
-  [param('roomId').isString(), query('limit').optional().isInt({ min: 1, max: 200 })],
+// Edit message
+router.patch(
+  "/rooms/:roomId/messages/:messageId",
+  [
+    param("roomId").isString().withMessage("roomId is required"),
+    param("messageId").isString().withMessage("messageId is required"),
+    body("content").isString().withMessage("content is required"),
+    body("userId").isString().withMessage("userId is required")
+  ],
   validate,
-  ctrl.listMessages        // ✅ ตอนนี้จะไม่ undefined แล้ว
-)
+  ctrl.editMessage
+);
+
+// Delete message
+router.delete(
+  "/rooms/:roomId/messages/:messageId",
+  [
+    param("roomId").isString().withMessage("roomId is required"),
+    param("messageId").isString().withMessage("messageId is required"),
+    body("userId").isString().withMessage("userId is required")
+  ],
+  validate,
+  ctrl.deleteMessage
+);
+
+// Mark message as read
+router.post(
+  "/rooms/:roomId/messages/:messageId/read",
+  [
+    param("roomId").isString().withMessage("roomId is required"),
+    param("messageId").isString().withMessage("messageId is required"),
+    body("userId").isString().withMessage("userId is required")
+  ],
+  validate,
+  ctrl.markMessageAsRead
+);
 
 export default router

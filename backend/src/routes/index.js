@@ -45,8 +45,8 @@ router.use('/schedule', scheduleRoutes)
 router.use('/settings', settingsRoutes)
 router.use('/users', usersRoutes)
 
-// ให้เส้นทางของห้องแชทอยู่ใต้ /api (เช่น /api/rooms)
-router.use('/', chatRoutes)
+// mount chat routes under /chat
+router.use('/chat', chatRoutes)
 
 // อย่ารวม assistant.routes ที่นี่
 // Assistant ถูก mount แยกผ่าน mountAssistant() ใน server.js แล้ว

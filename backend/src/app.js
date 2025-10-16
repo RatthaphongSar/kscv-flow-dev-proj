@@ -8,6 +8,7 @@ import compression from 'compression'
 import dotenv from 'dotenv'
 import swaggerUi from 'swagger-ui-express'
 import YAML from 'yamljs'
+import cookieParser from 'cookie-parser'
 import { fileURLToPath } from 'url'
 import path from 'path'
 import { apiRouter } from './routes/index.js'
@@ -44,6 +45,7 @@ export const createApp = () => {
   app.use(compression()) 
   app.use(express.urlencoded({ extended: true }))
   app.use(express.json({ limit: '1mb' }))
+  app.use(cookieParser())
 
   app.use(morgan(process.env.NODE_ENV === 'production' ? 'tiny' : 'dev'))
 

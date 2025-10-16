@@ -168,3 +168,139 @@ export const sendMessage = async (req, res, next) => {
     return next(err)
   }
 }
+
+/**
+ * PATCH /rooms/:roomId/messages/:messageId
+ * Edit a message
+ */
+export const editMessage = async (req, res, next) => {
+  try {
+    const { roomId, messageId } = req.params;
+    const { content } = req.body;
+    const userId = req.body.userId; // should come from auth middleware
+
+    // หาข้อความที่จะแก้ไข
+    const message = await prisma.message.findUnique({
+      where: { id: messageId }
+    });
+
+    if (!message) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    // ตรวจสอบว่าเป็นเจ้าของข้อความหรือไม่
+    if (message.userId !== userId) {
+      return res.status(403).json({ error: 'Not message owner' });
+    }
+
+    // แก้ไขข้อความ
+    const updated = await prisma.message.update({
+      where: { id: messageId },
+      data: { 
+        content,
+        edited: true,
+        editedAt: new Date()
+      },
+      include: {
+        user: true
+      }
+    });
+
+    // ส่ง socket event
+    const io = getIO();
+    io.to(roomId).emit('messageEdited', updated);
+
+    return res.json(updated);
+  } catch (err) {
+    console.error('editMessage error:', err);
+    return next(err);
+  }
+};
+
+/**
+ * DELETE /rooms/:roomId/messages/:messageId
+ * Delete a message
+ */
+export const deleteMessage = async (req, res, next) => {
+  try {
+    const { roomId, messageId } = req.params;
+    const userId = req.body.userId; // should come from auth middleware
+
+    // หาข้อความที่จะลบ
+    const message = await prisma.message.findUnique({
+      where: { id: messageId }
+    });
+
+    if (!message) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    // ตรวจสอบสิทธิ์ (เจ้าของข้อความหรือแอดมิน)
+    const member = await prisma.roomMember.findUnique({
+      where: { roomId_userId: { roomId, userId } }
+    });
+    
+    if (message.userId !== userId && member?.role !== 'admin') {
+      return res.status(403).json({ error: 'Not authorized to delete' });
+    }
+
+    // ลบข้อความ
+    await prisma.message.delete({
+      where: { id: messageId }
+    });
+
+    // ส่ง socket event
+    const io = getIO();
+    io.to(roomId).emit('messageDeleted', { messageId });
+
+    return res.status(204).send();
+  } catch (err) {
+    console.error('deleteMessage error:', err);
+    return next(err);
+  }
+};
+
+/**
+ * POST /rooms/:roomId/messages/:messageId/read
+ * Mark message as read by current user
+ */
+export const markMessageAsRead = async (req, res, next) => {
+  try {
+    const { roomId, messageId } = req.params;
+    const userId = req.body.userId; // should come from auth middleware
+
+    // ตรวจสอบว่าเป็นสมาชิกในห้อง
+    const member = await prisma.roomMember.findUnique({
+      where: { roomId_userId: { roomId, userId } }
+    });
+
+    if (!member) {
+      return res.status(403).json({ error: 'Not a room member' });
+    }
+
+    // บันทึกการอ่าน
+    const readMark = await prisma.messageRead.create({
+      data: {
+        messageId,
+        userId
+      },
+      include: {
+        message: true,
+        user: true
+      }
+    });
+
+    // ส่ง socket event
+    const io = getIO();
+    io.to(roomId).emit('messageRead', readMark);
+
+    return res.status(201).json(readMark);
+  } catch (err) {
+    if (err.code === 'P2002') {
+      // Already marked as read (unique constraint violation)
+      return res.status(200).json({ message: 'Already marked as read' });
+    }
+    console.error('markMessageAsRead error:', err);
+    return next(err);
+  }
+};

@@ -1,39 +1,41 @@
-// backend/prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")   // ← ดึงจาก .env
+  url      = env("DATABASE_URL") // ← ดึงจาก .env
 }
 
 model User {
   id           String   @id @default(cuid())
   username     String   @unique
-  passwordHash String  
+  passwordHash String? // optional สำหรับ system/assistant user
   role         String   @default("STUDENT")
-  year         Int
-  major        String
-  rooms        RoomMember[]
-  messages     Message[]
-}
+  year         Int      @default(1)
+  major        String   @default("General")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
+  roomMembers RoomMember[]
+  messages    Message[]
+}
 
 model Room {
-  id        String       @id @default(cuid())
-  name      String       @unique
-  type      String
-  members   RoomMember[]
-  messages  Message[]
+  id       String       @id @default(cuid())
+  name     String       @unique
+  type     String
+  members  RoomMember[]
+  messages Message[]
 
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-
 model RoomMember {
-  id     String @id @default(cuid())
+  id String @id @default(cuid())
+
+  // Relations
   user   User   @relation(fields: [userId], references: [id])
   userId String
   room   Room   @relation(fields: [roomId], references: [id])
@@ -48,10 +50,14 @@ model Message {
   id        String   @id @default(cuid())
   content   String
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String
-  room      Room     @relation(fields: [roomId], references: [id])
-  roomId    String
+  edited    Boolean  @default(false)
+  editedAt  DateTime?
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+  room   Room   @relation(fields: [roomId], references: [id])
+  roomId String
 
   @@index([roomId, createdAt])
 }

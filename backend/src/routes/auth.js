@@ -37,10 +37,23 @@ router.post('/login',
   async (req, res, next) => {
     try {
       const { username, password } = req.body
+      console.log('Login attempt:', { username }) // Debug log
+
       const u = await prisma.user.findUnique({ where: { username } })
-      if (!u || !u.passwordHash || !(await bcrypt.compare(password, u.passwordHash))) {
+      console.log('Found user:', u ? { id: u.id, username: u.username } : null) // Debug log
+
+      if (!u || !u.passwordHash) {
+        console.log('No user or no password hash') // Debug log
         return res.status(401).json({ error: 'Invalid credentials' })
       }
+
+      const passwordValid = await bcrypt.compare(password, u.passwordHash)
+      console.log('Password valid:', passwordValid) // Debug log
+
+      if (!passwordValid) {
+        return res.status(401).json({ error: 'Invalid credentials' })
+      }
+
       const access  = signAccess(u)
       const refresh = signRefresh(u)
       setAuthCookies(res, access, refresh)
