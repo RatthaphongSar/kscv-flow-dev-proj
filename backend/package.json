@@ -10,6 +10,8 @@
     "backfill:pwd": "node scripts/backfill-password-hash.js"
   },
   "dependencies": {
+    "@types/multer": "^2.0.0",
+    "@types/socket.io": "^3.0.1",
     "bcryptjs": "^2.4.3",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
@@ -21,6 +23,7 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "multer": "^2.0.2",
     "openai": "^5.23.0",
     "socket.io": "^4.8.1",
     "swagger-ui-express": "^5.0.1",

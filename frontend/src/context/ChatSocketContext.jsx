@@ -16,19 +16,25 @@ export function ChatSocketProvider({ children }) {
 
   useEffect(() => {
     if (!user) return
-    const s = io(SOCKET_URL, {
+    
+    // สร้าง socket connection
+    const socket = io(SOCKET_URL, {
       transports: ['websocket'],
       withCredentials: true,
       auth: { userId: user.id, username: user.username }
     })
-    socketRef.current = s
+    
+    // เก็บ socket instance
+    socketRef.current = socket
 
-    s.on('connect', () => setConnected(true))
-    s.on('disconnect', () => setConnected(false))
+    socket.on('connect', () => setConnected(true))
+    socket.on('disconnect', () => setConnected(false))
 
     return () => {
-      s.disconnect()
-      socketRef.current = null
+      if (socketRef.current) {
+        socketRef.current.disconnect()
+        socketRef.current = null
+      }
     }
   }, [user])
 
@@ -50,7 +56,12 @@ export function ChatSocketProvider({ children }) {
   const value = useMemo(() => ({
     socket: socketRef.current,
     connected,
-    joinRoom, leaveRoom, on, emitTyping, emitSeen
+    joinRoom,
+    leaveRoom,
+    on,
+    emitTyping,
+    emitSeen,
+    emit: (...args) => socketRef.current?.emit(...args)
   }), [connected])
 
   return <ChatSocketCtx.Provider value={value}>{children}</ChatSocketCtx.Provider>

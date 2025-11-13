@@ -7,9 +7,17 @@ import { AuthProvider } from "./context/AuthContext.jsx";
 import { ChatSocketProvider } from './context/ChatSocketContext'
 import "./styles/index.css";
 
+// เพิ่ม future flags สำหรับ React Router v7
+const router = {
+  future: {
+    v7_startTransition: true,
+    v7_relativeSplatPath: true
+  }
+};
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter {...router}>
       <AuthProvider>
         <ChatSocketProvider>
           <App />

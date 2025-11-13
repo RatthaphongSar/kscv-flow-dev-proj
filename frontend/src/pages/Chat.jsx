@@ -17,23 +17,65 @@ export default function ChatPage() {
     ChatAPI.listRooms(user.id).then(setRooms)
   }, [user])
 
-  // join room
+  // โหลดข้อความเก่าและเข้าร่วมห้องแชท
   useEffect(() => {
     if (!socket || !activeRoom) return
-    socket.emit('joinRoom', activeRoom.id)
+    
+    // โหลดข้อความเก่า
+    async function loadMessages() {
+      try {
+        const oldMessages = await ChatAPI.listMessages(activeRoom.id)
+        setMessages(oldMessages)
+      } catch (error) {
+        console.error('Error loading messages:', error)
+      }
+    }
+    loadMessages()
+    
+    // เข้าร่วมห้องแชท
+    socket?.emit('joinRoom', { roomId: activeRoom.id })
 
-    socket.on('chatMessage', (msg) => {
+    // รับข้อความใหม่
+    const handleNewMessage = (msg) => {
       setMessages((prev) => [...prev, msg])
-    })
+    }
+    socket?.on('chatMessage', handleNewMessage)
 
-    return () => socket.off('chatMessage')
+    // cleanup
+    return () => {
+      socket?.emit('leaveRoom', { roomId: activeRoom.id })
+      socket?.off('chatMessage', handleNewMessage)
+    }
   }, [socket, activeRoom])
 
   async function sendMessage(e) {
     e.preventDefault()
-    if (!text.trim()) return
-    await ChatAPI.sendMessage(activeRoom.id, user.id, text)
-    setText('')
+    if (!text.trim() || !socket || !activeRoom) return
+    
+    try {
+      // บันทึกข้อความผ่าน API
+      const newMessage = await ChatAPI.sendMessage(activeRoom.id, user.id, text.trim())
+      
+      // อัพเดทข้อความในหน้าจอทันที
+      setMessages(prev => [...prev, {
+        ...newMessage,
+        userId: user.id,
+        user: { username: user.username },
+        content: text.trim(),
+        createdAt: new Date().toISOString()
+      }])
+      
+      // ส่งข้อความผ่าน socket ให้คนอื่น
+      socket.emit('chatMessage', {
+        roomId: activeRoom.id,
+        userId: user.id,
+        text: text.trim()
+      })
+      
+      setText('')
+    } catch (error) {
+      console.error('Error sending message:', error)
+    }
   }
 
   return (
@@ -89,27 +131,27 @@ export default function ChatPage() {
           {/* Messages Area */}
           <div className="flex-1 px-8 py-6 overflow-y-auto space-y-4">
             {messages.map((m, i) => (
-              <div key={i} className={`flex ${m.userId === user.id ? 'justify-end' : 'justify-start'} group`}>
-                <div className={`flex max-w-2xl ${m.userId === user.id ? 'flex-row-reverse' : ''}`}>
+              <div key={i} className={`flex ${m.userId === user?.id ? 'justify-end' : 'justify-start'} group`}>
+                <div className={`flex max-w-2xl ${m.userId === user?.id ? 'flex-row-reverse' : ''}`}>
                   {/* Avatar */}
                   <div className="flex flex-col items-center mx-4">
                     <div className="w-8 h-8 rounded-full bg-[#0A4DAD] flex items-center justify-center text-white text-sm">
-                      {m.user?.username?.charAt(0)?.toUpperCase()}
+                      {m.user?.username?.charAt(0)?.toUpperCase() || '?'}
                     </div>
                   </div>
                   
                   {/* Message Content */}
                   <div className={`px-6 py-4 rounded-2xl shadow-sm
-                    ${m.userId === user.id 
+                    ${m.userId === user?.id 
                       ? 'bg-[#0A4DAD] text-white' 
                       : 'bg-[#F5F9FF] text-gray-900'}`}>
                     <div className={`text-sm mb-1 font-medium
-                      ${m.userId === user.id ? 'text-blue-100' : 'text-[#0A4DAD]'}`}>
-                      {m.user?.username}
+                      ${m.userId === user?.id ? 'text-blue-100' : 'text-[#0A4DAD]'}`}>
+                      {m.user?.username || 'Unknown User'}
                     </div>
-                    <div className="text-[15px] leading-relaxed">{m.content}</div>
+                    <div className="text-[15px] leading-relaxed">{m.text || m.content}</div>
                     <div className={`text-xs mt-2 
-                      ${m.userId === user.id ? 'text-blue-100' : 'text-gray-500'}`}>
+                      ${m.userId === user?.id ? 'text-blue-100' : 'text-gray-500'}`}>
                       {new Date(m.createdAt).toLocaleTimeString()}
                     </div>
                   </div>

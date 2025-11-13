@@ -1,0 +1,20 @@
+Test PDA [250908_PDA_Program_IP_Adjust_Message_Error_Non_PK_Wificonfig]
+	-- SSID
+	-- MacAdress PDA, Access Point
+	-- Memery Wifi Config Device
+	-- 
+
+-- ขยาย 100 สาขา 
+
+
+
+
+
+
+
+-------------------------
+
+Next Deploy [20,22] Smart assortment + POC ForgotIpWifi PDA 
+
+|16807|18434|23249| On SotiMobi
+
