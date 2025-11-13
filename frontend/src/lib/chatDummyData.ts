@@ -27,6 +27,14 @@ export interface Task {
 
 export type MessageType = 'text' | 'file';
 
+export interface Mention {
+  id: string;
+  index: number; // position in text
+  length: number;
+  userId: string;
+  name: string;
+}
+
 export interface Message {
   id: string;
   conversationId: string;
@@ -35,6 +43,7 @@ export interface Message {
   createdAt: string;
   type?: MessageType;
   attachment?: Attachment | null;
+  mentions?: Mention[]; // array of @mentions in this message
 }
 
 export interface Conversation {
