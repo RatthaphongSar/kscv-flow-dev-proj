@@ -1,9 +1,14 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Message } from '@/lib/chatDummyData';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 
-export function ChatConversation({ messages, meId, onSend, title, status } : { messages: Message[]; meId: string; onSend: (t:string)=>void; title:string; status?:string }){
+interface Attachment {
+  file: File;
+  preview: string;
+}
+
+export function ChatConversation({ messages, meId, onSend, title, status } : { messages: Message[]; meId: string; onSend: (t:string, a?: Attachment | null)=>void; title:string; status?:string }){
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(()=>{

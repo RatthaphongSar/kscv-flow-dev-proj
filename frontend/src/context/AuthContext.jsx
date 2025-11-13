@@ -11,25 +11,47 @@ export function AuthProvider({ children }) {
   // โหลดสถานะจากเซิร์ฟเวอร์ตอนเริ่ม
   useEffect(() => {
     let mounted = true
-    AuthAPI.me()
-      .then(res => { if (mounted) setUser(res.user || null) })
-      .finally(() => mounted && setLoading(false))
+    
+    // ตรวจสอบ localStorage ก่อน
+    const stored = localStorage.getItem('user')
+    if (stored) {
+      try {
+        if (mounted) setUser(JSON.parse(stored))
+      } catch (e) {
+        console.error('Failed to parse stored user:', e)
+      }
+      if (mounted) setLoading(false)
+      return
+    }
+    
+    // ถ้าไม่มี localStorage ให้ใช้ Mock user สำหรับ demo
+    if (mounted) {
+      setUser({
+        id: 'demo-user',
+        name: 'Demo User',
+        email: 'demo@kvc.local',
+        role: 'student'
+      })
+      setLoading(false)
+    }
     return () => { mounted = false }
   }, [])
 
   async function login(username, password) {
-    const res = await AuthAPI.login(username, password)
-    setUser(res.user)
-    return res.user
+    const user = { id: 'user-' + Date.now(), name: username, email: username + '@kvc.local', role: 'student' }
+    localStorage.setItem('user', JSON.stringify(user))
+    setUser(user)
+    return user
   }
   async function logout() {
-    await AuthAPI.logout()
+    localStorage.removeItem('user')
     setUser(null)
   }
   async function refresh() {
-    await AuthAPI.refresh()
-    const me = await AuthAPI.me()
-    setUser(me.user || null)
+    const stored = localStorage.getItem('user')
+    if (stored) {
+      setUser(JSON.parse(stored))
+    }
   }
 
   const value = useMemo(() => ({
