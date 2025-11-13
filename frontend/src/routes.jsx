@@ -12,7 +12,7 @@ import RegisterServices from './pages/RegisterServices.jsx'
 import ClubsActivities from './pages/ClubsActivities.jsx'
 import Settings from './pages/Settings.jsx'
 import Organization from './pages/Organization.jsx'
-import ChatPage from './pages/Chat.jsx'            // ✅ ใช้ ChatPage ให้ตรงกับไฟล์
+import ChatPage from './pages/Chat'            // use TypeScript Chat page (Chat.tsx)
 import Class from './pages/Class.jsx'
 import Meeting from './pages/Meeting.jsx'
 import Checkline from './pages/Checkline.jsx'
