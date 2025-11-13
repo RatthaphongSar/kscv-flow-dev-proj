@@ -139,20 +139,22 @@ export default function ChatPage() {
                       {m.user?.username?.charAt(0)?.toUpperCase() || '?'}
                     </div>
                   </div>
-                  
-                  {/* Message Content */}
-                  <div className={`px-3 py-2 rounded-2xl shadow-sm
-                    ${m.userId === user?.id 
-                      ? 'bg-[#0A4DAD] text-white' 
-                      : 'bg-[#F5F9FF] text-gray-900'}`}>
-                    <div className={`text-sm mb-1 font-medium
-                      ${m.userId === user?.id ? 'text-blue-100' : 'text-[#0A4DAD]'}`}>
+
+                  {/* Content column: name (outside bubble) + bubble */}
+                  <div className="flex flex-col">
+                    <div className={`text-sm mb-1 font-medium text-gray-800 ${m.userId === user?.id ? 'text-right' : 'text-left'}`}>
                       {m.user?.username || 'Unknown User'}
                     </div>
-                    <div className="text-sm leading-relaxed">{m.text || m.content}</div>
-                    <div className={`text-xs mt-2 
-                      ${m.userId === user?.id ? 'text-blue-100' : 'text-gray-500'}`}>
-                      {new Date(m.createdAt).toLocaleTimeString()}
+
+                    <div className={`px-3 py-2 rounded-2xl shadow-sm
+                      ${m.userId === user?.id 
+                        ? 'bg-[#0A4DAD] text-white' 
+                        : 'bg-[#F5F9FF] text-gray-900'}`}>
+                      <div className="text-sm leading-relaxed">{m.text || m.content}</div>
+                      <div className={`text-xs mt-2 
+                        ${m.userId === user?.id ? 'text-blue-100' : 'text-gray-500'}`}>
+                        {new Date(m.createdAt).toLocaleTimeString()}
+                      </div>
                     </div>
                   </div>
                 </div>
