@@ -132,7 +132,7 @@ export default function ChatPage() {
           <div className="flex-1 px-8 py-6 overflow-y-auto space-y-4">
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.userId === user?.id ? 'justify-end' : 'justify-start'} group`}>
-                <div className={`flex max-w-2xl ${m.userId === user?.id ? 'flex-row-reverse' : ''}`}>
+                <div className={`flex max-w-xl ${m.userId === user?.id ? 'flex-row-reverse' : ''}`}>
                   {/* Avatar */}
                   <div className="flex flex-col items-center mx-4">
                     <div className="w-8 h-8 rounded-full bg-[#0A4DAD] flex items-center justify-center text-white text-sm">
@@ -141,7 +141,7 @@ export default function ChatPage() {
                   </div>
                   
                   {/* Message Content */}
-                  <div className={`px-6 py-4 rounded-2xl shadow-sm
+                  <div className={`px-3 py-2 rounded-2xl shadow-sm
                     ${m.userId === user?.id 
                       ? 'bg-[#0A4DAD] text-white' 
                       : 'bg-[#F5F9FF] text-gray-900'}`}>
@@ -149,7 +149,7 @@ export default function ChatPage() {
                       ${m.userId === user?.id ? 'text-blue-100' : 'text-[#0A4DAD]'}`}>
                       {m.user?.username || 'Unknown User'}
                     </div>
-                    <div className="text-[15px] leading-relaxed">{m.text || m.content}</div>
+                    <div className="text-sm leading-relaxed">{m.text || m.content}</div>
                     <div className={`text-xs mt-2 
                       ${m.userId === user?.id ? 'text-blue-100' : 'text-gray-500'}`}>
                       {new Date(m.createdAt).toLocaleTimeString()}
