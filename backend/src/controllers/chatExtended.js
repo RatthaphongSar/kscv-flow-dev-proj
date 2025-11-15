@@ -1,5 +1,9 @@
 // backend/src/controllers/chatExtended.js
 import { prisma } from '../db.js'
+import { chatNotesService } from '../services/chatNotes.service.js'
+import { chatFilesService } from '../services/chatFiles.service.js'
+import { chatReadReceiptsService } from '../services/chatReadReceipts.service.js'
+import { chatMembersService } from '../services/chatMembers.service.js'
 
 // ==================== CHAT NOTES ====================
 
@@ -16,25 +20,15 @@ export const getNotes = async (req, res, next) => {
       return res.status(401).json({ error: 'Unauthorized' })
     }
 
-    // Verify user is member of room
     const isMember = await prisma.roomMember.findUnique({
-      where: {
-        roomId_userId: { roomId, userId: currentUser.id },
-      },
+      where: { roomId_userId: { roomId, userId: currentUser.id } },
     })
 
     if (!isMember) {
       return res.status(403).json({ error: 'Not a member of this room' })
     }
 
-    const notes = await prisma.chatNote.findMany({
-      where: { roomId },
-      include: {
-        author: { select: { id: true, username: true, role: true } },
-      },
-      orderBy: { updatedAt: 'desc' },
-    })
-
+    const notes = await chatNotesService.getNotesByRoom(roomId)
     return res.json(notes)
   } catch (err) {
     console.error('getNotes error:', err)
@@ -56,22 +50,14 @@ export const getNote = async (req, res, next) => {
     }
 
     const isMember = await prisma.roomMember.findUnique({
-      where: {
-        roomId_userId: { roomId, userId: currentUser.id },
-      },
+      where: { roomId_userId: { roomId, userId: currentUser.id } },
     })
 
     if (!isMember) {
       return res.status(403).json({ error: 'Not a member of this room' })
     }
 
-    const note = await prisma.chatNote.findFirst({
-      where: { id: noteId, roomId },
-      include: {
-        author: { select: { id: true, username: true, role: true } },
-      },
-    })
-
+    const note = await chatNotesService.getNoteById(noteId, roomId)
     if (!note) {
       return res.status(404).json({ error: 'Note not found' })
     }
@@ -97,38 +83,24 @@ export const createNote = async (req, res, next) => {
       return res.status(401).json({ error: 'Unauthorized' })
     }
 
-    if (currentUser.role !== 'TEACHER') {
-      return res.status(403).json({ error: 'Only teachers can create notes' })
-    }
-
     if (!title || !content) {
       return res.status(400).json({ error: 'Title and content are required' })
     }
 
     const isMember = await prisma.roomMember.findUnique({
-      where: {
-        roomId_userId: { roomId, userId: currentUser.id },
-      },
+      where: { roomId_userId: { roomId, userId: currentUser.id } },
     })
 
     if (!isMember) {
       return res.status(403).json({ error: 'Not a member of this room' })
     }
 
-    const note = await prisma.chatNote.create({
-      data: {
-        roomId,
-        authorId: currentUser.id,
-        title,
-        content,
-      },
-      include: {
-        author: { select: { id: true, username: true, role: true } },
-      },
-    })
-
+    const note = await chatNotesService.createNote(roomId, currentUser.id, currentUser.role, { title, content })
     return res.status(201).json(note)
   } catch (err) {
+    if (err.message.includes('Only teachers')) {
+      return res.status(403).json({ error: err.message })
+    }
     console.error('createNote error:', err)
     return next(err)
   }
@@ -148,34 +120,21 @@ export const updateNote = async (req, res, next) => {
       return res.status(401).json({ error: 'Unauthorized' })
     }
 
-    if (currentUser.role !== 'TEACHER') {
-      return res.status(403).json({ error: 'Only teachers can update notes' })
+    try {
+      const updated = await chatNotesService.updateNote(noteId, roomId, currentUser.id, currentUser.role, { title, content })
+      return res.json(updated)
+    } catch (err) {
+      if (err.message.includes('Only teachers')) {
+        return res.status(403).json({ error: err.message })
+      }
+      if (err.message.includes('not found')) {
+        return res.status(404).json({ error: err.message })
+      }
+      if (err.message.includes('Can only update')) {
+        return res.status(403).json({ error: err.message })
+      }
+      throw err
     }
-
-    const note = await prisma.chatNote.findFirst({
-      where: { id: noteId, roomId },
-    })
-
-    if (!note) {
-      return res.status(404).json({ error: 'Note not found' })
-    }
-
-    if (note.authorId !== currentUser.id) {
-      return res.status(403).json({ error: 'Can only update your own notes' })
-    }
-
-    const updated = await prisma.chatNote.update({
-      where: { id: noteId },
-      data: {
-        ...(title && { title }),
-        ...(content && { content }),
-      },
-      include: {
-        author: { select: { id: true, username: true, role: true } },
-      },
-    })
-
-    return res.json(updated)
   } catch (err) {
     console.error('updateNote error:', err)
     return next(err)
@@ -195,25 +154,21 @@ export const deleteNote = async (req, res, next) => {
       return res.status(401).json({ error: 'Unauthorized' })
     }
 
-    if (currentUser.role !== 'TEACHER') {
-      return res.status(403).json({ error: 'Only teachers can delete notes' })
+    try {
+      const result = await chatNotesService.deleteNote(noteId, roomId, currentUser.id, currentUser.role)
+      return res.json(result)
+    } catch (err) {
+      if (err.message.includes('Only teachers')) {
+        return res.status(403).json({ error: err.message })
+      }
+      if (err.message.includes('not found')) {
+        return res.status(404).json({ error: err.message })
+      }
+      if (err.message.includes('Can only delete')) {
+        return res.status(403).json({ error: err.message })
+      }
+      throw err
     }
-
-    const note = await prisma.chatNote.findFirst({
-      where: { id: noteId, roomId },
-    })
-
-    if (!note) {
-      return res.status(404).json({ error: 'Note not found' })
-    }
-
-    if (note.authorId !== currentUser.id) {
-      return res.status(403).json({ error: 'Can only delete your own notes' })
-    }
-
-    await prisma.chatNote.delete({ where: { id: noteId } })
-
-    return res.json({ success: true })
   } catch (err) {
     console.error('deleteNote error:', err)
     return next(err)
@@ -236,23 +191,14 @@ export const getFiles = async (req, res, next) => {
     }
 
     const isMember = await prisma.roomMember.findUnique({
-      where: {
-        roomId_userId: { roomId, userId: currentUser.id },
-      },
+      where: { roomId_userId: { roomId, userId: currentUser.id } },
     })
 
     if (!isMember) {
       return res.status(403).json({ error: 'Not a member of this room' })
     }
 
-    const files = await prisma.chatFile.findMany({
-      where: { roomId },
-      include: {
-        uploader: { select: { id: true, username: true, role: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    })
-
+    const files = await chatFilesService.getFilesByRoom(roomId)
     return res.json(files)
   } catch (err) {
     console.error('getFiles error:', err)
@@ -274,22 +220,14 @@ export const getFile = async (req, res, next) => {
     }
 
     const isMember = await prisma.roomMember.findUnique({
-      where: {
-        roomId_userId: { roomId, userId: currentUser.id },
-      },
+      where: { roomId_userId: { roomId, userId: currentUser.id } },
     })
 
     if (!isMember) {
       return res.status(403).json({ error: 'Not a member of this room' })
     }
 
-    const file = await prisma.chatFile.findFirst({
-      where: { id: fileId, roomId },
-      include: {
-        uploader: { select: { id: true, username: true, role: true } },
-      },
-    })
-
+    const file = await chatFilesService.getFileById(fileId, roomId)
     if (!file) {
       return res.status(404).json({ error: 'File not found' })
     }
@@ -315,41 +253,34 @@ export const uploadFile = async (req, res, next) => {
       return res.status(401).json({ error: 'Unauthorized' })
     }
 
-    if (currentUser.role !== 'TEACHER') {
-      return res.status(403).json({ error: 'Only teachers can upload files' })
-    }
-
     if (!fileName || !mimeType || !sizeBytes || !url) {
       return res.status(400).json({ error: 'fileName, mimeType, sizeBytes, url are required' })
     }
 
     const isMember = await prisma.roomMember.findUnique({
-      where: {
-        roomId_userId: { roomId, userId: currentUser.id },
-      },
+      where: { roomId_userId: { roomId, userId: currentUser.id } },
     })
 
     if (!isMember) {
       return res.status(403).json({ error: 'Not a member of this room' })
     }
 
-    const file = await prisma.chatFile.create({
-      data: {
-        roomId,
-        uploaderId: currentUser.id,
+    try {
+      const file = await chatFilesService.saveFileMetadata(roomId, currentUser.id, currentUser.role, {
         fileName,
         mimeType,
-        sizeBytes: parseInt(sizeBytes),
+        sizeBytes,
         url,
-        ...(width && { width: parseInt(width) }),
-        ...(height && { height: parseInt(height) }),
-      },
-      include: {
-        uploader: { select: { id: true, username: true, role: true } },
-      },
-    })
-
-    return res.status(201).json(file)
+        width,
+        height,
+      })
+      return res.status(201).json(file)
+    } catch (err) {
+      if (err.message.includes('Only teachers')) {
+        return res.status(403).json({ error: err.message })
+      }
+      throw err
+    }
   } catch (err) {
     console.error('uploadFile error:', err)
     return next(err)
@@ -369,25 +300,21 @@ export const deleteFile = async (req, res, next) => {
       return res.status(401).json({ error: 'Unauthorized' })
     }
 
-    if (currentUser.role !== 'TEACHER') {
-      return res.status(403).json({ error: 'Only teachers can delete files' })
+    try {
+      const result = await chatFilesService.deleteFile(fileId, roomId, currentUser.id, currentUser.role)
+      return res.json(result)
+    } catch (err) {
+      if (err.message.includes('Only teachers')) {
+        return res.status(403).json({ error: err.message })
+      }
+      if (err.message.includes('not found')) {
+        return res.status(404).json({ error: err.message })
+      }
+      if (err.message.includes('Can only delete')) {
+        return res.status(403).json({ error: err.message })
+      }
+      throw err
     }
-
-    const file = await prisma.chatFile.findFirst({
-      where: { id: fileId, roomId },
-    })
-
-    if (!file) {
-      return res.status(404).json({ error: 'File not found' })
-    }
-
-    if (file.uploaderId !== currentUser.id) {
-      return res.status(403).json({ error: 'Can only delete your own files' })
-    }
-
-    await prisma.chatFile.delete({ where: { id: fileId } })
-
-    return res.json({ success: true })
   } catch (err) {
     console.error('deleteFile error:', err)
     return next(err)
@@ -410,24 +337,15 @@ export const getRoomMembers = async (req, res, next) => {
     }
 
     const isMember = await prisma.roomMember.findUnique({
-      where: {
-        roomId_userId: { roomId, userId: currentUser.id },
-      },
+      where: { roomId_userId: { roomId, userId: currentUser.id } },
     })
 
     if (!isMember) {
       return res.status(403).json({ error: 'Not a member of this room' })
     }
 
-    const members = await prisma.roomMember.findMany({
-      where: { roomId },
-      include: {
-        user: { select: { id: true, username: true, role: true, email: true } },
-      },
-      orderBy: { user: { role: 'asc' } },
-    })
-
-    return res.json(members.map((m) => m.user))
+    const members = await chatMembersService.getRoomMembers(roomId)
+    return res.json(members)
   } catch (err) {
     console.error('getRoomMembers error:', err)
     return next(err)
@@ -451,24 +369,8 @@ export const getAvailableMembers = async (req, res, next) => {
       return res.status(403).json({ error: 'Only teachers can add members' })
     }
 
-    // Get existing members
-    const existingMembers = await prisma.roomMember.findMany({
-      where: { roomId },
-      select: { userId: true },
-    })
-
-    const existingIds = existingMembers.map((m) => m.userId)
-
-    // Get all users not in this room
-    const availableUsers = await prisma.user.findMany({
-      where: {
-        id: { notIn: existingIds },
-      },
-      select: { id: true, username: true, role: true, email: true },
-      orderBy: { role: 'asc' },
-    })
-
-    return res.json(availableUsers)
+    const available = await chatMembersService.getAvailableMembers(roomId)
+    return res.json(available)
   } catch (err) {
     console.error('getAvailableMembers error:', err)
     return next(err)
@@ -489,34 +391,22 @@ export const addMember = async (req, res, next) => {
       return res.status(401).json({ error: 'Unauthorized' })
     }
 
-    if (currentUser.role !== 'TEACHER') {
-      return res.status(403).json({ error: 'Only teachers can add members' })
-    }
-
     if (!userId) {
       return res.status(400).json({ error: 'userId is required' })
     }
 
-    // Check if already a member
-    const existing = await prisma.roomMember.findUnique({
-      where: {
-        roomId_userId: { roomId, userId },
-      },
-    })
-
-    if (existing) {
-      return res.status(409).json({ error: 'User is already a member' })
+    try {
+      const member = await chatMembersService.addMember(roomId, userId, currentUser.role)
+      return res.status(201).json(member)
+    } catch (err) {
+      if (err.message.includes('Only teachers')) {
+        return res.status(403).json({ error: err.message })
+      }
+      if (err.message.includes('already a member')) {
+        return res.status(409).json({ error: err.message })
+      }
+      throw err
     }
-
-    // Add member
-    const member = await prisma.roomMember.create({
-      data: { roomId, userId },
-      include: {
-        user: { select: { id: true, username: true, role: true, email: true } },
-      },
-    })
-
-    return res.status(201).json(member.user)
   } catch (err) {
     console.error('addMember error:', err)
     return next(err)
@@ -536,31 +426,21 @@ export const removeMember = async (req, res, next) => {
       return res.status(401).json({ error: 'Unauthorized' })
     }
 
-    if (currentUser.role !== 'TEACHER') {
-      return res.status(403).json({ error: 'Only teachers can remove members' })
+    try {
+      const result = await chatMembersService.removeMember(roomId, userId, currentUser.role, currentUser.id)
+      return res.json(result)
+    } catch (err) {
+      if (err.message.includes('Only teachers')) {
+        return res.status(403).json({ error: err.message })
+      }
+      if (err.message.includes('Cannot remove')) {
+        return res.status(400).json({ error: err.message })
+      }
+      if (err.message.includes('not found')) {
+        return res.status(404).json({ error: err.message })
+      }
+      throw err
     }
-
-    if (userId === currentUser.id) {
-      return res.status(400).json({ error: 'Cannot remove yourself' })
-    }
-
-    const existing = await prisma.roomMember.findUnique({
-      where: {
-        roomId_userId: { roomId, userId },
-      },
-    })
-
-    if (!existing) {
-      return res.status(404).json({ error: 'Member not found in this room' })
-    }
-
-    await prisma.roomMember.delete({
-      where: {
-        roomId_userId: { roomId, userId },
-      },
-    })
-
-    return res.json({ success: true })
   } catch (err) {
     console.error('removeMember error:', err)
     return next(err)
@@ -582,39 +462,16 @@ export const markRoomAsRead = async (req, res, next) => {
       return res.status(401).json({ error: 'Unauthorized' })
     }
 
-    // Verify user is member of room
     const isMember = await prisma.roomMember.findUnique({
-      where: {
-        roomId_userId: { roomId, userId: currentUser.id },
-      },
+      where: { roomId_userId: { roomId, userId: currentUser.id } },
     })
 
     if (!isMember) {
       return res.status(403).json({ error: 'Not a member of this room' })
     }
 
-    // Get all messages in room
-    const messages = await prisma.message.findMany({
-      where: { roomId },
-      select: { id: true },
-    })
-
-    const messageIds = messages.map((m) => m.id)
-
-    if (messageIds.length === 0) {
-      return res.json({ markedCount: 0 })
-    }
-
-    // Create MessageRead entries (skip duplicates)
-    const result = await prisma.messageRead.createMany({
-      data: messageIds.map((messageId) => ({
-        messageId,
-        userId: currentUser.id,
-      })),
-      skipDuplicates: true,
-    })
-
-    return res.json({ markedCount: result.count })
+    const result = await chatReadReceiptsService.markRoomAsRead(roomId, currentUser.id)
+    return res.json(result)
   } catch (err) {
     console.error('markRoomAsRead error:', err)
     return next(err)
@@ -628,7 +485,6 @@ export const markRoomAsRead = async (req, res, next) => {
  */
 export const getReadReceipts = async (req, res, next) => {
   try {
-    const { roomId } = req.query
     const messageIds = req.query.messageIds ? req.query.messageIds.split(',') : []
     const currentUser = req.user
 
@@ -679,13 +535,7 @@ export const getMessageReaders = async (req, res, next) => {
       return res.status(404).json({ error: 'Message not found' })
     }
 
-    const readers = await prisma.messageRead.findMany({
-      where: { messageId },
-      include: {
-        user: { select: { id: true, username: true, role: true } },
-      },
-    })
-
+    const readers = await chatReadReceiptsService.getMessageReaders(messageId)
     return res.json(readers.map((r) => r.user))
   } catch (err) {
     console.error('getMessageReaders error:', err)
@@ -707,48 +557,7 @@ export const getUnreadSummary = async (req, res, next) => {
       return res.status(401).json({ error: 'Unauthorized' })
     }
 
-    // Get all rooms for user
-    const rooms = await prisma.roomMember.findMany({
-      where: { userId: currentUser.id },
-      select: { roomId: true },
-    })
-
-    const roomIds = rooms.map((r) => r.roomId)
-
-    if (roomIds.length === 0) {
-      return res.json({})
-    }
-
-    // For each room, count unread messages (messages without MessageRead entry for this user)
-    const unreadCounts = {}
-
-    for (const roomId of roomIds) {
-      const messages = await prisma.message.findMany({
-        where: { roomId },
-        select: { id: true },
-      })
-
-      const messageIds = messages.map((m) => m.id)
-
-      if (messageIds.length === 0) {
-        unreadCounts[roomId] = 0
-        continue
-      }
-
-      const readMessages = await prisma.messageRead.findMany({
-        where: {
-          messageId: { in: messageIds },
-          userId: currentUser.id,
-        },
-        select: { messageId: true },
-      })
-
-      const readIds = new Set(readMessages.map((r) => r.messageId))
-      const unreadCount = messageIds.filter((id) => !readIds.has(id)).length
-
-      unreadCounts[roomId] = unreadCount
-    }
-
+    const unreadCounts = await chatReadReceiptsService.getUnreadCounts(currentUser.id)
     return res.json(unreadCounts)
   } catch (err) {
     console.error('getUnreadSummary error:', err)
