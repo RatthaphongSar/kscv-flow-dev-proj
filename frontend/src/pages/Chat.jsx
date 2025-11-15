@@ -20,9 +20,14 @@ export default function ChatPage() {
 
   const [text, setText] = useState('')
   const [socketConnected, setSocketConnected] = useState(false)
+  const [sendLoading, setSendLoading] = useState(false)
+  const [sendError, setSendError] = useState('')
 
   // typing indicator
   const [typingMap, setTypingMap] = useState({}) // { userId: { username, last } }
+
+  // reply system
+  const [replyingTo, setReplyingTo] = useState(null) // { id, username, content }
 
   const canCreateRoom =
     user?.role === 'teacher' ||
@@ -53,7 +58,9 @@ export default function ChatPage() {
 
     setRoomsLoading(true)
     setRoomsError('')
-    ChatAPI.listRooms(user.id)
+
+    // backend ใช้ JWT ใน cookie แล้ว ไม่จำเป็นต้องส่ง userId
+    ChatAPI.listRooms()
       .then((data) => {
         setRooms(data || [])
         if (!activeRoom && data && data.length > 0) {
@@ -106,6 +113,8 @@ export default function ChatPage() {
       try {
         const oldMessages = await ChatAPI.listMessages(activeRoom.id)
         if (!cancelled) {
+          // Backend ส่งเรียง ASC (เก่า → ใหม่) - เก็บไว้ตรงนี้ก่อน
+          // ChatConversation จะจัดเรียง ASC เอง ไม่ต้อง reverse ที่นี่
           setMessages(oldMessages || [])
         }
       } catch (error) {
@@ -172,21 +181,48 @@ export default function ChatPage() {
 
   const typingUsers = Object.values(typingMap).map((t) => t.username)
 
-  // -----------------------------
   // ส่งข้อความ
-  // -----------------------------
   async function sendMessage(e) {
     if (e?.preventDefault) e.preventDefault()
-    if (!text.trim() || !socket || !activeRoom || !user) return
+    
+    setSendError('')
+    
+    if (!text.trim()) {
+      setSendError('ข้อความว่างเปล่า')
+      return
+    }
+    
+    if (!socket) {
+      setSendError('ยังไม่เชื่อมต่อ Socket')
+      console.warn('Socket not connected')
+      return
+    }
+    
+    if (!activeRoom) {
+      setSendError('ยังไม่เลือกห้อง')
+      return
+    }
+    
+    if (!user) {
+      setSendError('ยังไม่เข้าสู่ระบบ')
+      return
+    }
 
+    setSendLoading(true)
     const trimmed = text.trim()
+    const replyToId = replyingTo?.id || null
 
     try {
+      console.log('📤 Sending message:', { roomId: activeRoom.id, userId: user.id, content: trimmed, replyToId })
+      
       const newMessage = await ChatAPI.sendMessage(
         activeRoom.id,
         user.id,
         trimmed,
+        replyToId,
       )
+
+      console.log('✅ Message sent:', newMessage)
 
       setMessages((prev) => [
         ...prev,
@@ -197,6 +233,7 @@ export default function ChatPage() {
           user: { username: user.username },
           content: trimmed,
           createdAt: new Date().toISOString(),
+          replyToId,
         },
       ])
 
@@ -207,13 +244,17 @@ export default function ChatPage() {
       })
 
       setText('')
+      setReplyingTo(null)
       setTypingMap((prev) => {
         const next = { ...prev }
         delete next[user.id]
         return next
       })
     } catch (error) {
-      console.error('Error sending message:', error)
+      console.error('❌ Error sending message:', error)
+      setSendError(error?.message || 'ไม่สามารถส่งข้อความได้')
+    } finally {
+      setSendLoading(false)
     }
   }
 
@@ -236,58 +277,142 @@ export default function ChatPage() {
   )
 
   // -----------------------------
-  // สร้างห้อง (mock frontend-only)
+  // ลบข้อความ
   // -----------------------------
-  function handleCreateRoom(roomData) {
-    if (!user) return
-    const tempId = `temp-${Date.now()}`
-    const newRoom = {
-      id: tempId,
-      name: roomData.name,
-      description: roomData.description,
-      type: roomData.type,
-      createdBy: user.id,
-      isTemporary: true,
-    }
+  const handleDeleteMessage = useCallback(
+    async (messageId) => {
+      if (!activeRoom) return
+      try {
+        await ChatAPI.deleteMessage(activeRoom.id, messageId)
+        setMessages((prev) => prev.filter((m) => m.id !== messageId))
+        
+        // ออกอากาศการลบข้อความ
+        socket?.emit?.('messageDeleted', {
+          roomId: activeRoom.id,
+          messageId,
+        })
+      } catch (error) {
+        console.error('Error deleting message:', error)
+        window.alert('ไม่สามารถลบข้อความได้')
+      }
+    },
+    [activeRoom, socket],
+  )
 
-    setRooms((prev) => [...prev, newRoom])
-    setActiveRoom(newRoom)
-    setMessages([])
-  }
+  // -----------------------------
+  // แก้ไขข้อความ
+  // -----------------------------
+  const handleEditMessage = useCallback(
+    async (messageId, newContent) => {
+      if (!activeRoom) return
+      try {
+        const updatedMessage = await ChatAPI.editMessage(
+          activeRoom.id,
+          messageId,
+          newContent,
+        )
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId
+              ? { ...m, content: newContent, edited: true, ...updatedMessage }
+              : m,
+          ),
+        )
 
-  function handleSelectRoom(room) {
-    setActiveRoom(room)
-    setMessages([])
-    setTypingMap({})
-  }
+        // ออกอากาศการแก้ไขข้อความ
+        socket?.emit?.('messageEdited', {
+          roomId: activeRoom.id,
+          messageId,
+          content: newContent,
+        })
+      } catch (error) {
+        console.error('Error editing message:', error)
+        window.alert('ไม่สามารถแก้ไขข้อความได้')
+      }
+    },
+    [activeRoom, socket],
+  )
 
-  if (!user) {
-    return (
-      <div className="w-full h-[calc(100vh-64px)] bg-[#020617] flex items-center justify-center text-gray-300 text-sm">
-        กรุณาเข้าสู่ระบบก่อนใช้งานห้องแชท
-      </div>
-    )
-  }
+  // ตอบกลับข้อความ
+  // -----------------------------
+  const handleReplyMessage = useCallback(
+    (messageId) => {
+      const message = messages.find((m) => m.id === messageId)
+      if (message) {
+        setReplyingTo({
+          id: messageId,
+          username: message.user?.username || 'Unknown',
+          content: message.content,
+        })
+      }
+    },
+    [messages],
+  )
 
+  // ยกเลิกการตอบกลับ
+  // -----------------------------
+  const handleCancelReply = useCallback(() => {
+    setReplyingTo(null)
+  }, [])
+
+  // ครูสร้างห้องแชท
+  // -----------------------------
+  const handleCreateRoom = useCallback(
+    async (roomData) => {
+      if (!user) return
+      const roomName = roomData?.name?.trim()
+      if (!roomName) return
+
+      try {
+        // memberIds = [] → backend จะดึงนักเรียนทั้งหมด (role=STUDENT) + teacher เข้า room ให้อัตโนมัติ
+        const createdRoom = await ChatAPI.createRoom(roomName, [])
+
+        console.log('[Chat] created room from API:', createdRoom)
+
+        setRooms((prev) => {
+          const filtered = prev.filter((r) => r.id !== createdRoom.id)
+          return [createdRoom, ...filtered]
+        })
+
+        setActiveRoom(createdRoom)
+        setMessages([])
+
+        // join room ใหม่ทาง socket
+        socket?.emit?.('joinRoom', { roomId: createdRoom.id })
+      } catch (err) {
+        console.error('Failed to create room:', err)
+        window.alert('สร้างห้องแชทไม่สำเร็จ กรุณาลองใหม่อีกครั้ง')
+      }
+    },
+    [user, socket],
+  )
+
+  // -----------------------------
+  // Render
   return (
-    <div className="w-full h-[calc(100vh-64px)] bg-[#020617]">
-      <ChatLayout
-        rooms={rooms}
-        roomsLoading={roomsLoading}
-        roomsError={roomsError}
-        activeRoom={activeRoom}
-        onSelectRoom={handleSelectRoom}
-        messages={messages}
-        loadingMessages={loadingMessages}
-        currentUser={user}
-        text={text}
-        setText={handleChangeText}
-        onSendMessage={sendMessage}
-        canCreateRoom={canCreateRoom}
-        onCreateRoom={handleCreateRoom}
-        socketConnected={socketConnected}
-        typingUsers={typingUsers}
-      />
-    </div>
+    <ChatLayout
+      rooms={rooms}
+      roomsLoading={roomsLoading}
+      roomsError={roomsError}
+      activeRoom={activeRoom}
+      onSelectRoom={setActiveRoom}
+      messages={messages}
+      loadingMessages={loadingMessages}
+      text={text}
+      setText={handleChangeText}
+      onSendMessage={sendMessage}
+      currentUser={user}
+      canCreateRoom={canCreateRoom}
+      onCreateRoom={handleCreateRoom}
+      socketConnected={socketConnected}
+      typingUsers={typingUsers}
+      sendLoading={sendLoading}
+      sendError={sendError}
+      onDeleteMessage={handleDeleteMessage}
+      onEditMessage={handleEditMessage}
+      onReplyMessage={handleReplyMessage}
+      replyingTo={replyingTo}
+      onCancelReply={() => setReplyingTo(null)}
+    />
   )
 }

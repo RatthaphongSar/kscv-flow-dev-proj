@@ -8,7 +8,7 @@ export default function ConversationList({ rooms, activeRoom, onSelectRoom }) {
   }
 
   return (
-    <div className="p-2 space-y-1">
+    <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-1">
       {rooms.map(room => {
         const isActive = activeRoom?.id === room.id
         return (

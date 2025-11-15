@@ -24,8 +24,21 @@ function signRefresh(u) {
 }
 function setAuthCookies(res, access, refresh) {
   const isProd = process.env.NODE_ENV === 'production'
-  res.cookie('access_token', access,  { httpOnly:true, sameSite:'lax', secure:isProd, maxAge:1000*60*60*24*7 })
-  res.cookie('refresh_token', refresh,{ httpOnly:true, sameSite:'lax', secure:isProd, maxAge:1000*60*60*24*30 })
+  const secure = isProd || process.env.FORCE_SECURE_COOKIES === 'true'
+  const sameSite = isProd ? 'strict' : 'lax'
+  
+  res.cookie('access_token', access, { 
+    httpOnly: true, 
+    sameSite, 
+    secure, 
+    maxAge: 1000*60*60*24*7 
+  })
+  res.cookie('refresh_token', refresh, { 
+    httpOnly: true, 
+    sameSite, 
+    secure, 
+    maxAge: 1000*60*60*24*30 
+  })
 }
 
 /**
@@ -57,7 +70,7 @@ router.post('/login',
       const access  = signAccess(u)
       const refresh = signRefresh(u)
       setAuthCookies(res, access, refresh)
-      res.json({ user: { id:u.id, username:u.username, role:u.role, year:u.year, major:u.major } })
+      res.json({ id: u.id, username: u.username, role: u.role, year: u.year, major: u.major })
     } catch (e) { next(e) }
   }
 )

@@ -12,9 +12,16 @@ export default function ChatLayout({
   onSendMessage,
   canCreateRoom,
   onCreateRoom,
+  sendLoading,
+  sendError,
+  onDeleteMessage,
+  onEditMessage,
+  onReplyMessage,
+  replyingTo,
+  onCancelReply,
 }) {
   return (
-    <div className="flex h-full w-full text-gray-100">
+    <div className="flex flex-1 min-h-0 w-full text-gray-100 overflow-hidden">
       {/* ซ้าย: รายการแชท */}
       <ChatSidebar
         rooms={rooms}
@@ -33,6 +40,13 @@ export default function ChatLayout({
         text={text}
         setText={setText}
         onSendMessage={onSendMessage}
+        sendLoading={sendLoading}
+        sendError={sendError}
+        onDeleteMessage={onDeleteMessage}
+        onEditMessage={onEditMessage}
+        onReplyMessage={onReplyMessage}
+        replyingTo={replyingTo}
+        onCancelReply={onCancelReply}
       />
     </div>
   )

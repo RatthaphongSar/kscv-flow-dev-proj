@@ -72,10 +72,10 @@ export default function App() {
   const avatarUrl = user?.avatarUrl || user?.photoURL || null
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#020617] text-gray-100">
+    <div className="h-screen flex flex-col bg-[#020617] text-gray-100 overflow-hidden">
 
       {/* ============ TOPBAR ============ */}
-      <header className="sticky top-0 z-40 bg-[#020617] border-b border-[#1f2937]">
+      <header className="shrink-0 bg-[#020617] border-b border-[#1f2937]">
         <div className="w-full flex justify-center">
           <div className="w-full max-w-[1400px] flex items-center gap-3 p-3">
             <button
@@ -161,7 +161,7 @@ export default function App() {
       </aside>
 
       {/* ============ PRIMARY NAV ============ */}
-      <div className="w-full bg-[#020617] border-b border-[#1f2937]">
+      <div className="w-full bg-[#020617] border-b border-[#1f2937] shrink-0">
         <div className="w-full flex justify-center">
           <div className="w-full max-w-[1400px] flex justify-around md:justify-start md:gap-2 px-3 py-2">
             <NavItem to="/" icon={Home} label="Home" />
@@ -175,8 +175,8 @@ export default function App() {
       </div>
 
       {/* ============ MAIN CONTENT ============ */}
-      <main className="flex flex-1 min-h-0 w-full justify-center">
-        <div className="w-full max-w-[1400px] px-3 flex flex-1 min-h-0">
+      <main className="flex flex-1 min-h-0 w-full justify-center overflow-hidden">
+        <div className="w-full max-w-[1400px] flex flex-1 min-h-0 overflow-hidden bg-[#020617]">
           <AppRoutes />
         </div>
       </main>

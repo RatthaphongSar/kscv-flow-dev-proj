@@ -3,8 +3,8 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { io } from 'socket.io-client'
 import { useAuth } from './AuthContext'
 
-// ปรับ URL ให้ชี้ backend https / พอร์ตของคุณ
-const SOCKET_URL = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '') || 'http://localhost:4001'
+const SOCKET_URL =
+  import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '') || 'http://localhost:4001'
 
 const ChatSocketCtx = createContext(null)
 
@@ -16,15 +16,13 @@ export function ChatSocketProvider({ children }) {
 
   useEffect(() => {
     if (!user) return
-    
-    // สร้าง socket connection
+
     const socket = io(SOCKET_URL, {
       transports: ['websocket'],
       withCredentials: true,
-      auth: { userId: user.id, username: user.username }
+      auth: { userId: user.id, username: user.username },
     })
-    
-    // เก็บ socket instance
+
     socketRef.current = socket
 
     socket.on('connect', () => setConnected(true))
@@ -53,16 +51,19 @@ export function ChatSocketProvider({ children }) {
   const emitSeen = (roomId, messageId) =>
     socketRef.current?.emit('chat:seen', { roomId, messageId })
 
-  const value = useMemo(() => ({
-    socket: socketRef.current,
-    connected,
-    joinRoom,
-    leaveRoom,
-    on,
-    emitTyping,
-    emitSeen,
-    emit: (...args) => socketRef.current?.emit(...args)
-  }), [connected])
+  const value = useMemo(
+    () => ({
+      socket: socketRef.current,
+      connected,
+      joinRoom,
+      leaveRoom,
+      on,
+      emitTyping,
+      emitSeen,
+      emit: (...args) => socketRef.current?.emit(...args),
+    }),
+    [connected]
+  )
 
   return <ChatSocketCtx.Provider value={value}>{children}</ChatSocketCtx.Provider>
 }

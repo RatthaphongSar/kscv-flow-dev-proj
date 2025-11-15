@@ -17,15 +17,40 @@ export function initSocket(httpServer) {
   })
 
   io.on('connection', (socket) => {
-    // join ห้อง
+    // join ห้อง (รองรับชื่อดั้งเดิมและชื่อที่ frontend ใช้)
     socket.on('joinRoom', (roomId) => socket.join(roomId))
+    socket.on('chat:join', ({ roomId } = {}) => {
+      if (!roomId) return
+      socket.join(roomId)
+    })
 
-    // typing indicator (option เผื่อใช้)
-    socket.on('typing', ({ roomId, user }) => {
+    // leave ห้อง
+    socket.on('chat:leave', ({ roomId } = {}) => {
+      if (!roomId) return
+      socket.leave(roomId)
+    })
+
+    // typing indicators - support both simple and namespaced events
+    socket.on('typing', ({ roomId, user } = {}) => {
+      if (!roomId) return
       socket.to(roomId).emit('typing', { user })
     })
-    socket.on('stopTyping', ({ roomId, user }) => {
+    socket.on('stopTyping', ({ roomId, user } = {}) => {
+      if (!roomId) return
       socket.to(roomId).emit('stopTyping', { user })
+    })
+
+    // frontend emits namespaced typing with isTyping flag
+    socket.on('chat:typing', ({ roomId, isTyping, user } = {}) => {
+      if (!roomId) return
+      // broadcast typing state to other members in room
+      socket.to(roomId).emit('chat:typing', { user, isTyping })
+    })
+
+    // seen/read events
+    socket.on('chat:seen', ({ roomId, messageId, user } = {}) => {
+      if (!roomId || !messageId) return
+      socket.to(roomId).emit('chat:seen', { messageId, user })
     })
   })
 
