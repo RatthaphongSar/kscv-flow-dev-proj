@@ -12,7 +12,7 @@ interface ChatConversationProps {
 }
 
 export default function ChatConversation({
-  roomId,
+  roomId: _roomId,
   messages,
   currentUser,
   onDeleteMessage,

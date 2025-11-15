@@ -7,8 +7,10 @@ import { Message } from '../stores/chat'
  * Event map สำหรับ type safety เวลา on/emit
  * (ตอนนี้ยังไม่ได้ enforce ผ่าน generics ของ Socket
  *  แต่เก็บไว้เป็น reference ว่า server ควรยิง event อะไรบ้าง)
+ * 
+ * @internal Reference for future socket.io type-safe event handling
  */
-interface ChatEvents {
+export interface ChatEvents {
   'message:send': (message: Message) => void
   'message:received': (message: Message) => void
   'typing:start': (roomId: string, userId: string) => void

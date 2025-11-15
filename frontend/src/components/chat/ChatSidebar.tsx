@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
 import ConversationList from './ConversationList'
 import UserAvatar from './UserAvatar'
+import ChatSidebarTabs from './ChatSidebarTabs'
+
+type ChatFilter = 'all' | 'pinned' | 'unread'
 
 export default function ChatSidebar({
   rooms,
@@ -11,18 +14,33 @@ export default function ChatSidebar({
   onCreateRoom,
 }) {
   const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState<ChatFilter>('all')
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [roomName, setRoomName] = useState('')
   const [roomType, setRoomType] = useState('class')
   const [roomDesc, setRoomDesc] = useState('')
 
-  const filteredRooms = useMemo(
-    () =>
-      rooms.filter(r =>
-        (r.name || '').toLowerCase().includes(search.toLowerCase()),
-      ),
-    [rooms, search],
-  )
+  /**
+   * Apply both search and filter to rooms
+   * Filter logic:
+   * - "all": show all rooms
+   * - "pinned": show only rooms where isPinned === true
+   * - "unread": show only rooms where unreadCount > 0
+   */
+  const filteredRooms = useMemo(() => {
+    let result = rooms.filter(r =>
+      (r.name || '').toLowerCase().includes(search.toLowerCase()),
+    )
+
+    // Apply filter based on selected tab
+    if (filter === 'pinned') {
+      result = result.filter(r => r.isPinned === true)
+    } else if (filter === 'unread') {
+      result = result.filter(r => (r.unreadCount ?? 0) > 0)
+    }
+
+    return result
+  }, [rooms, search, filter])
 
   function handleSubmitCreate(e) {
     e.preventDefault()
@@ -75,18 +93,8 @@ export default function ChatSidebar({
           </span>
         </div>
 
-        {/* Tabs (ยังไม่ต้องมี logic ก็ได้) */}
-        <div className="flex gap-2 text-[11px]">
-          <button className="px-2 py-1 rounded-full bg-violet-600/20 text-violet-300 border border-violet-500/40">
-            ทั้งหมด
-          </button>
-          <button className="px-2 py-1 rounded-full text-gray-300 hover:bg-[#020617]">
-            ปักหมุด
-          </button>
-          <button className="px-2 py-1 rounded-full text-gray-300 hover:bg-[#020617]">
-            ยังไม่ได้อ่าน
-          </button>
-        </div>
+        {/* Tabs (ทั้งหมด / เก็บพูด / ยังไม่ได้อ่าน) */}
+        <ChatSidebarTabs value={filter} onChange={setFilter} />
       </div>
 
       {/* รายการห้อง */}

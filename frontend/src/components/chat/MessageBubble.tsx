@@ -1,14 +1,27 @@
 import { useState, useRef } from 'react'
 import UserAvatar from './UserAvatar'
 
+interface MessageFile {
+  id: string
+  fileName: string
+  url: string
+  width?: number
+  height?: number
+  mimeType?: string
+}
+
 interface MessageBubbleProps {
   id: string
   isOwn: boolean
   username: string
   content: string
   time: string
+  type?: 'text' | 'image' | 'file'
+  file?: MessageFile
   edited?: boolean
   replyTo?: { user: { username: string }; content: string } | null
+  readCount?: number
+  totalMembers?: number
   onDelete?: (messageId: string) => void
   onEdit?: (messageId: string, newContent: string) => void
   onReply?: (messageId: string) => void
@@ -21,8 +34,12 @@ export default function MessageBubble({
   username,
   content,
   time,
+  type = 'text',
+  file,
   edited = false,
   replyTo,
+  readCount,
+  totalMembers,
   onDelete,
   onEdit,
   onReply,
@@ -31,7 +48,22 @@ export default function MessageBubble({
   const [showMenu, setShowMenu] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(content)
+  const [imageViewerOpen, setImageViewerOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  // Calculate image dimensions based on orientation
+  const getImageDimensions = () => {
+    if (!file?.width || !file?.height) return { maxWidth: '320px', maxHeight: '224px' }
+    
+    const aspectRatio = file.width / file.height
+    const isLandscape = aspectRatio > 1
+    
+    if (isLandscape) {
+      return { maxWidth: '320px', maxHeight: '224px' } // max-w-xs, max-h-56
+    } else {
+      return { maxWidth: '160px', maxHeight: '320px' } // max-w-40, max-h-80
+    }
+  }
 
   const handleCopy = () => {
     navigator.clipboard.writeText(content)
@@ -117,6 +149,55 @@ export default function MessageBubble({
                 </button>
               </div>
             </div>
+          ) : type === 'image' && file ? (
+            // Image message
+            <div className="relative group">
+              <img
+                src={file.url}
+                alt={file.fileName}
+                onClick={() => setImageViewerOpen(true)}
+                className="rounded-2xl object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                style={getImageDimensions()}
+              />
+              {/* Image filename tooltip */}
+              <div className={`text-[10px] mt-1 ${
+                isOwn ? 'text-violet-100 text-right' : 'text-gray-400'
+              }`}>
+                {file.fileName}
+              </div>
+              {/* Timestamp */}
+              <div className={`text-[10px] mt-0.5 ${
+                isOwn ? 'text-violet-100 text-right' : 'text-gray-400 text-right'
+              }`}>
+                {time}
+              </div>
+              
+              {/* Image viewer modal */}
+              {imageViewerOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center"
+                    onClick={() => setImageViewerOpen(false)}
+                  >
+                    <div className="relative max-w-4xl max-h-[90vh] p-4">
+                      <img
+                        src={file.url}
+                        alt={file.fileName}
+                        className="max-w-full max-h-full object-contain rounded-lg"
+                      />
+                      <button
+                        onClick={() => setImageViewerOpen(false)}
+                        className="absolute top-2 right-2 p-2 bg-black/50 hover:bg-black/70 text-white rounded-lg transition-colors"
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           ) : (
             <div
               className={`px-3 py-2 rounded-2xl text-sm leading-relaxed break-words relative
@@ -154,6 +235,15 @@ export default function MessageBubble({
                   >
                     {time}
                   </div>
+
+                  {/* Read receipt indicator - show for own messages when in a group */}
+                  {isOwn && readCount !== undefined && totalMembers !== undefined && totalMembers > 1 && (
+                    <div className={`text-[9px] mt-0.5 ${
+                      isOwn ? 'text-violet-100 text-right' : 'text-gray-400'
+                    }`}>
+                      อ่านแล้ว {readCount}/{totalMembers}
+                    </div>
+                  )}
                 </div>
 
                 {/* Action Menu Button (Three Dots) - Inside Message Box */}

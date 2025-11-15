@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
-import { ChatAPI } from '../../services/chat.js'
+
+// Import all exports from chat module
+import * as chatModule from '../../services/chat.js'
+const ChatAPI = (chatModule as any).ChatAPI
 
 interface Student {
   id: string

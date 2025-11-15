@@ -4,6 +4,10 @@ import ChatConversation from './ChatConversation'
 import MessageInput from './MessageInput'
 import UserAvatar from './UserAvatar'
 import AddStudentsModal from './AddStudentsModal'
+import ChatPanelTabs, { type ChatPanelTab } from './ChatPanelTabs'
+import ChatFilesPanel from './ChatFilesPanel'
+import ChatNotesPanel from './ChatNotesPanel'
+import { MembersPanel } from './MembersPanel'
 
 interface ChatWindowProps {
   activeRoom: { id: string; name?: string } | null
@@ -19,6 +23,7 @@ interface ChatWindowProps {
   onReplyMessage?: (messageId: string) => void
   replyingTo?: { id: string; username: string; content: string } | null
   onCancelReply?: () => void
+  onAttachFiles?: (files: FileList) => void
 }
 
 export default function ChatWindow({
@@ -35,8 +40,10 @@ export default function ChatWindow({
   onReplyMessage,
   replyingTo,
   onCancelReply,
+  onAttachFiles,
 }: ChatWindowProps) {
   const [showAddStudents, setShowAddStudents] = useState(false)
+  const [activeTab, setActiveTab] = useState<ChatPanelTab>('chat')
   const isTeacher = currentUser?.role === 'TEACHER' || currentUser?.role === 'ADMIN'
   
   const title = activeRoom?.name || 'เลือกการสนทนา'
@@ -67,29 +74,42 @@ export default function ChatWindow({
             ➕ เพิ่มสมาชิก
           </button>
         )}
-
-        {/* แท็บด้านบน (ยังไม่ต้องมี logic) */}
-        {activeRoom && (
-          <div className="flex gap-4 text-xs text-gray-400">
-            <button className="border-b-2 border-violet-500 text-gray-100 pb-1">
-              แชท
-            </button>
-            <button className="pb-1 hover:text-gray-200">ไฟล์</button>
-            <button className="pb-1 hover:text-gray-200">โน้ต</button>
-          </div>
-        )}
       </div>
+
+      {/* Panel tabs (แชท / ไฟล์ / โน้ต / สมาชิก) */}
+      {activeRoom && (
+        <div className="px-5 border-b border-[#374151] bg-[#020617] shrink-0">
+          <ChatPanelTabs value={activeTab} onChange={setActiveTab} isTeacher={isTeacher} />
+        </div>
+      )}
 
       {/* Messages area – ล็อกความสูง scroll ภายใน + min-h-0 เพื่อให้ flex ทำงานถูกต้อง */}
       {activeRoom ? (
-        <ChatConversation
-          roomId={activeRoom.id}
-          messages={messages}
-          currentUser={currentUser}
-          onDeleteMessage={onDeleteMessage}
-          onEditMessage={onEditMessage}
-          onReplyMessage={onReplyMessage}
-        />
+        <>
+          {activeTab === 'chat' && (
+            <ChatConversation
+              roomId={activeRoom.id}
+              messages={messages}
+              currentUser={currentUser}
+              onDeleteMessage={onDeleteMessage}
+              onEditMessage={onEditMessage}
+              onReplyMessage={onReplyMessage}
+            />
+          )}
+          {activeTab === 'files' && (
+            <ChatFilesPanel roomId={activeRoom.id} />
+          )}
+          {activeTab === 'notes' && (
+            <ChatNotesPanel roomId={activeRoom.id} isTeacher={isTeacher} />
+          )}
+          {activeTab === 'members' && (
+            <MembersPanel
+              roomId={activeRoom.id}
+              isTeacher={isTeacher}
+              currentUserId={currentUser?.id || ''}
+            />
+          )}
+        </>
       ) : (
         <div className="flex-1 min-h-0 flex items-center justify-center text-sm text-gray-500">
           เลือกห้องจากด้านซ้ายเพื่อเริ่มสนทนา
@@ -97,7 +117,7 @@ export default function ChatWindow({
       )}
 
       {/* Input */}
-      {activeRoom && (
+      {activeRoom && activeTab === 'chat' && (
         <div className="border-t border-[#1f2937] bg-[#020617] px-4 py-3 shrink-0">
           {sendError && (
             <div className="mb-2 px-3 py-2 bg-red-900/30 border border-red-600/50 rounded-md text-xs text-red-300">
@@ -123,6 +143,7 @@ export default function ChatWindow({
             setText={setText} 
             onSubmit={onSendMessage}
             isLoading={sendLoading}
+            onAttachFiles={onAttachFiles}
           />
         </div>
       )}

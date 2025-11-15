@@ -1,10 +1,49 @@
-export default function MessageInput({ text, setText, onSubmit, isLoading = false }) {
+import { useRef } from 'react'
+
+interface MessageInputProps {
+  text: string
+  setText: (value: string) => void
+  onSubmit: (e?: React.FormEvent) => void
+  isLoading?: boolean
+  onAttachFiles?: (files: FileList) => void
+}
+
+export default function MessageInput({
+  text,
+  setText,
+  onSubmit,
+  isLoading = false,
+  onAttachFiles,
+}: MessageInputProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const disabled = !text.trim() || isLoading
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && !disabled) {
       e.preventDefault()
       onSubmit?.()
+    }
+  }
+
+  /**
+   * Handle attachment button click
+   * Triggers hidden file input dialog
+   */
+  const handleAttachClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  /**
+   * Handle file selection
+   * Called when user selects files from dialog
+   */
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && onAttachFiles) {
+      onAttachFiles(e.target.files)
+      // Clear input so same file can be selected again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
     }
   }
 
@@ -25,15 +64,40 @@ export default function MessageInput({ text, setText, onSubmit, isLoading = fals
         />
       </div>
 
-      {/* ปุ่มเครื่องมือ */}
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        onChange={handleFileChange}
+        className="hidden"
+        aria-label="Select files to attach"
+      />
+
+      {/* ปุ่มแนบไฟล์ */}
       <button
         type="button"
-        className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-200 
-                   hover:bg-[#1f2937] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        onClick={handleAttachClick}
+        className="h-9 w-9 flex items-center justify-center rounded-md bg-slate-800 border border-slate-700
+                   text-slate-200 hover:bg-slate-700 hover:border-slate-600 transition-colors
+                   disabled:opacity-50 disabled:cursor-not-allowed"
         title="แนบไฟล์"
         disabled={isLoading}
       >
-        <span className="text-lg">📎</span>
+        {/* Paperclip icon */}
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 19l9 2-9-18-9 18 9-2m0 0v-8m0 8l-6-4m6 4l6-4"
+          />
+        </svg>
       </button>
 
       {/* ปุ่มส่ง */}
