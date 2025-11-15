@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import * as ctrl from '../controllers/attendance.js';
 import { body, param, query } from 'express-validator';
+import { authRequired } from '../middleware/auth.js';
 const router = Router();
+
+// Require auth for all attendance routes
+router.use(authRequired);
 
 // Check-in (checkline) for attendance
 router.post('/checkin', [

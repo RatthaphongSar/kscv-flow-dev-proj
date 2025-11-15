@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import * as ctrl from '../controllers/clubs.js';
 import { body, param, query } from 'express-validator';
+import { authRequired } from '../middleware/auth.js';
 const router = Router();
+
+// Require auth for all club routes
+router.use(authRequired);
 
 // Clubs & Activities list
 router.get('/', [

@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import * as ctrl from '../controllers/leaves.js';
 import { body, param, query } from 'express-validator';
+import { authRequired } from '../middleware/auth.js';
 const router = Router();
+
+// Require auth for all leave routes
+router.use(authRequired);
 
 // Submit leave request (sick/personal/ordination/other) with rules
 router.post('/', [

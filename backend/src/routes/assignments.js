@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import * as ctrl from '../controllers/assignments.js';
 import { body, param, query } from 'express-validator';
+import { authRequired } from '../middleware/auth.js';
 const router = Router();
+
+// Require auth for all assignment routes
+router.use(authRequired);
 
 // List assignments
 router.get('/', [

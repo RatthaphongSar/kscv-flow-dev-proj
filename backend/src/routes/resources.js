@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import * as ctrl from '../controllers/resources.js';
 import { body, param, query } from 'express-validator';
+import { authRequired } from '../middleware/auth.js';
 const router = Router();
+
+// Require auth for all resource routes
+router.use(authRequired);
 
 // Resources / Materials list
 router.get('/', [

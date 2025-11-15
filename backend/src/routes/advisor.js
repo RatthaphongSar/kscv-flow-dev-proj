@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import * as ctrl from '../controllers/advisor.js';
 import { body, param, query } from 'express-validator';
+import { authRequired } from '../middleware/auth.js';
 const router = Router();
+
+// Require auth for all advisor routes
+router.use(authRequired);
 
 // Advisor contact info (my assigned advisor)
 router.get('/contact', ctrl.advisorContact);
