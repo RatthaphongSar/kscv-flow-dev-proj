@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { api } from '../utils/api'
 
 export interface RoomMember {
   id: string
@@ -28,7 +29,7 @@ export const useRoomMembers = (options: UseRoomMembersOptions = {}) => {
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch(`/api/chat/rooms/${roomId}/members`)
+      const response = await api(`/chat/rooms/${roomId}/members`)
       if (!response.ok) throw new Error('Failed to fetch members')
       const data = await response.json()
       setMembers(data)
@@ -43,10 +44,9 @@ export const useRoomMembers = (options: UseRoomMembersOptions = {}) => {
     async (userId: string) => {
       if (!roomId) return
       try {
-        const response = await fetch(`/api/chat/rooms/${roomId}/members`, {
+        const response = await api(`/chat/rooms/${roomId}/members`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId }),
+          body: { userId }
         })
         if (!response.ok) throw new Error('Failed to add member')
         const newMember: RoomMember = await response.json()
@@ -65,8 +65,8 @@ export const useRoomMembers = (options: UseRoomMembersOptions = {}) => {
     async (userId: string) => {
       if (!roomId) return
       try {
-        const response = await fetch(`/api/chat/rooms/${roomId}/members/${userId}`, {
-          method: 'DELETE',
+        const response = await api(`/chat/rooms/${roomId}/members/${userId}`, {
+          method: 'DELETE'
         })
         if (!response.ok) throw new Error('Failed to remove member')
         setMembers((prev) => prev.filter((m) => m.id !== userId))

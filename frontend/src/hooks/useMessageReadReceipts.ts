@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { api } from '../utils/api'
 
 export interface MessageReadReceipt {
   messageId: string
@@ -30,7 +31,7 @@ export const useMessageReadReceipts = (roomId?: string) => {
       try {
         // Fetch read receipts for multiple messages
         const queryString = messageIds.map((id) => `messageId=${id}`).join('&')
-        const response = await fetch(`/api/chat/rooms/${roomId}/messages/read-receipts?${queryString}`)
+        const response = await api(`/chat/rooms/${roomId}/messages/read-receipts?${queryString}`)
         if (!response.ok) throw new Error('Failed to fetch read receipts')
 
         const data: MessageReadReceipt[] = await response.json()
@@ -60,7 +61,7 @@ export const useMessageReadReceipts = (roomId?: string) => {
       if (!roomId) return []
 
       try {
-        const response = await fetch(`/api/chat/rooms/${roomId}/messages/${messageId}/readers`)
+        const response = await api(`/chat/rooms/${roomId}/messages/${messageId}/readers`)
         if (!response.ok) throw new Error('Failed to fetch readers')
         const data: MessageReader[] = await response.json()
         return data

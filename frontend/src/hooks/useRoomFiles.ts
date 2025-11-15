@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { api } from '../utils/api'
 
 export interface ChatFile {
   id: string
@@ -41,7 +42,7 @@ export const useRoomFiles = (options: UseRoomFilesOptions = {}) => {
     setError(null)
 
     try {
-      const response = await fetch(`/api/chat/rooms/${roomId}/files`)
+      const response = await api(`/chat/rooms/${roomId}/files`)
 
       if (!response.ok) {
         throw new Error(`Failed to fetch files: ${response.statusText}`)
@@ -72,10 +73,9 @@ export const useRoomFiles = (options: UseRoomFilesOptions = {}) => {
     }) => {
       if (!roomId) throw new Error('No room ID')
 
-      const response = await fetch(`/api/chat/rooms/${roomId}/files`, {
+      const response = await api(`/chat/rooms/${roomId}/files`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(metadata)
+        body: metadata
       })
 
       if (!response.ok) {
@@ -99,7 +99,7 @@ export const useRoomFiles = (options: UseRoomFilesOptions = {}) => {
     async (fileId: string) => {
       if (!roomId) throw new Error('No room ID')
 
-      const response = await fetch(`/api/chat/rooms/${roomId}/files/${fileId}`, {
+      const response = await api(`/chat/rooms/${roomId}/files/${fileId}`, {
         method: 'DELETE'
       })
 

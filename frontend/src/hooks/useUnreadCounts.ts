@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { api } from '../utils/api'
 
 export interface UnreadCount {
   roomId: string
@@ -18,7 +19,7 @@ export const useUnreadCounts = () => {
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch('/api/chat/unread-summary')
+      const response = await api(`/chat/unread-summary`)
       if (!response.ok) throw new Error('Failed to fetch unread counts')
       
       const data: UnreadCount[] = await response.json()

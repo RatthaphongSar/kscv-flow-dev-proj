@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useRoomMembers } from '../../hooks/useRoomMembers'
+import { api } from '../../utils/api'
 
 interface User {
   id: string
@@ -37,7 +38,7 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
       setLoading(true)
       try {
         // Fetch all users that are not already members
-        const response = await fetch(`/api/chat/rooms/${roomId}/members/available`)
+        const response = await api(`/chat/rooms/${roomId}/members/available`)
         if (!response.ok) throw new Error('Failed to fetch available users')
         const data = await response.json()
         setAvailableUsers(data)
