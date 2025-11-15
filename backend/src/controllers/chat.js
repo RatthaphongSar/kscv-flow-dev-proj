@@ -195,7 +195,7 @@ export const sendMessage = async (req, res, next) => {
   try {
     const { roomId } = req.params
     const { content, replyToId } = req.body
-    const userId = req.user?.sub || req.body.userId
+    const userId = req.user?.id || req.body.userId
 
     if (!userId || !content) {
       return res
@@ -261,7 +261,7 @@ export const editMessage = async (req, res, next) => {
   try {
     const { roomId, messageId } = req.params
     const { content } = req.body
-    const userId = req.user?.sub || req.body.userId
+    const userId = req.user?.id || req.body.userId
 
     const message = await prisma.message.findUnique({
       where: { id: messageId },
@@ -308,7 +308,7 @@ export const editMessage = async (req, res, next) => {
 export const deleteMessage = async (req, res, next) => {
   try {
     const { roomId, messageId } = req.params
-    const userId = req.user?.sub || req.body.userId
+    const userId = req.user?.id || req.body.userId
 
     const message = await prisma.message.findUnique({
       where: { id: messageId },
@@ -479,7 +479,7 @@ export const addMembersToRoom = async (req, res, next) => {
 export const markMessageAsRead = async (req, res, next) => {
   try {
     const { roomId, messageId } = req.params
-    const userId = req.user?.sub || req.body.userId
+    const userId = req.user?.id || req.body.userId
 
     const member = await prisma.roomMember.findUnique({
       where: { roomId_userId: { roomId, userId } },
