@@ -37,7 +37,7 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
       setLoading(true)
       try {
         // Fetch all users that are not already members
-        const response = await fetch(`/api/rooms/${roomId}/members/available`)
+        const response = await fetch(`/api/chat/rooms/${roomId}/members/available`)
         if (!response.ok) throw new Error('Failed to fetch available users')
         const data = await response.json()
         setAvailableUsers(data)

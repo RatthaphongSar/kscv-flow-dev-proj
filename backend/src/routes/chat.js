@@ -1,6 +1,7 @@
 // backend/src/routes/chat.js
 import { Router } from 'express'
 import * as ctrl from '../controllers/chat.js'
+import * as ctrlExt from '../controllers/chatExtended.js'
 import { body, param, query } from 'express-validator'
 import { validate } from '../middleware/validate.js'
 import { authRequired } from '../middleware/auth.js'
@@ -104,6 +105,158 @@ router.post(
   ],
   validate,
   ctrl.addMembersToRoom
+)
+
+// ==================== CHAT NOTES ====================
+
+// GET /rooms/:roomId/notes
+router.get(
+  '/rooms/:roomId/notes',
+  authRequired,
+  ctrlExt.getNotes
+)
+
+// GET /rooms/:roomId/notes/:noteId
+router.get(
+  '/rooms/:roomId/notes/:noteId',
+  authRequired,
+  ctrlExt.getNote
+)
+
+// POST /rooms/:roomId/notes
+router.post(
+  '/rooms/:roomId/notes',
+  authRequired,
+  [
+    body('title').isString().withMessage('title is required'),
+    body('content').isString().withMessage('content is required'),
+  ],
+  validate,
+  ctrlExt.createNote
+)
+
+// PUT /rooms/:roomId/notes/:noteId
+router.put(
+  '/rooms/:roomId/notes/:noteId',
+  authRequired,
+  [
+    body('title').optional().isString(),
+    body('content').optional().isString(),
+  ],
+  validate,
+  ctrlExt.updateNote
+)
+
+// DELETE /rooms/:roomId/notes/:noteId
+router.delete(
+  '/rooms/:roomId/notes/:noteId',
+  authRequired,
+  ctrlExt.deleteNote
+)
+
+// ==================== CHAT FILES ====================
+
+// GET /rooms/:roomId/files
+router.get(
+  '/rooms/:roomId/files',
+  authRequired,
+  ctrlExt.getFiles
+)
+
+// GET /rooms/:roomId/files/:fileId
+router.get(
+  '/rooms/:roomId/files/:fileId',
+  authRequired,
+  ctrlExt.getFile
+)
+
+// POST /rooms/:roomId/files
+router.post(
+  '/rooms/:roomId/files',
+  authRequired,
+  [
+    body('fileName').isString().withMessage('fileName is required'),
+    body('mimeType').isString().withMessage('mimeType is required'),
+    body('sizeBytes').isInt({ min: 0 }).withMessage('sizeBytes must be a number'),
+    body('url').isString().withMessage('url is required'),
+    body('width').optional().isInt({ min: 0 }),
+    body('height').optional().isInt({ min: 0 }),
+  ],
+  validate,
+  ctrlExt.uploadFile
+)
+
+// DELETE /rooms/:roomId/files/:fileId
+router.delete(
+  '/rooms/:roomId/files/:fileId',
+  authRequired,
+  ctrlExt.deleteFile
+)
+
+// ==================== CHAT MEMBERS ====================
+
+// GET /rooms/:roomId/members
+router.get(
+  '/rooms/:roomId/members',
+  authRequired,
+  ctrlExt.getRoomMembers
+)
+
+// GET /rooms/:roomId/members/available
+router.get(
+  '/rooms/:roomId/members/available',
+  authRequired,
+  ctrlExt.getAvailableMembers
+)
+
+// POST /rooms/:roomId/members
+router.post(
+  '/rooms/:roomId/members',
+  authRequired,
+  [
+    body('userId').isString().withMessage('userId is required'),
+  ],
+  validate,
+  ctrlExt.addMember
+)
+
+// DELETE /rooms/:roomId/members/:userId
+router.delete(
+  '/rooms/:roomId/members/:userId',
+  authRequired,
+  ctrlExt.removeMember
+)
+
+// ==================== CHAT READ RECEIPTS ====================
+
+// POST /rooms/:roomId/messages/mark-read
+router.post(
+  '/rooms/:roomId/messages/mark-read',
+  authRequired,
+  ctrlExt.markRoomAsRead
+)
+
+// GET /rooms/:roomId/messages/read-receipts
+router.get(
+  '/rooms/:roomId/messages/read-receipts',
+  authRequired,
+  ctrlExt.getReadReceipts
+)
+
+// GET /rooms/:roomId/messages/:messageId/readers
+router.get(
+  '/rooms/:roomId/messages/:messageId/readers',
+  authRequired,
+  ctrlExt.getMessageReaders
+)
+
+// ==================== UNREAD SUMMARY ====================
+
+// GET /unread-summary
+router.get(
+  '/unread-summary',
+  authRequired,
+  ctrlExt.getUnreadSummary
 )
 
 export default router

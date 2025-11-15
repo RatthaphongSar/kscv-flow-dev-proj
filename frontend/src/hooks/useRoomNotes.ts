@@ -38,7 +38,7 @@ export const useRoomNotes = (options: UseRoomNotesOptions = {}) => {
     setError(null)
 
     try {
-      const response = await fetch(`/api/rooms/${roomId}/notes`)
+      const response = await fetch(`/api/chat/rooms/${roomId}/notes`)
 
       if (!response.ok) {
         throw new Error(`Failed to fetch notes: ${response.statusText}`)
@@ -61,7 +61,7 @@ export const useRoomNotes = (options: UseRoomNotesOptions = {}) => {
     async (title: string, content: string) => {
       if (!roomId) throw new Error('No room ID')
 
-      const response = await fetch(`/api/rooms/${roomId}/notes`, {
+      const response = await fetch(`/api/chat/rooms/${roomId}/notes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, content })
@@ -88,7 +88,7 @@ export const useRoomNotes = (options: UseRoomNotesOptions = {}) => {
     async (noteId: string, title?: string, content?: string) => {
       if (!roomId) throw new Error('No room ID')
 
-      const response = await fetch(`/api/rooms/${roomId}/notes/${noteId}`, {
+      const response = await fetch(`/api/chat/rooms/${roomId}/notes/${noteId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, content })
@@ -116,7 +116,7 @@ export const useRoomNotes = (options: UseRoomNotesOptions = {}) => {
     async (noteId: string) => {
       if (!roomId) throw new Error('No room ID')
 
-      const response = await fetch(`/api/rooms/${roomId}/notes/${noteId}`, {
+      const response = await fetch(`/api/chat/rooms/${roomId}/notes/${noteId}`, {
         method: 'DELETE'
       })
 

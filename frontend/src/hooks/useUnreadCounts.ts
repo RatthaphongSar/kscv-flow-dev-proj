@@ -18,7 +18,7 @@ export const useUnreadCounts = () => {
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch('/api/rooms/unread-summary')
+      const response = await fetch('/api/chat/unread-summary')
       if (!response.ok) throw new Error('Failed to fetch unread counts')
       
       const data: UnreadCount[] = await response.json()

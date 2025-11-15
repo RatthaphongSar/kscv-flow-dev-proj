@@ -28,7 +28,7 @@ export const useRoomMembers = (options: UseRoomMembersOptions = {}) => {
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch(`/api/rooms/${roomId}/members`)
+      const response = await fetch(`/api/chat/rooms/${roomId}/members`)
       if (!response.ok) throw new Error('Failed to fetch members')
       const data = await response.json()
       setMembers(data)
@@ -43,7 +43,7 @@ export const useRoomMembers = (options: UseRoomMembersOptions = {}) => {
     async (userId: string) => {
       if (!roomId) return
       try {
-        const response = await fetch(`/api/rooms/${roomId}/members`, {
+        const response = await fetch(`/api/chat/rooms/${roomId}/members`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId }),
@@ -65,7 +65,7 @@ export const useRoomMembers = (options: UseRoomMembersOptions = {}) => {
     async (userId: string) => {
       if (!roomId) return
       try {
-        const response = await fetch(`/api/rooms/${roomId}/members/${userId}`, {
+        const response = await fetch(`/api/chat/rooms/${roomId}/members/${userId}`, {
           method: 'DELETE',
         })
         if (!response.ok) throw new Error('Failed to remove member')

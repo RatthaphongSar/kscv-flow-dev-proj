@@ -41,7 +41,7 @@ export const useRoomFiles = (options: UseRoomFilesOptions = {}) => {
     setError(null)
 
     try {
-      const response = await fetch(`/api/rooms/${roomId}/files`)
+      const response = await fetch(`/api/chat/rooms/${roomId}/files`)
 
       if (!response.ok) {
         throw new Error(`Failed to fetch files: ${response.statusText}`)
@@ -72,7 +72,7 @@ export const useRoomFiles = (options: UseRoomFilesOptions = {}) => {
     }) => {
       if (!roomId) throw new Error('No room ID')
 
-      const response = await fetch(`/api/rooms/${roomId}/files`, {
+      const response = await fetch(`/api/chat/rooms/${roomId}/files`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(metadata)
@@ -99,7 +99,7 @@ export const useRoomFiles = (options: UseRoomFilesOptions = {}) => {
     async (fileId: string) => {
       if (!roomId) throw new Error('No room ID')
 
-      const response = await fetch(`/api/rooms/${roomId}/files/${fileId}`, {
+      const response = await fetch(`/api/chat/rooms/${roomId}/files/${fileId}`, {
         method: 'DELETE'
       })
 
