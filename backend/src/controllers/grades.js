@@ -1,12 +1,53 @@
-// All endpoints return 501 until DB layer is connected.
-
+import { prisma } from "../db.js"
 
 /**
  * Get Grades & Transcript for student
  * @route GET /transcript
- * @returns {{}} 501 Not Implemented
- * @remarks Request/Response schema documented in docs/openapi.yaml
  */
-export const getTranscript = async (req, res) => {
-  return res.status(501).json({ error: 'Not Implemented', endpoint: 'GET /transcript' });
-};
+export const getTranscript = async (req, res, next) => {
+  try {
+    const grades = await prisma.grade.findMany({
+      where: { studentId: req.user?.sub },
+      include: {
+        exam: {
+          include: { class: { select: { name: true, level: true, major: true } } }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    const gpa = grades.length > 0
+      ? (grades.reduce((sum, g) => sum + (g.score * (g.maxScore || 100) / 100), 0) / grades.length).toFixed(2)
+      : 0
+
+    res.json({ grades, gpa, total: grades.length })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * Create or update grade (teacher)
+ * @route POST /
+ */
+export const createGrade = async (req, res, next) => {
+  try {
+    const { examId, studentId, score, maxScore, grade } = req.body
+    if (!examId || !studentId || score === undefined) {
+      return res.status(400).json({ error: "examId, studentId, score are required" })
+    }
+
+    const percentage = ((score / (maxScore || 100)) * 100).toFixed(2)
+
+    const gradeRecord = await prisma.grade.upsert({
+      where: { examId_studentId: { examId, studentId } },
+      update: { score, maxScore, percentage: parseFloat(percentage), grade },
+      create: { examId, studentId, score, maxScore, percentage: parseFloat(percentage), grade },
+      include: { student: { select: { username: true } }, exam: { select: { title: true } } }
+    })
+
+    res.json(gradeRecord)
+  } catch (err) {
+    next(err)
+  }
+}

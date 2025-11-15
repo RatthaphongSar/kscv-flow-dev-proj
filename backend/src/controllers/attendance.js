@@ -1,23 +1,92 @@
-// All endpoints return 501 until DB layer is connected.
-
+import { prisma } from "../db.js"
 
 /**
  * Check-in (checkline) for attendance
  * @route POST /checkin
- * @returns {{}} 501 Not Implemented
- * @remarks Request/Response schema documented in docs/openapi.yaml
  */
-export const checkIn = async (req, res) => {
-  return res.status(501).json({ error: 'Not Implemented', endpoint: 'POST /checkin' });
-};
+export const checkIn = async (req, res, next) => {
+  try {
+    const { classId, date, status, remark } = req.body
+    if (!classId || !date || !status) {
+      return res.status(400).json({ error: "classId, date, status are required" })
+    }
 
+    const attendance = await prisma.attendance.upsert({
+      where: {
+        studentId_classId_date: {
+          studentId: req.user?.sub,
+          classId,
+          date: new Date(date)
+        }
+      },
+      update: { status, remark },
+      create: {
+        studentId: req.user?.sub,
+        classId,
+        date: new Date(date),
+        status,
+        remark
+      },
+      include: { student: { select: { username: true } }, class: { select: { name: true } } }
+    })
+
+    res.json(attendance)
+  } catch (err) {
+    next(err)
+  }
+}
 
 /**
  * My attendance records
  * @route GET /my
- * @returns {{}} 501 Not Implemented
- * @remarks Request/Response schema documented in docs/openapi.yaml
  */
-export const myAttendance = async (req, res) => {
-  return res.status(501).json({ error: 'Not Implemented', endpoint: 'GET /my' });
-};
+export const myAttendance = async (req, res, next) => {
+  try {
+    const { classId, month } = req.query
+
+    let where = { studentId: req.user?.sub }
+    if (classId) where.classId = classId
+    if (month) {
+      const [year, monthNum] = month.split('-')
+      const startDate = new Date(`${year}-${monthNum}-01`)
+      const endDate = new Date(year, monthNum, 0)
+      where.date = { gte: startDate, lte: endDate }
+    }
+
+    const attendance = await prisma.attendance.findMany({
+      where,
+      include: { class: { select: { name: true } } },
+      orderBy: { date: 'desc' }
+    })
+
+    res.json(attendance)
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * List attendance by class (teacher)
+ * @route GET /class/:classId
+ */
+export const listAttendanceByClass = async (req, res, next) => {
+  try {
+    const { classId } = req.params
+    const { date } = req.query
+
+    let where = { classId }
+    if (date) where.date = new Date(date)
+
+    const attendance = await prisma.attendance.findMany({
+      where,
+      include: {
+        student: { select: { id: true, username: true, year: true, major: true } }
+      },
+      orderBy: { student: { username: 'asc' } }
+    })
+
+    res.json(attendance)
+  } catch (err) {
+    next(err)
+  }
+}
