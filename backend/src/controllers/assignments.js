@@ -59,7 +59,7 @@ export const createAssignment = async (req, res, next) => {
 export const submitAssignment = async (req, res, next) => {
   try {
     const { id: assignmentId } = req.params
-    const { content, fileUrl, studentId } = req.body
+    const { submissionUrl, submissionText, studentId } = req.body
 
     if (!assignmentId) return res.status(400).json({ error: "assignmentId is required" })
 
@@ -70,17 +70,17 @@ export const submitAssignment = async (req, res, next) => {
           studentId: studentId || req.user?.sub 
         } 
       },
-      update: { content, fileUrl, submittedAt: new Date() },
+      update: { submissionUrl, submissionText, submittedAt: new Date() },
       create: { 
         assignmentId, 
         studentId: studentId || req.user?.sub, 
-        content, 
-        fileUrl 
+        submissionUrl, 
+        submissionText
       },
       include: { student: { select: { username: true } } }
     })
 
-    res.json(submission)
+    res.status(201).json(submission)
   } catch (err) {
     next(err)
   }

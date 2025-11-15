@@ -3,9 +3,10 @@ import * as ctrl from '../controllers/classes.js';
 import { body, param, query } from 'express-validator';
 const router = Router();
 
-// List classes for user (by enrollment)
+// List classes for user (by enrollment/teaching)
 router.get('/', [
-  // no validators yet
+  query('page').optional().isInt({ min: 1 }),
+  query('limit').optional().isInt({ min: 1, max: 50 })
 ], ctrl.listClasses);
 
 export default router;

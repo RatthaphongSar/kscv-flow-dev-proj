@@ -5,7 +5,17 @@ const router = Router();
 
 // List exams schedule
 router.get('/', [
-  // no validators yet
+  query('classId').optional().isString()
 ], ctrl.listExams);
+
+// Create exam
+router.post('/', [
+  body('title').isString(),
+  body('date').isISO8601(),
+  body('classId').isString()
+], ctrl.createExam);
+
+// My exam grades
+router.get('/my', [], ctrl.myExams);
 
 export default router;

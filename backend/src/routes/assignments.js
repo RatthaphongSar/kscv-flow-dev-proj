@@ -5,17 +5,23 @@ const router = Router();
 
 // List assignments
 router.get('/', [
-  // no validators yet
+  query('classId').optional().isString(),
+  query('status').optional().isIn(['open','closed','graded'])
 ], ctrl.listAssignments);
 
 // Create new assignment (teacher)
 router.post('/', [
-  // no validators yet
+  body('classId').isString(),
+  body('title').isString().notEmpty(),
+  body('description').optional().isString(),
+  body('dueDate').isISO8601()
 ], ctrl.createAssignment);
 
 // Submit assignment (file/link)
 router.post('/:id/submit', [
-  param('id').isString()
+  param('id').isString(),
+  body('submissionUrl').isString().notEmpty(),
+  body('submissionText').optional().isString()
 ], ctrl.submitAssignment);
 
 export default router;

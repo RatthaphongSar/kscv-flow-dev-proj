@@ -5,7 +5,21 @@ const router = Router();
 
 // Resources / Materials list
 router.get('/', [
-  // no validators yet
+  query('classId').optional().isString(),
+  query('type').optional().isString()
 ], ctrl.listResources);
+
+// Create new resource
+router.post('/', [
+  body('classId').isString(),
+  body('title').isString().notEmpty(),
+  body('fileUrl').isString(),
+  body('fileType').optional().isString()
+], ctrl.createResource);
+
+// Delete resource
+router.delete('/:id', [
+  param('id').isString()
+], ctrl.deleteResource);
 
 export default router;

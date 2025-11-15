@@ -5,12 +5,20 @@ const router = Router();
 
 // Check-in (checkline) for attendance
 router.post('/checkin', [
-  body('classId').isString()
+  body('classId').isString(),
+  body('date').isISO8601(),
+  body('status').isIn(['present','absent','late']).optional(),
+  body('remark').isString().optional()
 ], ctrl.checkIn);
 
 // My attendance records
 router.get('/my', [
-  // no validators yet
+  query('month').optional().isISO8601()
 ], ctrl.myAttendance);
+
+// List attendance by class (for advisor/teacher)
+router.get('/class/:classId', [
+  param('classId').isString()
+], ctrl.listAttendanceByClass);
 
 export default router;
