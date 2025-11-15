@@ -18,7 +18,8 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 const app = createApp()
-app.use("/api/chat", chatRouter)
+// NOTE: chat router already mounted under /api/chat in routes/index.js
+// app.use("/api/chat", chatRouter)  // ❌ COMMENTED OUT - duplicates /api/chat from apiRouter
 // ---------- Assistant ----------
 mountAssistant({ app, basePath: '/api/assistant', prisma })
 registerPostHandlers(app)

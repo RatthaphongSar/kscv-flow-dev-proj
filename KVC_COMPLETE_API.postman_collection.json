@@ -1,0 +1,487 @@
+{
+  "info": {
+    "_postman_id": "kvc-complete-api",
+    "name": "KVC Complete API Testing",
+    "description": "Full test collection for KVC Backend API - all endpoints with validators",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:4001/api"
+    },
+    {
+      "key": "student_token",
+      "value": ""
+    },
+    {
+      "key": "teacher_token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Login - Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.environment.set('student_token', pm.response.json().access_token);"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"username\":\"student-demo\",\"password\":\"Student123!\"}"},
+            "url": {"raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"]}
+          }
+        },
+        {
+          "name": "Login - Teacher",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.environment.set('teacher_token', pm.response.json().access_token);"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\"username\":\"teacher-demo\",\"password\":\"Teacher123!\"}"},
+            "url": {"raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"]}
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{base_url}}/auth/me", "host": ["{{base_url}}"], "path": ["auth", "me"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Attendance",
+      "item": [
+        {
+          "name": "Check-In (Create Attendance)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"classId\":\"class1\",\"date\":\"2025-11-15T00:00:00Z\",\"status\":\"present\",\"remark\":\"On time\"}"
+            },
+            "url": {"raw": "{{base_url}}/attendance/checkin", "host": ["{{base_url}}"], "path": ["attendance", "checkin"]}
+          }
+        },
+        {
+          "name": "My Attendance Records",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/attendance/my?month=2025-11-01T00:00:00Z",
+              "host": ["{{base_url}}"],
+              "path": ["attendance", "my"],
+              "query": [{"key": "month", "value": "2025-11-01T00:00:00Z"}]
+            }
+          }
+        },
+        {
+          "name": "List Attendance by Class",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{base_url}}/attendance/class/class1", "host": ["{{base_url}}"], "path": ["attendance", "class", "class1"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Exams & Grades",
+      "item": [
+        {
+          "name": "List Exams",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/exams?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["exams"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "10"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Exam (Teacher)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\":\"Midterm Exam\",\"date\":\"2025-12-10T09:00:00Z\",\"classId\":\"class1\"}"
+            },
+            "url": {"raw": "{{base_url}}/exams", "host": ["{{base_url}}"], "path": ["exams"]}
+          }
+        },
+        {
+          "name": "My Exams & Results",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{base_url}}/exams/my", "host": ["{{base_url}}"], "path": ["exams", "my"]}
+          }
+        },
+        {
+          "name": "Get Transcript (Grades)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{base_url}}/grades/transcript", "host": ["{{base_url}}"], "path": ["grades", "transcript"]}
+          }
+        },
+        {
+          "name": "Create Grade (Teacher)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"examId\":\"exam1\",\"studentId\":\"user1\",\"score\":85}"
+            },
+            "url": {"raw": "{{base_url}}/grades", "host": ["{{base_url}}"], "path": ["grades"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Leaves",
+      "item": [
+        {
+          "name": "Submit Leave Request",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"type\":\"sick\",\"startDate\":\"2025-11-20T00:00:00Z\",\"endDate\":\"2025-11-21T00:00:00Z\"}"
+            },
+            "url": {"raw": "{{base_url}}/leaves", "host": ["{{base_url}}"], "path": ["leaves"]}
+          }
+        },
+        {
+          "name": "My Leave Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/leaves/my?status=pending",
+              "host": ["{{base_url}}"],
+              "path": ["leaves", "my"],
+              "query": [{"key": "status", "value": "pending"}]
+            }
+          }
+        },
+        {
+          "name": "Attach Doctor Certificate",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"docUrl\":\"https://example.com/doc.pdf\"}"
+            },
+            "url": {"raw": "{{base_url}}/leaves/leave1/attach-doctor-cert", "host": ["{{base_url}}"], "path": ["leaves", "leave1", "attach-doctor-cert"]}
+          }
+        },
+        {
+          "name": "Approve/Reject Leave (Advisor)",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"approved\"}"
+            },
+            "url": {"raw": "{{base_url}}/leaves/leave1/status", "host": ["{{base_url}}"], "path": ["leaves", "leave1", "status"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Clubs",
+      "item": [
+        {
+          "name": "List All Clubs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/clubs?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["clubs"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "20"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Enroll to Club",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"clubId\":\"club1\"}"
+            },
+            "url": {"raw": "{{base_url}}/clubs/enroll", "host": ["{{base_url}}"], "path": ["clubs", "enroll"]}
+          }
+        },
+        {
+          "name": "My Clubs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{base_url}}/clubs/my", "host": ["{{base_url}}"], "path": ["clubs", "my"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Schedule",
+      "item": [
+        {
+          "name": "Get Class Schedule",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/schedule?classId=class1&dayOfWeek=1",
+              "host": ["{{base_url}}"],
+              "path": ["schedule"],
+              "query": [
+                {"key": "classId", "value": "class1"},
+                {"key": "dayOfWeek", "value": "1"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Schedule (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"classId\":\"class1\",\"dayOfWeek\":1,\"startTime\":\"08:30\",\"endTime\":\"10:00\",\"room\":\"A101\",\"teacher\":\"Teacher1\"}"
+            },
+            "url": {"raw": "{{base_url}}/schedule", "host": ["{{base_url}}"], "path": ["schedule"]}
+          }
+        },
+        {
+          "name": "My Schedule (Student)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{base_url}}/schedule/my", "host": ["{{base_url}}"], "path": ["schedule", "my"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Assignments",
+      "item": [
+        {
+          "name": "List Assignments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/assignments?classId=class1&status=open",
+              "host": ["{{base_url}}"],
+              "path": ["assignments"],
+              "query": [
+                {"key": "classId", "value": "class1"},
+                {"key": "status", "value": "open"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Assignment (Teacher)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"classId\":\"class1\",\"title\":\"Chapter 1 Reading\",\"description\":\"Read pages 1-20\",\"dueDate\":\"2025-11-30T23:59:00Z\"}"
+            },
+            "url": {"raw": "{{base_url}}/assignments", "host": ["{{base_url}}"], "path": ["assignments"]}
+          }
+        },
+        {
+          "name": "Submit Assignment",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"submissionUrl\":\"https://drive.google.com/file/assignment\",\"submissionText\":\"Completed\"}"
+            },
+            "url": {"raw": "{{base_url}}/assignments/assign1/submit", "host": ["{{base_url}}"], "path": ["assignments", "assign1", "submit"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Advisors",
+      "item": [
+        {
+          "name": "My Advisor Contact",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{base_url}}/advisor/contact", "host": ["{{base_url}}"], "path": ["advisor", "contact"]}
+          }
+        },
+        {
+          "name": "List All Advisors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{base_url}}/advisor", "host": ["{{base_url}}"], "path": ["advisor"]}
+          }
+        },
+        {
+          "name": "Get Advisor Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{base_url}}/advisor/advisor1", "host": ["{{base_url}}"], "path": ["advisor", "advisor1"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Resources",
+      "item": [
+        {
+          "name": "List Resources",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/resources?classId=class1&type=pdf",
+              "host": ["{{base_url}}"],
+              "path": ["resources"],
+              "query": [
+                {"key": "classId", "value": "class1"},
+                {"key": "type", "value": "pdf"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Resource (Teacher)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"classId\":\"class1\",\"title\":\"Lecture Notes Week 1\",\"fileUrl\":\"https://example.com/notes.pdf\",\"fileType\":\"pdf\"}"
+            },
+            "url": {"raw": "{{base_url}}/resources", "host": ["{{base_url}}"], "path": ["resources"]}
+          }
+        },
+        {
+          "name": "Delete Resource",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {"raw": "{{base_url}}/resources/res1", "host": ["{{base_url}}"], "path": ["resources", "res1"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Chat",
+      "item": [
+        {
+          "name": "List Chat Rooms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{base_url}}/chat/rooms", "host": ["{{base_url}}"], "path": ["chat", "rooms"]}
+          }
+        },
+        {
+          "name": "Create Chat Room",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Class Discussion\",\"type\":\"manual\",\"members\":[\"user1\",\"user2\"]}"
+            },
+            "url": {"raw": "{{base_url}}/chat/rooms", "host": ["{{base_url}}"], "path": ["chat", "rooms"]}
+          }
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"content\":\"Hello everyone!\",\"replyTo\":null}"
+            },
+            "url": {"raw": "{{base_url}}/chat/rooms/room1/messages", "host": ["{{base_url}}"], "path": ["chat", "rooms", "room1", "messages"]}
+          }
+        },
+        {
+          "name": "Get Room Messages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/chat/rooms/room1/messages?limit=50&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["chat", "rooms", "room1", "messages"],
+              "query": [
+                {"key": "limit", "value": "50"},
+                {"key": "offset", "value": "0"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Health Check",
+      "item": [
+        {
+          "name": "Server Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {"raw": "{{base_url}}/health", "host": ["{{base_url}}"], "path": ["health"]}
+          }
+        }
+      ]
+    }
+  ]
+}
