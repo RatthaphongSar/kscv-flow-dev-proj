@@ -16,8 +16,8 @@ export const getNotes = async (req, res, next) => {
     const { roomId } = req.params
     const currentUser = req.user
 
-    if (!currentUser) {
-      return res.status(401).json({ error: 'Unauthorized' })
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
     }
 
     const isMember = await prisma.roomMember.findUnique({
@@ -45,8 +45,8 @@ export const getNote = async (req, res, next) => {
     const { roomId, noteId } = req.params
     const currentUser = req.user
 
-    if (!currentUser) {
-      return res.status(401).json({ error: 'Unauthorized' })
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
     }
 
     const isMember = await prisma.roomMember.findUnique({
@@ -79,8 +79,8 @@ export const createNote = async (req, res, next) => {
     const { title, content } = req.body
     const currentUser = req.user
 
-    if (!currentUser) {
-      return res.status(401).json({ error: 'Unauthorized' })
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
     }
 
     if (!title || !content) {
@@ -113,11 +113,11 @@ export const createNote = async (req, res, next) => {
 export const updateNote = async (req, res, next) => {
   try {
     const { roomId, noteId } = req.params
-    const { title, content } = req.body
+    const updates = req.body
     const currentUser = req.user
 
-    if (!currentUser) {
-      return res.status(401).json({ error: 'Unauthorized' })
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
     }
 
     try {
@@ -150,8 +150,8 @@ export const deleteNote = async (req, res, next) => {
     const { roomId, noteId } = req.params
     const currentUser = req.user
 
-    if (!currentUser) {
-      return res.status(401).json({ error: 'Unauthorized' })
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
     }
 
     try {
@@ -186,8 +186,8 @@ export const getFiles = async (req, res, next) => {
     const { roomId } = req.params
     const currentUser = req.user
 
-    if (!currentUser) {
-      return res.status(401).json({ error: 'Unauthorized' })
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
     }
 
     const isMember = await prisma.roomMember.findUnique({
@@ -215,8 +215,8 @@ export const getFile = async (req, res, next) => {
     const { roomId, fileId } = req.params
     const currentUser = req.user
 
-    if (!currentUser) {
-      return res.status(401).json({ error: 'Unauthorized' })
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
     }
 
     const isMember = await prisma.roomMember.findUnique({
@@ -249,8 +249,8 @@ export const uploadFile = async (req, res, next) => {
     const { fileName, mimeType, sizeBytes, url, width, height } = req.body
     const currentUser = req.user
 
-    if (!currentUser) {
-      return res.status(401).json({ error: 'Unauthorized' })
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
     }
 
     if (!fileName || !mimeType || !sizeBytes || !url) {
@@ -296,8 +296,8 @@ export const deleteFile = async (req, res, next) => {
     const { roomId, fileId } = req.params
     const currentUser = req.user
 
-    if (!currentUser) {
-      return res.status(401).json({ error: 'Unauthorized' })
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
     }
 
     try {
@@ -332,8 +332,8 @@ export const getRoomMembers = async (req, res, next) => {
     const { roomId } = req.params
     const currentUser = req.user
 
-    if (!currentUser) {
-      return res.status(401).json({ error: 'Unauthorized' })
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
     }
 
     const isMember = await prisma.roomMember.findUnique({
@@ -361,8 +361,8 @@ export const getAvailableMembers = async (req, res, next) => {
     const { roomId } = req.params
     const currentUser = req.user
 
-    if (!currentUser) {
-      return res.status(401).json({ error: 'Unauthorized' })
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
     }
 
     if (currentUser.role !== 'TEACHER') {
@@ -387,8 +387,8 @@ export const addMember = async (req, res, next) => {
     const { userId } = req.body
     const currentUser = req.user
 
-    if (!currentUser) {
-      return res.status(401).json({ error: 'Unauthorized' })
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
     }
 
     if (!userId) {
@@ -422,8 +422,8 @@ export const removeMember = async (req, res, next) => {
     const { roomId, userId } = req.params
     const currentUser = req.user
 
-    if (!currentUser) {
-      return res.status(401).json({ error: 'Unauthorized' })
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
     }
 
     try {
@@ -458,8 +458,8 @@ export const markRoomAsRead = async (req, res, next) => {
     const { roomId } = req.params
     const currentUser = req.user
 
-    if (!currentUser) {
-      return res.status(401).json({ error: 'Unauthorized' })
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
     }
 
     const isMember = await prisma.roomMember.findUnique({
@@ -488,8 +488,8 @@ export const getReadReceipts = async (req, res, next) => {
     const messageIds = req.query.messageIds ? req.query.messageIds.split(',') : []
     const currentUser = req.user
 
-    if (!currentUser) {
-      return res.status(401).json({ error: 'Unauthorized' })
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
     }
 
     if (!messageIds || messageIds.length === 0) {
@@ -520,11 +520,11 @@ export const getReadReceipts = async (req, res, next) => {
  */
 export const getMessageReaders = async (req, res, next) => {
   try {
-    const { roomId, messageId } = req.params
+    const { messageId } = req.params
     const currentUser = req.user
 
-    if (!currentUser) {
-      return res.status(401).json({ error: 'Unauthorized' })
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
     }
 
     const message = await prisma.message.findFirst({
@@ -553,8 +553,8 @@ export const getUnreadSummary = async (req, res, next) => {
   try {
     const currentUser = req.user
 
-    if (!currentUser) {
-      return res.status(401).json({ error: 'Unauthorized' })
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
     }
 
     const unreadCounts = await chatReadReceiptsService.getUnreadCounts(currentUser.id)

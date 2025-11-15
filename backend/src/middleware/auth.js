@@ -15,7 +15,14 @@ export function authRequired(req, res, next) {
     if (!token) return res.status(401).json({ error: 'Unauthorized' })
     const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET)
     // payload: { sub, username, role, year, major }
-    req.user = payload
+    // Map 'sub' to 'id' for consistency
+    req.user = {
+      id: payload.sub,
+      username: payload.username,
+      role: payload.role,
+      year: payload.year,
+      major: payload.major
+    }
     next()
   } catch {
     res.status(401).json({ error: 'Unauthorized' })
