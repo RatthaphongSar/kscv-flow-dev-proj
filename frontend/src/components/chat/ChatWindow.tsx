@@ -5,8 +5,8 @@ import MessageInput from './MessageInput'
 import UserAvatar from './UserAvatar'
 import AddStudentsModal from './AddStudentsModal'
 import ChatPanelTabs, { type ChatPanelTab } from './ChatPanelTabs'
-import ChatFilesPanel from './ChatFilesPanel'
-import ChatNotesPanel from './ChatNotesPanel'
+import { ChatFilesPanel } from './ChatFilesPanel'
+import { ChatNotesPanel } from './ChatNotesPanel'
 import { MembersPanel } from './MembersPanel'
 
 interface ChatWindowProps {

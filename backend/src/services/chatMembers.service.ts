@@ -30,7 +30,7 @@ export class ChatMembersService {
       }
     })
 
-    return members.map((m) => ({
+    return members.map((m: any) => ({
       id: m.user.id,
       username: m.user.username,
       role: m.user.role,
@@ -187,7 +187,7 @@ export class ChatMembersService {
       select: { userId: true }
     })
 
-    const currentMemberIds = currentMembers.map((m) => m.userId)
+    const currentMemberIds = currentMembers.map((m: any) => m.userId)
 
     // Get all users not in this room
     const availableUsers = await this.prisma.user.findMany({

@@ -46,7 +46,7 @@ export class ChatReadReceiptsService {
       select: { id: true }
     })
 
-    const messageIds = messagesToMark.map((m) => m.id)
+    const messageIds = messagesToMark.map((m: any) => m.id)
 
     if (messageIds.length === 0) {
       return { markedCount: 0 }
@@ -61,15 +61,15 @@ export class ChatReadReceiptsService {
       select: { messageId: true }
     })
 
-    const alreadyReadMessageIds = new Set(existingReads.map((r) => r.messageId))
-    const messagesToCreateRead = messageIds.filter((id) => !alreadyReadMessageIds.has(id))
+    const alreadyReadMessageIds = new Set(existingReads.map((r: any) => r.messageId))
+    const messagesToCreateRead = messageIds.filter((id: any) => !alreadyReadMessageIds.has(id))
 
     if (messagesToCreateRead.length === 0) {
       return { markedCount: 0 }
     }
 
     await this.prisma.messageRead.createMany({
-      data: messagesToCreateRead.map((messageId) => ({
+      data: messagesToCreateRead.map((messageId: any) => ({
         messageId,
         userId
       })),
@@ -127,7 +127,7 @@ export class ChatReadReceiptsService {
       })
     )
 
-    return unreadSummary.filter((s) => s.unreadCount > 0)
+    return unreadSummary.filter((s: any) => s.unreadCount > 0)
   }
 
   /**
@@ -183,7 +183,7 @@ export class ChatReadReceiptsService {
       where: { roomId }
     })
 
-    return readCounts.map((rc) => ({
+    return readCounts.map((rc: any) => ({
       messageId: rc.messageId,
       readCount: rc._count.userId,
       totalMembers
@@ -204,7 +204,7 @@ export class ChatReadReceiptsService {
       orderBy: { readAt: 'asc' }
     })
 
-    return readers.map((r) => ({
+    return readers.map((r: any) => ({
       userId: r.user.id,
       username: r.user.username,
       readAt: r.readAt
