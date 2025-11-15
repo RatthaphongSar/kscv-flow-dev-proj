@@ -11,14 +11,38 @@ model User {
   id           String   @id @default(cuid())
   username     String   @unique
   passwordHash String? // optional สำหรับ system/assistant user
-  role         String   @default("STUDENT")
+  email        String?  @unique
+  phone        String?
+  role         String   @default("STUDENT") // STUDENT, TEACHER, ADMIN
   year         Int      @default(1)
   major        String   @default("General")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  roomMembers RoomMember[]
-  messages    Message[]
+  // Chat Relations
+  roomMembers  RoomMember[]
+  messages     Message[]
+
+  // Academic Relations
+  class        Class?   @relation(fields: [classId], references: [id])
+  classId      String?
+
+  teacherAssignments Assignment[] @relation("TeacherAssignments")
+  assignmentSubmissions AssignmentSubmission[]
+
+  studentAttendances Attendance[] @relation("StudentAttendance")
+
+  grades       Grade[]
+  studentLeaves Leave[] @relation("StudentLeaves")
+  advisorApprovals Leave[] @relation("AdvisorApprovals")
+
+  advisor      Advisor?
+  clubMembers  ClubMember[]
+  organizations ClassOrganization[]
+  communities  CommunityMember[]
+  serviceRequests ServiceRequest[]
+
+  @@index([role, year, major])
 }
 
 model Room {
@@ -60,4 +84,318 @@ model Message {
   roomId String
 
   @@index([roomId, createdAt])
+}
+
+// ============ ACADEMIC MODELS ============
+
+model Assignment {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  dueDate     DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  teacher   User   @relation("TeacherAssignments", fields: [teacherId], references: [id])
+  teacherId String
+  class     Class  @relation(fields: [classId], references: [id])
+  classId   String
+
+  submissions AssignmentSubmission[]
+
+  @@index([classId, dueDate])
+}
+
+model AssignmentSubmission {
+  id           String   @id @default(cuid())
+  submittedAt  DateTime @default(now())
+  fileUrl      String?
+  content      String?
+  grade        Float?
+  feedback     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  student      User       @relation(fields: [studentId], references: [id])
+  studentId    String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id])
+  assignmentId String
+
+  @@unique([assignmentId, studentId])
+  @@index([studentId, submittedAt])
+}
+
+model Attendance {
+  id        String   @id @default(cuid())
+  date      DateTime
+  status    String   @default("absent") // present, absent, late, excuse
+  remark    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  student   User   @relation("StudentAttendance", fields: [studentId], references: [id])
+  studentId String
+  class     Class  @relation(fields: [classId], references: [id])
+  classId   String
+
+  @@unique([studentId, classId, date])
+  @@index([classId, date])
+}
+
+model Exam {
+  id        String   @id @default(cuid())
+  title     String
+  subject   String
+  date      DateTime
+  room      String?
+  duration  Int?     // in minutes
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  class   Class   @relation(fields: [classId], references: [id])
+  classId String
+
+  grades Grade[]
+
+  @@index([classId, date])
+}
+
+model Grade {
+  id        String   @id @default(cuid())
+  score     Float
+  maxScore  Float    @default(100)
+  percentage Float?
+  grade     String?  // A, B, C, D, F
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  student User   @relation(fields: [studentId], references: [id])
+  studentId String
+  exam    Exam  @relation(fields: [examId], references: [id])
+  examId  String
+
+  @@unique([examId, studentId])
+  @@index([studentId, score])
+}
+
+model Leave {
+  id        String   @id @default(cuid())
+  type      String   // sick, personal, ordination, other
+  startDate DateTime
+  endDate   DateTime
+  reason    String?
+  status    String   @default("pending") // pending, approved, rejected
+  docUrl    String?  // doctor certificate for sick leave
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  student   User   @relation("StudentLeaves", fields: [studentId], references: [id])
+  studentId String
+  advisor   User?  @relation("AdvisorApprovals", fields: [advisorId], references: [id])
+  advisorId String?
+
+  @@index([studentId, status])
+}
+
+model Club {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members ClubMember[]
+  activities ClubActivity[]
+
+  @@index([name])
+}
+
+model ClubMember {
+  id String @id @default(cuid())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+  club   Club   @relation(fields: [clubId], references: [id])
+  clubId String
+  role   String @default("member") // member, officer, president
+
+  @@unique([clubId, userId])
+  @@index([userId])
+}
+
+model ClubActivity {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  date        DateTime
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+
+  club   Club   @relation(fields: [clubId], references: [id])
+  clubId String
+
+  @@index([clubId, date])
+}
+
+model Schedule {
+  id        String   @id @default(cuid())
+  dayOfWeek Int      // 0=Monday, 4=Friday
+  startTime String   // HH:mm format
+  endTime   String   // HH:mm format
+  room      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  class   Class   @relation(fields: [classId], references: [id])
+  classId String
+
+  @@unique([classId, dayOfWeek, startTime])
+}
+
+model Class {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  level     Int      // 1, 2, 3
+  major     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  students      User[]
+  assignments   Assignment[]
+  attendances   Attendance[]
+  exams         Exam[]
+  schedules     Schedule[]
+  resources     Resource[]
+  organizations ClassOrganization[]
+
+  @@index([major, level])
+}
+
+model Advisor {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  phone     String?
+  office    String?
+  bio       String?
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @unique
+
+  @@index([email])
+}
+
+model Community {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+
+  members CommunityMember[]
+
+  @@index([name])
+}
+
+model CommunityMember {
+  id String @id @default(cuid())
+
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String
+  community   Community @relation(fields: [communityId], references: [id])
+  communityId String
+  role        String    @default("member")
+
+  @@unique([communityId, userId])
+  @@index([userId])
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+
+  positions ClassOrganization[]
+
+  @@index([name])
+}
+
+model ClassOrganization {
+  id String @id @default(cuid())
+
+  position String // President, Vice President, Treasurer, etc
+  user     User   @relation(fields: [userId], references: [id])
+  userId   String
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+  class          Class        @relation(fields: [classId], references: [id])
+  classId        String
+
+  @@unique([organizationId, classId, userId])
+  @@index([classId, organizationId])
+}
+
+model RegisterService {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  category    String   // การลงทะเบียน, เอกสาร, สถานภาพ, etc
+  status      String   @default("online") // online, onsite, mixed, closed
+  eta         String?  // estimated time e.g., "3-5 working days"
+  fee         Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  requests ServiceRequest[]
+
+  @@index([category, status])
+}
+
+model ServiceRequest {
+  id        String   @id @default(cuid())
+  status    String   @default("pending") // pending, approved, rejected, completed
+  appliedAt DateTime @default(now())
+  completedAt DateTime?
+  remarks   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  student   User            @relation(fields: [studentId], references: [id])
+  studentId String
+  service   RegisterService @relation(fields: [serviceId], references: [id])
+  serviceId String
+
+  @@unique([serviceId, studentId])
+  @@index([studentId, status])
+}
+
+model Resource {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  fileUrl     String
+  fileType    String   // pdf, video, document, etc
+  size        Int?     // in bytes
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  class   Class  @relation(fields: [classId], references: [id])
+  classId String
+
+  @@index([classId, fileType])
 }

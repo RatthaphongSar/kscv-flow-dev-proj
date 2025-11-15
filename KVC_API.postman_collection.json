@@ -1,0 +1,240 @@
+{
+  "info": {
+    "_postman_id": "kvc-api-collection",
+    "name": "KVC API Testing",
+    "description": "Collection for testing KVC Backend API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login - Student",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"student-demo\",\"password\":\"Student123!\"}"
+            },
+            "url": {
+              "raw": "http://localhost:4001/api/auth/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4001",
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login - Teacher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"teacher-demo\",\"password\":\"Teacher123!\"}"
+            },
+            "url": {
+              "raw": "http://localhost:4001/api/auth/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4001",
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User (/me)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4001/api/auth/me",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4001",
+              "path": ["api", "auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4001/api/auth/logout",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4001",
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4001/api/auth/refresh",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4001",
+              "path": ["api", "auth", "refresh"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chat",
+      "item": [
+        {
+          "name": "List Rooms (by userId)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4001/api/chat/rooms?userId=student-demo",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4001",
+              "path": ["api", "chat", "rooms"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "student-demo"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Room",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Test Room\",\"memberIds\":[]}"
+            },
+            "url": {
+              "raw": "http://localhost:4001/api/chat/rooms",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4001",
+              "path": ["api", "chat", "rooms"]
+            }
+          }
+        },
+        {
+          "name": "Auto Generate Rooms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4001/api/chat/rooms/auto",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4001",
+              "path": ["api", "chat", "rooms", "auto"]
+            }
+          }
+        },
+        {
+          "name": "List Messages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4001/api/chat/rooms/ROOM_ID/messages?limit=50",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4001",
+              "path": ["api", "chat", "rooms", "ROOM_ID", "messages"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"userId\":\"student-demo\",\"content\":\"Hello world!\"}"
+            },
+            "url": {
+              "raw": "http://localhost:4001/api/chat/rooms/ROOM_ID/messages",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4001",
+              "path": ["api", "chat", "rooms", "ROOM_ID", "messages"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4001/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4001",
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "Root",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:4001",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4001"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
