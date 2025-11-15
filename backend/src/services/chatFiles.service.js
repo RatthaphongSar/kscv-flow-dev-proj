@@ -1,9 +1,13 @@
 // backend/src/services/chatFiles.service.js
-import { prisma } from '../db.js'
+import { prisma as defaultPrisma } from '../db.js'
 
 export class ChatFilesService {
+  constructor(prisma = defaultPrisma) {
+    this.prisma = prisma
+  }
+
   async getFilesByRoom(roomId) {
-    return prisma.chatFile.findMany({
+    return this.prisma.chatFile.findMany({
       where: { roomId },
       include: {
         uploader: { select: { id: true, username: true, role: true } },
@@ -13,7 +17,7 @@ export class ChatFilesService {
   }
 
   async getFileById(fileId, roomId) {
-    return prisma.chatFile.findFirst({
+    return this.prisma.chatFile.findFirst({
       where: { id: fileId, roomId },
       include: {
         uploader: { select: { id: true, username: true, role: true } },
@@ -26,7 +30,7 @@ export class ChatFilesService {
       throw new Error('Only teachers can upload files')
     }
 
-    return prisma.chatFile.create({
+    return this.prisma.chatFile.create({
       data: {
         roomId,
         uploaderId,
@@ -48,7 +52,7 @@ export class ChatFilesService {
       throw new Error('Only teachers can delete files')
     }
 
-    const file = await prisma.chatFile.findFirst({
+    const file = await this.prisma.chatFile.findFirst({
       where: { id: fileId, roomId },
     })
 
@@ -60,7 +64,7 @@ export class ChatFilesService {
       throw new Error('Can only delete your own files')
     }
 
-    await prisma.chatFile.delete({ where: { id: fileId } })
+    await this.prisma.chatFile.delete({ where: { id: fileId } })
     return { success: true }
   }
 
@@ -73,4 +77,5 @@ export class ChatFilesService {
   }
 }
 
-export const chatFilesService = new ChatFilesService()
+// Export instance with prisma passed explicitly
+export const chatFilesService = new ChatFilesService(defaultPrisma)

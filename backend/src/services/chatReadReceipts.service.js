@@ -1,9 +1,13 @@
 // backend/src/services/chatReadReceipts.service.js
-import { prisma } from '../db.js'
+import { prisma as defaultPrisma } from '../db.js'
 
 export class ChatReadReceiptsService {
+  constructor(prisma = defaultPrisma) {
+    this.prisma = prisma
+  }
+
   async markRoomAsRead(roomId, userId) {
-    const messages = await prisma.message.findMany({
+    const messages = await this.prisma.message.findMany({
       where: { roomId },
       select: { id: true },
     })
@@ -14,7 +18,7 @@ export class ChatReadReceiptsService {
       return { markedCount: 0 }
     }
 
-    const result = await prisma.messageRead.createMany({
+    const result = await this.prisma.messageRead.createMany({
       data: messageIds.map((messageId) => ({
         messageId,
         userId,
@@ -26,7 +30,7 @@ export class ChatReadReceiptsService {
   }
 
   async getUnreadCounts(userId) {
-    const rooms = await prisma.roomMember.findMany({
+    const rooms = await this.prisma.roomMember.findMany({
       where: { userId },
       select: { roomId: true },
     })
@@ -35,7 +39,7 @@ export class ChatReadReceiptsService {
     const unreadCounts = {}
 
     for (const roomId of roomIds) {
-      const messages = await prisma.message.findMany({
+      const messages = await this.prisma.message.findMany({
         where: { roomId },
         select: { id: true },
       })
@@ -47,7 +51,7 @@ export class ChatReadReceiptsService {
         continue
       }
 
-      const readMessages = await prisma.messageRead.findMany({
+      const readMessages = await this.prisma.messageRead.findMany({
         where: {
           messageId: { in: messageIds },
           userId,
@@ -65,7 +69,7 @@ export class ChatReadReceiptsService {
   }
 
   async getMessageReadCount(messageId) {
-    return prisma.messageRead.count({
+    return this.prisma.messageRead.count({
       where: { messageId },
     })
   }
@@ -81,7 +85,7 @@ export class ChatReadReceiptsService {
   }
 
   async getMessageReaders(messageId) {
-    return prisma.messageRead.findMany({
+    return this.prisma.messageRead.findMany({
       where: { messageId },
       include: {
         user: { select: { id: true, username: true, role: true } },
@@ -90,4 +94,5 @@ export class ChatReadReceiptsService {
   }
 }
 
-export const chatReadReceiptsService = new ChatReadReceiptsService()
+// Export instance with prisma passed explicitly
+export const chatReadReceiptsService = new ChatReadReceiptsService(defaultPrisma)

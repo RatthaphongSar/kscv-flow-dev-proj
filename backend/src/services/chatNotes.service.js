@@ -1,9 +1,13 @@
 // backend/src/services/chatNotes.service.js
-import { prisma } from '../db.js'
+import { prisma as defaultPrisma } from '../db.js'
 
 export class ChatNotesService {
+  constructor(prisma = defaultPrisma) {
+    this.prisma = prisma
+  }
+
   async getNotesByRoom(roomId) {
-    return prisma.chatNote.findMany({
+    return this.prisma.chatNote.findMany({
       where: { roomId },
       include: {
         author: { select: { id: true, username: true, role: true } },
@@ -13,7 +17,7 @@ export class ChatNotesService {
   }
 
   async getNoteById(noteId, roomId) {
-    return prisma.chatNote.findFirst({
+    return this.prisma.chatNote.findFirst({
       where: { id: noteId, roomId },
       include: {
         author: { select: { id: true, username: true, role: true } },
@@ -26,7 +30,7 @@ export class ChatNotesService {
       throw new Error('Only teachers can create notes')
     }
 
-    return prisma.chatNote.create({
+    return this.prisma.chatNote.create({
       data: {
         roomId,
         authorId,
@@ -44,7 +48,7 @@ export class ChatNotesService {
       throw new Error('Only teachers can update notes')
     }
 
-    const note = await prisma.chatNote.findFirst({
+    const note = await this.prisma.chatNote.findFirst({
       where: { id: noteId, roomId },
     })
 
@@ -56,7 +60,7 @@ export class ChatNotesService {
       throw new Error('Can only update your own notes')
     }
 
-    return prisma.chatNote.update({
+    return this.prisma.chatNote.update({
       where: { id: noteId },
       data: {
         ...(data.title && { title: data.title }),
@@ -73,7 +77,7 @@ export class ChatNotesService {
       throw new Error('Only teachers can delete notes')
     }
 
-    const note = await prisma.chatNote.findFirst({
+    const note = await this.prisma.chatNote.findFirst({
       where: { id: noteId, roomId },
     })
 
@@ -85,9 +89,10 @@ export class ChatNotesService {
       throw new Error('Can only delete your own notes')
     }
 
-    await prisma.chatNote.delete({ where: { id: noteId } })
+    await this.prisma.chatNote.delete({ where: { id: noteId } })
     return { success: true }
   }
 }
 
-export const chatNotesService = new ChatNotesService()
+// Export instance with prisma passed explicitly
+export const chatNotesService = new ChatNotesService(defaultPrisma)

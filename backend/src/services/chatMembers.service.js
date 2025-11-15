@@ -1,9 +1,13 @@
 // backend/src/services/chatMembers.service.js
-import { prisma } from '../db.js'
+import { prisma as defaultPrisma } from '../db.js'
 
 export class ChatMembersService {
+  constructor(prisma = defaultPrisma) {
+    this.prisma = prisma
+  }
+
   async getRoomMembers(roomId) {
-    const members = await prisma.roomMember.findMany({
+    const members = await this.prisma.roomMember.findMany({
       where: { roomId },
       include: {
         user: { select: { id: true, username: true, role: true, email: true } },
@@ -15,14 +19,14 @@ export class ChatMembersService {
   }
 
   async getAvailableMembers(roomId) {
-    const existingMembers = await prisma.roomMember.findMany({
+    const existingMembers = await this.prisma.roomMember.findMany({
       where: { roomId },
       select: { userId: true },
     })
 
     const existingIds = existingMembers.map((m) => m.userId)
 
-    return prisma.user.findMany({
+    return this.prisma.user.findMany({
       where: {
         id: { notIn: existingIds },
       },
@@ -36,7 +40,7 @@ export class ChatMembersService {
       throw new Error('Only teachers can add members')
     }
 
-    const existing = await prisma.roomMember.findUnique({
+    const existing = await this.prisma.roomMember.findUnique({
       where: {
         roomId_userId: { roomId, userId },
       },
@@ -46,7 +50,7 @@ export class ChatMembersService {
       throw new Error('User is already a member')
     }
 
-    const member = await prisma.roomMember.create({
+    const member = await this.prisma.roomMember.create({
       data: { roomId, userId },
       include: {
         user: { select: { id: true, username: true, role: true, email: true } },
@@ -65,7 +69,7 @@ export class ChatMembersService {
       throw new Error('Cannot remove yourself')
     }
 
-    const existing = await prisma.roomMember.findUnique({
+    const existing = await this.prisma.roomMember.findUnique({
       where: {
         roomId_userId: { roomId, userId },
       },
@@ -75,7 +79,7 @@ export class ChatMembersService {
       throw new Error('Member not found in this room')
     }
 
-    await prisma.roomMember.delete({
+    await this.prisma.roomMember.delete({
       where: {
         roomId_userId: { roomId, userId },
       },
@@ -85,4 +89,5 @@ export class ChatMembersService {
   }
 }
 
-export const chatMembersService = new ChatMembersService()
+// Export instance with prisma passed explicitly
+export const chatMembersService = new ChatMembersService(defaultPrisma)

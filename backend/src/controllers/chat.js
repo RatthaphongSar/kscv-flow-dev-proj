@@ -30,7 +30,7 @@ export const createRoom = async (req, res, next) => {
 
     // เริ่มจากเพิ่ม creator เข้าไปแน่นอน
     let targetIds = Array.isArray(memberIds) ? [...memberIds] : []
-    targetIds.push(currentUser.sub)
+    targetIds.push(currentUser.id)
 
     // ถ้าไม่ส่ง memberIds → ดึงนักเรียนทั้งหมด
     if (!Array.isArray(memberIds) || memberIds.length === 0) {
@@ -139,7 +139,7 @@ export const autoRooms = async (_req, res, next) => {
  */
 export const listRooms = async (req, res, next) => {
   try {
-    const userId = req.user?.sub || req.query.userId
+    const userId = req.user?.id || req.query.userId
     if (!userId) {
       return res.status(400).json({ error: 'userId is required' })
     }
@@ -421,7 +421,7 @@ export const addMembersToRoom = async (req, res, next) => {
 
     // ตรวจว่า user เป็นสมาชิกห้องแล้ว
     const isMember = await prisma.roomMember.findUnique({
-      where: { roomId_userId: { roomId, userId: currentUser.sub } },
+      where: { roomId_userId: { roomId, userId: currentUser.id } },
     })
 
     if (!isMember && currentUser.role !== 'ADMIN') {
