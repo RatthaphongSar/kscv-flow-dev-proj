@@ -91,13 +91,13 @@ router.post('/logout', (req, res) => {
 router.get('/me', async (req, res) => {
   try {
     const token = req.cookies?.access_token
-    if (!token) return res.json({ user: null })
+    if (!token) return res.json(null)
     const p = jwt.verify(token, process.env.JWT_ACCESS_SECRET)
     const u = await prisma.user.findUnique({ where: { id: p.sub } })
-    if (!u) return res.json({ user: null })
-    res.json({ user: { id:u.id, username:u.username, role:u.role, year:u.year, major:u.major } })
+    if (!u) return res.json(null)
+    res.json({ id:u.id, username:u.username, role:u.role, year:u.year, major:u.major })
   } catch {
-    res.json({ user: null })
+    res.json(null)
   }
 })
 

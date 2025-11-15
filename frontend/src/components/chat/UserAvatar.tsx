@@ -1,13 +1,18 @@
-import React from 'react';
-import { User } from '@/lib/chatDummyData';
-
-export function UserAvatar({ user, size = 8 }: { user: User; size?: number }) {
-  const initials = user.name.split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase();
-  return (
-    <div className={`flex items-center justify-center rounded-full bg-[#0A4DAD] text-white`} style={{width: size*4, height: size*4}}>
-      <span className={`text-sm font-medium`}>{user.avatar ? '' : initials}</span>
-    </div>
-  );
+const sizeMap = {
+  sm: 'w-8 h-8 text-xs',
+  md: 'w-10 h-10 text-sm',
+  lg: 'w-16 h-16 text-lg',
 }
 
-export default UserAvatar;
+export default function UserAvatar({ name, size = 'sm' }) {
+  const initial = name?.charAt(0)?.toUpperCase() || '?'
+  const cls = sizeMap[size]
+
+  return (
+    <div
+      className={`${cls} rounded-full bg-[#0A4DAD] flex items-center justify-center text-white font-medium`}
+    >
+      {initial}
+    </div>
+  )
+}

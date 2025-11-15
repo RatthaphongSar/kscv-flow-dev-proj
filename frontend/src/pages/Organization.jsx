@@ -1,10 +1,296 @@
+// frontend/src/pages/Organization.jsx
+import { useState } from "react"
+import PageShell from "../components/PageShell"
+import { Users, ChevronRight, Search } from "lucide-react"
+
+const mockChain = [
+  { level: "คุณ", role: "Student", name: "คุณ", unit: "KVC – IT Program" },
+  {
+    level: "ที่ปรึกษา",
+    role: "Advisor",
+    name: "Aj. Ratchanee",
+    unit: "Business Department",
+  },
+  {
+    level: "หัวหน้างาน / หัวหน้าแผนก",
+    role: "Dean",
+    name: "Dr. Somchai",
+    unit: "Faculty of Technology",
+  },
+]
+
+const mockLeaders = [
+  {
+    id: 1,
+    name: "ดร.กรณพงศ์ ดอกบัว",
+    role: "ผู้อำนวยการวิทยาลัยอาชีวศึกษากาฬสินธุ์",
+    photo: "/images/org/director.png", // ใส่ path รูปจริงตามที่มี
+    highlight: true,
+    type: "director",
+  },
+  {
+    id: 2,
+    name: "นางสาวณีอี จันทร์เพ็ญ",
+    role: "รองผู้อำนวยการฝ่ายพัฒนากิจการนักเรียน นักศึกษา",
+    photo: "/images/org/dep1.png",
+    type: "deputy",
+  },
+  {
+    id: 3,
+    name: "นายรณนันท์ แจ่มใส",
+    role: "รองผู้อำนวยการฝ่ายวิชาการ",
+    photo: "/images/org/dep2.png",
+    type: "deputy",
+  },
+  {
+    id: 4,
+    name: "นางศรีญา ปันวิศ",
+    role: "รองผู้อำนวยการฝ่ายบริหารทรัพยากร",
+    photo: "/images/org/dep3.png",
+    type: "deputy",
+  },
+  {
+    id: 5,
+    name: "นายจิติศักดิ์ เรืองเวช์ปัญญา",
+    role: "รองผู้อำนวยการฝ่ายแผนและความร่วมมือ",
+    photo: "/images/org/dep4.png",
+    type: "deputy",
+  },
+]
 
 export default function Organization() {
-  return (
-    <section className="p-4 bg-white rounded-xl shadow-sm border">
-      <h1 className="text-xl font-semibold text-primary mb-2">Organization</h1>
-      <p className="text-sm text-slate-600">This page is scaffolded and ready to connect to API.</p>
+  const [roleFilter, setRoleFilter] = useState("all") // all | director | deputy
+  const [search, setSearch] = useState("")
 
-    </section>
+  const searchLower = search.trim().toLowerCase()
+
+  const filteredLeaders = mockLeaders
+    .filter((l) => !l.highlight)
+    .filter((l) => (roleFilter === "all" ? true : l.type === roleFilter))
+    .filter((l) => {
+      if (!searchLower) return true
+      return (
+        l.name.toLowerCase().includes(searchLower) ||
+        l.role.toLowerCase().includes(searchLower)
+      )
+    })
+
+  return (
+    <PageShell
+      title="Organization"
+      subtitle="โครงสร้างการดูแลในสายการเรียนของคุณ และผู้บริหารที่เกี่ยวข้อง"
+    >
+      <div className="space-y-6">
+        {/* ===== SECTION 1: สายการดูแลของคุณ ===== */}
+        <section className="rounded-2xl border border-[#1f2937] bg-[#020617] p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h2 className="text-sm font-semibold text-gray-100">
+                สายการดูแลของคุณ (Student Support Chain)
+              </h2>
+              <p className="text-[11px] text-gray-400 mt-0.5">
+                ลำดับบุคลากรที่คุณสามารถติดต่อเมื่อมีปัญหาการเรียน / การใช้ชีวิตในวิทยาลัย
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-6 md:grid-cols-[1.2fr,1fr]">
+            {/* Timeline ทางซ้าย */}
+            <div className="relative">
+              <div className="absolute left-3 top-2 bottom-2 w-px bg-[#1f2937]" />
+              <div className="space-y-4">
+                {mockChain.map((item, idx) => (
+                  <div key={idx} className="relative pl-7">
+                    <div className="absolute left-0 top-1.5 w-3 h-3 rounded-full bg-violet-500 border border-[#020617]" />
+                    <div className="flex items-center gap-2 text-[11px] text-violet-300 mb-0.5">
+                      <span className="px-2 py-0.5 rounded-full bg-violet-600/20 border border-violet-500/40">
+                        {item.level}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-100 font-medium">
+                      {item.role} • {item.name}
+                    </div>
+                    <div className="text-[11px] text-gray-400">{item.unit}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* กล่องสรุปทางขวา */}
+            <div className="rounded-xl border border-[#1f2937] bg-[#020617] p-4 text-[11px] text-gray-300 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold text-gray-100 mb-1">
+                <Users size={14} className="text-violet-400" />
+                ช่องทางติดต่อหลัก (ตัวอย่าง)
+              </div>
+              <ul className="list-disc pl-4 space-y-1">
+                <li>
+                  ปัญหาการบ้าน / เนื้อหาในรายวิชา → ติดต่ออาจารย์ผู้สอน หรือที่ปรึกษา
+                </li>
+                <li>
+                  ปัญหาทุนการศึกษา / ทะเบียน → ติดต่อฝ่ายงานทะเบียน – ทุน
+                </li>
+                <li>
+                  ปัญหาสุขภาพจิต / การปรับตัว → ติดต่อครูที่ปรึกษา หรือศูนย์ให้คำปรึกษา
+                </li>
+              </ul>
+              <div className="mt-2 p-2 rounded-lg border border-violet-500/30 bg-violet-600/5 text-[11px]">
+                <div className="font-semibold text-violet-200 mb-0.5">
+                  แนะนำลำดับการติดต่อเมื่อมีปัญหา
+                </div>
+                <ol className="list-decimal list-inside space-y-0.5 text-gray-300">
+                  <li>เริ่มจากครูที่ปรึกษา / อาจารย์ประจำวิชา</li>
+                  <li>หากยังแก้ปัญหาไม่ได้ ติดต่อหัวหน้างาน/หัวหน้าแผนก</li>
+                  <li>กรณีมีผลกระทบมาก เช่น พักการเรียน ให้ติดต่อฝ่ายบริหารที่เกี่ยวข้อง</li>
+                </ol>
+              </div>
+              <p className="text-[10px] text-gray-500 pt-1">
+                * เมื่อเชื่อมต่อกับ API จริง สามารถดึงข้อมูลสายการดูแลของนักศึกษาแต่ละคนจากระบบกลางมาแสดงอัตโนมัติได้
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ===== SECTION 2: ผู้บริหารวิทยาลัย / โปรแกรม ===== */}
+        <section className="rounded-2xl border border-[#1f2937] bg-[#020617] p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-sm font-semibold text-gray-100">
+                ผู้บริหารวิทยาลัย / ทีมบริหารที่เกี่ยวข้องกับสายการเรียนของคุณ
+              </h2>
+              <p className="text-[11px] text-gray-400 mt-0.5">
+                แสดงโครงสร้างผู้บริหารในรูปแบบการ์ด สามารถปรับเป็นข้อมูลจริงจากฐานข้อมูลได้
+              </p>
+            </div>
+          </div>
+
+          {/* Director การ์ดใหญ่ด้านบน */}
+          <div className="flex justify-center mb-6">
+            {mockLeaders
+              .filter((l) => l.highlight)
+              .map((leader) => (
+                <div
+                  key={leader.id}
+                  className="w-full max-w-xs rounded-2xl border border-[#1f2937] bg-gradient-to-b from-violet-500/40 via-violet-600/30 to-[#020617] p-4 flex flex-col items-center"
+                >
+                  <div className="w-40 h-56 rounded-2xl overflow-hidden bg-gradient-to-b from-violet-300 to-violet-600 mb-3">
+                    <img
+                      src={leader.photo}
+                      alt={leader.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="text-sm font-semibold text-gray-100 text-center">
+                    {leader.name}
+                  </div>
+                  <div className="text-[11px] text-gray-200 text-center mt-1">
+                    {leader.role}
+                  </div>
+                  <span className="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/40 text-[10px] text-amber-200">
+                    ผู้อำนวยการวิทยาลัย
+                  </span>
+                </div>
+              ))}
+          </div>
+
+          {/* แถว filter + search สำหรับรองผู้อำนวยการ */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3 text-[11px]">
+            <div className="inline-flex items-center gap-1 bg-[#020617] border border-[#1f2937] rounded-full p-1">
+              <FilterChip
+                active={roleFilter === "all"}
+                onClick={() => setRoleFilter("all")}
+              >
+                ทั้งหมด
+              </FilterChip>
+              <FilterChip
+                active={roleFilter === "director"}
+                onClick={() => setRoleFilter("director")}
+              >
+                ผอ. / Director
+              </FilterChip>
+              <FilterChip
+                active={roleFilter === "deputy"}
+                onClick={() => setRoleFilter("deputy")}
+              >
+                รองผู้อำนวยการ
+              </FilterChip>
+            </div>
+
+            <div className="relative w-full md:w-64">
+              <Search
+                size={14}
+                className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500"
+              />
+              <input
+                className="w-full bg-[#020617] border border-[#1f2937] rounded-full pl-7 pr-3 py-1.5 text-[11px] text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                placeholder="ค้นหาชื่อ / ตำแหน่งผู้บริหาร..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* รองผู้อำนวยการ / ทีมบริหาร แถวล่าง */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {filteredLeaders.length === 0 ? (
+              <div className="text-[11px] text-gray-500 col-span-full py-4 text-center border border-dashed border-[#1f2937] rounded-xl">
+                ไม่พบผู้บริหารที่ตรงกับเงื่อนไขการค้นหา
+              </div>
+            ) : (
+              filteredLeaders.map((leader) => (
+                <div
+                  key={leader.id}
+                  className="rounded-2xl border border-[#1f2937] bg-[#020617] overflow-hidden flex flex-col items-center pb-3"
+                >
+                  <div className="w-full h-52 bg-gradient-to-b from-violet-300 to-violet-600">
+                    <img
+                      src={leader.photo}
+                      alt={leader.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="px-3 pt-2 text-center">
+                    <div className="text-sm font-semibold text-gray-100 leading-snug">
+                      {leader.name}
+                    </div>
+                    <div className="text-[10px] text-gray-300 mt-1 leading-snug">
+                      {leader.role}
+                    </div>
+                    <span className="inline-flex mt-2 px-2 py-0.5 rounded-full border border-[#374151] text-[10px] text-gray-400">
+                      {leader.type === "deputy"
+                        ? "รองผู้อำนวยการ"
+                        : "ผู้อำนวยการ"}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="flex justify-end mt-4">
+            <button className="inline-flex items-center gap-1 text-[11px] px-3 py-1.5 rounded-full border border-[#374151] text-gray-300 hover:bg-slate-900">
+              ดูโครงสร้างทั้งหมดจากเว็บไซต์หลัก
+              <ChevronRight size={12} />
+            </button>
+          </div>
+        </section>
+      </div>
+    </PageShell>
+  )
+}
+
+// ปุ่ม filter เล็ก ๆ
+function FilterChip({ active, children, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-3 py-1 rounded-full text-[11px] transition ${
+        active
+          ? "bg-violet-600 text-white"
+          : "bg-transparent text-gray-300 hover:bg-slate-800"
+      }`}
+    >
+      {children}
+    </button>
   )
 }

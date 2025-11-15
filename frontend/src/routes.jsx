@@ -38,7 +38,9 @@ export default function AppRoutes() {
       <Route path="/clubs" element={<ClubsActivities />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="/organization" element={<Organization />} />
-      {/* ✅ เหลือ route เดียว และห่อด้วย Protected */}
+
+      {/* Wati for Chat.tsx */}
+      
       <Route path="/chat" element={<Protected><ChatPage /></Protected>} />
       <Route path="/class" element={<Class />} />
       <Route path="/meeting" element={<Meeting />} />

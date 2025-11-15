@@ -6,7 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "npm run build && node server.js 3000",
+    "start:prod": "npm run build && node server.js 443",
+    "start:8080": "npm run build && node server.js 8080",
+    "server": "node server.js 3000",
+    "server:watch": "npm run build && node server.js 3000 && npm run dev"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -19,8 +24,11 @@
     "@types/react-datepicker": "^6.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "compression": "^1.8.1",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.18",
+    "express": "^5.1.0",
+    "http-proxy-middleware": "^3.0.5",
     "lucide-react": "^0.453.0",
     "react": "^18.3.1",
     "react-datepicker": "^8.7.0",

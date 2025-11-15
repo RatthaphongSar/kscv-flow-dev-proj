@@ -4,7 +4,7 @@ import { io } from 'socket.io-client'
 import { useAuth } from './AuthContext'
 
 // ปรับ URL ให้ชี้ backend https / พอร์ตของคุณ
-const SOCKET_URL = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '') || 'https://localhost:4000'
+const SOCKET_URL = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '') || 'http://localhost:4001'
 
 const ChatSocketCtx = createContext(null)
 

@@ -1,69 +1,138 @@
-import React, { useState } from 'react';
-import { Attachment, Note, Task, User } from '@/lib/chatDummyData';
+import { useState } from 'react'
+import UserAvatar from './UserAvatar'
+import MessageSearch from './MessageSearch'
 
-function Section({title, children}:{title:string; children:React.ReactNode}){
-  const [open, setOpen] = useState(true);
+export default function ChatDetailsPanel({ activeRoom, messages }) {
+  const [search, setSearch] = useState('')
+
+  if (!activeRoom) {
+    return (
+      <aside className="hidden lg:flex w-80 xl:w-96 border-l border-gray-200 bg-white items-center justify-center text-sm text-gray-400">
+        เลือกห้องเพื่อดูรายละเอียด
+      </aside>
+    )
+  }
+
+  const members = [
+    { name: 'student-123', role: 'Student' },
+    { name: 'teacher-001', role: 'Teacher' },
+    { name: 'student-456', role: 'Student' },
+  ]
+
+  const attachments = [
+    { name: 'assignment-1.pdf', size: '320 KB' },
+    { name: 'course-outline.pdf', size: '1.2 MB' },
+    { name: 'schedule.png', size: '540 KB' },
+  ]
+
+  const notes = [
+    { title: 'บทสนทนาเรื่องการบ้าน', time: '2 days ago' },
+    { title: 'แจ้งเลื่อนสอบ', time: '1 week ago' },
+  ]
+
+  const filteredMessages = search
+    ? messages.filter(m =>
+        (m.text || m.content || '')
+          .toLowerCase()
+          .includes(search.toLowerCase()),
+      )
+    : []
+
   return (
-    <div className="mb-4 bg-white rounded-lg border p-3">
-      <div className="flex items-center justify-between mb-2">
-        <div className="text-sm font-medium">{title}</div>
-        <button onClick={()=>setOpen(v=>!v)} className="text-xs text-gray-500">{open? 'Hide':'Show'}</button>
+    <aside className="hidden lg:flex w-80 xl:w-96 border-l border-gray-200 bg-white flex-col">
+      <div className="p-5 border-b border-gray-200 flex flex-col items-center">
+        <UserAvatar name={activeRoom.name} size="lg" />
+        <h2 className="mt-3 text-base font-semibold text-gray-900 text-center">
+          {activeRoom.name}
+        </h2>
+        <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded-full bg-[#F5F9FF] text-[10px] font-medium text-[#0A4DAD]">
+          Group Room
+        </span>
       </div>
-      {open && <div>{children}</div>}
-    </div>
-  );
-}
 
-export function ChatDetailsPanel({ user, attachments, notes, tasks }:{ user:User | null; attachments:Attachment[]; notes:Note[]; tasks:Task[] }){
-  return (
-    <aside className="w-80 border-l bg-white p-4 flex flex-col gap-4">
-      {user && (
-        <div className="flex flex-col items-center text-center">
-          <div className="w-24 h-24 rounded-full bg-[#0A4DAD] flex items-center justify-center text-white text-xl font-semibold">{user.name.split(' ')[0][0]}</div>
-          <div className="mt-2 text-sm font-medium">{user.name}</div>
-          <div className="text-xs text-gray-400">{user.role}</div>
-        </div>
-      )}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
+        {/* Search */}
+        <section className="border border-gray-200 rounded-xl p-3">
+          <MessageSearch value={search} onChange={setSearch} />
+          {search && (
+            <p className="text-[11px] text-gray-500">
+              พบ {filteredMessages.length} ข้อความที่ตรงกับคำค้น
+            </p>
+          )}
+        </section>
 
-      <Section title="Search in conversation">
-        <input className="w-full px-3 py-2 rounded-lg border" placeholder="Search in conversation" />
-      </Section>
-
-      <Section title="Attachments">
-        <div className="space-y-2">
-          {attachments.map(a=> (
-            <div key={a.id} className="flex items-center justify-between">
-              <div>
-                <div className="text-sm">{a.filename}</div>
-                <div className="text-xs text-gray-400">{a.size}</div>
+        {/* Attachments */}
+        <section className="border border-gray-200 rounded-xl p-3">
+          <h3 className="text-xs font-semibold text-gray-500 mb-2">
+            Attachments
+          </h3>
+          <div className="space-y-2">
+            {attachments.map((a, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between text-xs bg-[#F5F9FF] rounded-lg px-2 py-2"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-red-500 text-sm">📄</span>
+                  <div>
+                    <div className="font-medium truncate max-w-[150px]">
+                      {a.name}
+                    </div>
+                    <div className="text-[10px] text-gray-500">
+                      {a.size}
+                    </div>
+                  </div>
+                </div>
+                <button className="text-[11px] text-[#0A4DAD] hover:underline">
+                  ดาวน์โหลด
+                </button>
               </div>
-              <button className="text-blue-600 text-sm">Download</button>
-            </div>
-          ))}
-        </div>
-      </Section>
+            ))}
+          </div>
+        </section>
 
-      <Section title="Notes">
-        <div className="space-y-2">
-          {notes.map(n=> (
-            <div key={n.id} className="text-sm text-gray-700">{n.text}</div>
-          ))}
-          <button className="mt-2 px-3 py-1 bg-gray-100 rounded">Add note</button>
-        </div>
-      </Section>
+        {/* Members */}
+        <section className="border border-gray-200 rounded-xl p-3">
+          <h3 className="text-xs font-semibold text-gray-500 mb-2">
+            Members
+          </h3>
+          <div className="space-y-2">
+            {members.map((m, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <UserAvatar name={m.name} size="sm" />
+                <div>
+                  <div className="text-xs font-medium text-gray-900">
+                    {m.name}
+                  </div>
+                  <div className="text-[10px] text-gray-500">
+                    {m.role}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
-      <Section title="Tasks">
-        <div className="space-y-2">
-          {tasks.map(t=> (
-            <label key={t.id} className="flex items-center gap-2 text-sm">
-              <input type="checkbox" defaultChecked={t.done} /> {t.text}
-            </label>
-          ))}
-        </div>
-      </Section>
-
+        {/* Notes */}
+        <section className="border border-gray-200 rounded-xl p-3">
+          <h3 className="text-xs font-semibold text-gray-500 mb-2">
+            Notes
+          </h3>
+          <div className="space-y-2 mb-2">
+            {notes.map((n, i) => (
+              <div key={i} className="bg-[#F5F9FF] rounded-lg px-2 py-2">
+                <div className="text-xs text-gray-800">{n.title}</div>
+                <div className="text-[10px] text-gray-500">
+                  {n.time}
+                </div>
+              </div>
+            ))}
+          </div>
+          <button className="w-full text-[11px] text-[#0A4DAD] border border-dashed border-[#0A4DAD] rounded-lg py-1 hover:bg-[#F5F9FF]">
+            + เพิ่มโน้ต
+          </button>
+        </section>
+      </div>
     </aside>
-  );
+  )
 }
-
-export default ChatDetailsPanel;

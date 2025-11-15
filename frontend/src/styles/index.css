@@ -25,7 +25,22 @@
   color: #0A4DAD !important;
 }
 
-/* Apply Poppins as the global font */
+/* Global font + ซ่อน scrollbar แต่ให้ยังเลื่อนได้ */
+html,
 body {
   font-family: var(--font-sans);
+  height: 100%;
+  scrollbar-width: none !important;      /* Firefox */
+  -ms-overflow-style: none !important;   /* IE, Edge */
+}
+
+/* Chrome / Edge / Safari */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* ถ้าอยากกันแค่สโครลแนวนอนหลุดขอบ */
+body {
+  overflow-x: hidden;
 }

@@ -1,196 +1,293 @@
-import { useEffect, useState } from 'react'
+// frontend/src/pages/Chat.jsx (ChatPage)
+import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useChatSocket } from '../context/ChatSocketContext'
 import { ChatAPI } from '../services/chat'
+import ChatLayout from '../components/chat/ChatLayout'
 
 export default function ChatPage() {
   const { user } = useAuth()
   const socket = useChatSocket()
-  const [rooms, setRooms] = useState([])
-  const [activeRoom, setActiveRoom] = useState(null)
-  const [messages, setMessages] = useState([])
-  const [text, setText] = useState('')
 
+  const [rooms, setRooms] = useState([])
+  const [roomsLoading, setRoomsLoading] = useState(false)
+  const [roomsError, setRoomsError] = useState('')
+
+  const [activeRoom, setActiveRoom] = useState(null)
+
+  const [messages, setMessages] = useState([])
+  const [loadingMessages, setLoadingMessages] = useState(false)
+
+  const [text, setText] = useState('')
+  const [socketConnected, setSocketConnected] = useState(false)
+
+  // typing indicator
+  const [typingMap, setTypingMap] = useState({}) // { userId: { username, last } }
+
+  const canCreateRoom =
+    user?.role === 'teacher' ||
+    user?.role === 'TEACHER' ||
+    user?.isTeacher === true
+
+  // -------- helper สำหรับถอด listener ให้ปลอดภัย ----------
+  const safeOff = (event, handler) => {
+    if (!socket) return
+    if (typeof socket.off === 'function') {
+      socket.off(event, handler)
+    } else if (typeof socket.removeListener === 'function') {
+      socket.removeListener(event, handler)
+    } else if (typeof socket.removeEventListener === 'function') {
+      socket.removeEventListener(event, handler)
+    }
+  }
+
+  // -----------------------------
   // โหลดห้องของ user
+  // -----------------------------
   useEffect(() => {
-    if (!user) return
-    ChatAPI.listRooms(user.id).then(setRooms)
+    if (!user) {
+      setRooms([])
+      setActiveRoom(null)
+      return
+    }
+
+    setRoomsLoading(true)
+    setRoomsError('')
+    ChatAPI.listRooms(user.id)
+      .then((data) => {
+        setRooms(data || [])
+        if (!activeRoom && data && data.length > 0) {
+          setActiveRoom(data[0])
+        }
+      })
+      .catch((err) => {
+        console.error('Error loading rooms:', err)
+        setRoomsError('โหลดห้องสนทนาไม่สำเร็จ')
+      })
+      .finally(() => setRoomsLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
-  // โหลดข้อความเก่าและเข้าร่วมห้องแชท
+  // -----------------------------
+  // ติดตามสถานะ socket connect/disconnect
+  // -----------------------------
+  useEffect(() => {
+    if (!socket) {
+      setSocketConnected(false)
+      return
+    }
+
+    const handleConnect = () => setSocketConnected(true)
+    const handleDisconnect = () => setSocketConnected(false)
+
+    if (socket.connected) setSocketConnected(true)
+
+    if (typeof socket.on === 'function') {
+      socket.on('connect', handleConnect)
+      socket.on('disconnect', handleDisconnect)
+    }
+
+    return () => {
+      safeOff('connect', handleConnect)
+      safeOff('disconnect', handleDisconnect)
+    }
+  }, [socket])
+
+  // -----------------------------
+  // โหลดข้อความเก่าของห้อง + join/leave room
+  // -----------------------------
   useEffect(() => {
     if (!socket || !activeRoom) return
-    
-    // โหลดข้อความเก่า
+
+    let cancelled = false
+
     async function loadMessages() {
+      setLoadingMessages(true)
       try {
         const oldMessages = await ChatAPI.listMessages(activeRoom.id)
-        setMessages(oldMessages)
+        if (!cancelled) {
+          setMessages(oldMessages || [])
+        }
       } catch (error) {
         console.error('Error loading messages:', error)
+        if (!cancelled) setMessages([])
+      } finally {
+        if (!cancelled) setLoadingMessages(false)
       }
     }
-    loadMessages()
-    
-    // เข้าร่วมห้องแชท
-    socket?.emit('joinRoom', { roomId: activeRoom.id })
 
-    // รับข้อความใหม่
+    loadMessages()
+
+    // join room
+    socket.emit?.('joinRoom', { roomId: activeRoom.id })
+
     const handleNewMessage = (msg) => {
+      if (msg.roomId && msg.roomId !== activeRoom.id) return
       setMessages((prev) => [...prev, msg])
     }
-    socket?.on('chatMessage', handleNewMessage)
 
-    // cleanup
-    return () => {
-      socket?.emit('leaveRoom', { roomId: activeRoom.id })
-      socket?.off('chatMessage', handleNewMessage)
+    const handleTyping = (payload) => {
+      if (!activeRoom) return
+      if (payload.roomId !== activeRoom.id) return
+      if (payload.userId === user?.id) return
+
+      setTypingMap((prev) => ({
+        ...prev,
+        [payload.userId]: {
+          username: payload.username || 'User',
+          last: Date.now(),
+        },
+      }))
     }
-  }, [socket, activeRoom])
 
+    if (typeof socket.on === 'function') {
+      socket.on('chatMessage', handleNewMessage)
+      socket.on('typing', handleTyping)
+    }
+
+    return () => {
+      socket.emit?.('leaveRoom', { roomId: activeRoom.id })
+      safeOff('chatMessage', handleNewMessage)
+      safeOff('typing', handleTyping)
+    }
+  }, [socket, activeRoom, user])
+
+  // Clear typing ที่หมดเวลา
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTypingMap((prev) => {
+        const now = Date.now()
+        const next = {}
+        Object.entries(prev).forEach(([uid, info]) => {
+          if (now - info.last < 4000) {
+            next[uid] = info
+          }
+        })
+        return next
+      })
+    }, 2000)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  const typingUsers = Object.values(typingMap).map((t) => t.username)
+
+  // -----------------------------
+  // ส่งข้อความ
+  // -----------------------------
   async function sendMessage(e) {
-    e.preventDefault()
-    if (!text.trim() || !socket || !activeRoom) return
-    
+    if (e?.preventDefault) e.preventDefault()
+    if (!text.trim() || !socket || !activeRoom || !user) return
+
+    const trimmed = text.trim()
+
     try {
-      // บันทึกข้อความผ่าน API
-      const newMessage = await ChatAPI.sendMessage(activeRoom.id, user.id, text.trim())
-      
-      // อัพเดทข้อความในหน้าจอทันที
-      setMessages(prev => [...prev, {
-        ...newMessage,
-        userId: user.id,
-        user: { username: user.username },
-        content: text.trim(),
-        createdAt: new Date().toISOString()
-      }])
-      
-      // ส่งข้อความผ่าน socket ให้คนอื่น
-      socket.emit('chatMessage', {
+      const newMessage = await ChatAPI.sendMessage(
+        activeRoom.id,
+        user.id,
+        trimmed,
+      )
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          ...newMessage,
+          roomId: activeRoom.id,
+          userId: user.id,
+          user: { username: user.username },
+          content: trimmed,
+          createdAt: new Date().toISOString(),
+        },
+      ])
+
+      socket.emit?.('chatMessage', {
         roomId: activeRoom.id,
         userId: user.id,
-        text: text.trim()
+        text: trimmed,
       })
-      
+
       setText('')
+      setTypingMap((prev) => {
+        const next = { ...prev }
+        delete next[user.id]
+        return next
+      })
     } catch (error) {
       console.error('Error sending message:', error)
     }
   }
 
-  return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="flex h-[85vh] bg-white rounded-xl overflow-hidden shadow-lg border border-gray-200">
-        {/* Sidebar Rooms */}
-        <aside className="w-80 bg-[#F5F9FF] border-r border-gray-200 flex flex-col">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-[#0A4DAD]">Group Chat</h2>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-3 space-y-1">
-              {rooms.map(r => (
-                <button key={r.id}
-                  onClick={() => { setActiveRoom(r); setMessages([]) }}
-                  className={`w-full flex items-center gap-3 px-4 py-4 rounded-lg transition-all
-                    ${activeRoom?.id === r.id 
-                      ? 'bg-[#0A4DAD] text-white shadow-md' 
-                      : 'text-gray-700 hover:bg-white'}`}>
-                  <div className="w-2 h-2 rounded-full bg-current"></div>
-                  <span className="font-medium">{r.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          <div className="p-4 border-t border-gray-200 bg-white">
-            <div className="flex items-center gap-3 px-4 py-2">
-              <div className="w-10 h-10 rounded-full bg-[#0A4DAD] flex items-center justify-center text-white font-medium">
-                {user?.username?.charAt(0)?.toUpperCase()}
-              </div>
-              <div>
-                <div className="font-medium text-gray-900">{user?.username}</div>
-                <div className="text-sm text-gray-500">ออนไลน์</div>
-              </div>
-            </div>
-          </div>
-        </aside>
+  // -----------------------------
+  // พิมพ์ข้อความ + ยิง event typing
+  // -----------------------------
+  const handleChangeText = useCallback(
+    (value) => {
+      setText(value)
+      if (!socket || !activeRoom || !user) return
+      if (!value.trim()) return
 
-        {/* Chat Window */}
-        <main className="flex-1 flex flex-col bg-white">
-          {/* Chat Header */}
-          <div className="bg-white border-b border-gray-200 px-8 py-6 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h1 className="text-xl font-semibold text-gray-900">
-                {activeRoom ? activeRoom.name : 'เลือกห้องสนทนา'}
-              </h1>
-              {activeRoom && <span className="text-sm text-gray-500">สมาชิก 3 คน</span>}
-            </div>
-          </div>
+      socket.emit?.('typing', {
+        roomId: activeRoom.id,
+        userId: user.id,
+        username: user.username || 'Student',
+      })
+    },
+    [socket, activeRoom, user],
+  )
 
-          {/* Messages Area */}
-          <div className="flex-1 px-8 py-6 overflow-y-auto space-y-4">
-            {messages.map((m, i) => (
-              <div key={i} className={`flex ${m.userId === user?.id ? 'justify-end' : 'justify-start'} group`}>
-                <div className={`flex max-w-xl ${m.userId === user?.id ? 'flex-row-reverse' : ''}`}>
-                  {/* Avatar */}
-                  <div className="flex flex-col items-center mx-4">
-                    <div className="w-8 h-8 rounded-full bg-[#0A4DAD] flex items-center justify-center text-white text-sm">
-                      {m.user?.username?.charAt(0)?.toUpperCase() || '?'}
-                    </div>
-                  </div>
+  // -----------------------------
+  // สร้างห้อง (mock frontend-only)
+  // -----------------------------
+  function handleCreateRoom(roomData) {
+    if (!user) return
+    const tempId = `temp-${Date.now()}`
+    const newRoom = {
+      id: tempId,
+      name: roomData.name,
+      description: roomData.description,
+      type: roomData.type,
+      createdBy: user.id,
+      isTemporary: true,
+    }
 
-                  {/* Content column: name (outside bubble) + bubble */}
-                  <div className="flex flex-col">
-                    <div className={`text-sm mb-1 font-medium text-gray-800 ${m.userId === user?.id ? 'text-right' : 'text-left'}`}>
-                      {m.user?.username || 'Unknown User'}
-                    </div>
+    setRooms((prev) => [...prev, newRoom])
+    setActiveRoom(newRoom)
+    setMessages([])
+  }
 
-                    <div className={`px-3 py-2 rounded-2xl shadow-sm
-                      ${m.userId === user?.id 
-                        ? 'bg-[#0A4DAD] text-white' 
-                        : 'bg-[#F5F9FF] text-gray-900'}`}>
-                      <div className="text-sm leading-relaxed">{m.text || m.content}</div>
-                      <div className={`text-xs mt-2 
-                        ${m.userId === user?.id ? 'text-blue-100' : 'text-gray-500'}`}>
-                        {new Date(m.createdAt).toLocaleTimeString()}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+  function handleSelectRoom(room) {
+    setActiveRoom(room)
+    setMessages([])
+    setTypingMap({})
+  }
 
-          {/* Message Input */}
-          {activeRoom && (
-            <div className="border-t border-gray-200 bg-white px-8 py-6">
-              <form onSubmit={sendMessage} className="flex gap-4">
-                <input 
-                  className="flex-1 bg-[#F5F9FF] border-0 rounded-xl px-6 py-4
-                            focus:outline-none focus:ring-2 focus:ring-[#0A4DAD]"
-                  placeholder="พิมพ์ข้อความของคุณ..."
-                  value={text} 
-                  onChange={e => setText(e.target.value)} 
-                />
-                <button 
-                  type="submit"
-                  className="bg-[#0A4DAD] text-white px-8 py-4 rounded-xl font-medium
-                           hover:bg-[#083b87] transition-colors
-                           disabled:opacity-50 disabled:cursor-not-allowed
-                           flex items-center gap-2"
-                  disabled={!text.trim()}>
-                  <span>ส่งข้อความ</span>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                          d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </button>
-              </form>
-            </div>
-          )}
-        </main>
+  if (!user) {
+    return (
+      <div className="w-full h-[calc(100vh-64px)] bg-[#020617] flex items-center justify-center text-gray-300 text-sm">
+        กรุณาเข้าสู่ระบบก่อนใช้งานห้องแชท
       </div>
+    )
+  }
+
+  return (
+    <div className="w-full h-[calc(100vh-64px)] bg-[#020617]">
+      <ChatLayout
+        rooms={rooms}
+        roomsLoading={roomsLoading}
+        roomsError={roomsError}
+        activeRoom={activeRoom}
+        onSelectRoom={handleSelectRoom}
+        messages={messages}
+        loadingMessages={loadingMessages}
+        currentUser={user}
+        text={text}
+        setText={handleChangeText}
+        onSendMessage={sendMessage}
+        canCreateRoom={canCreateRoom}
+        onCreateRoom={handleCreateRoom}
+        socketConnected={socketConnected}
+        typingUsers={typingUsers}
+      />
     </div>
   )
 }

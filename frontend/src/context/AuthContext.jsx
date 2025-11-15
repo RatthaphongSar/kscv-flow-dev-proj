@@ -24,26 +24,38 @@ export function AuthProvider({ children }) {
       return
     }
     
-    // ถ้าไม่มี localStorage ให้ใช้ Mock user สำหรับ demo
-    if (mounted) {
-      setUser({
-        id: 'demo-user',
-        name: 'Demo User',
-        email: 'demo@kvc.local',
-        role: 'student'
+    // ถ้าไม่มี localStorage ให้โหลดจาก /auth/me (ถ้า user ยังอยู่ใน cookie session)
+    AuthAPI.me()
+      .then(u => {
+        if (mounted && u) {
+          setUser(u)
+          localStorage.setItem('user', JSON.stringify(u))
+        }
       })
-      setLoading(false)
-    }
+      .catch(() => {
+        // ไม่มี session ให้ปล่อยเป็น null (ต้อง login)
+        if (mounted) setUser(null)
+      })
+      .finally(() => {
+        if (mounted) setLoading(false)
+      })
+    
     return () => { mounted = false }
   }, [])
 
   async function login(username, password) {
-    const user = { id: 'user-' + Date.now(), name: username, email: username + '@kvc.local', role: 'student' }
-    localStorage.setItem('user', JSON.stringify(user))
-    setUser(user)
-    return user
+    // เรียก API จริง
+    const userData = await AuthAPI.login(username, password)
+    localStorage.setItem('user', JSON.stringify(userData))
+    setUser(userData)
+    return userData
   }
   async function logout() {
+    try {
+      await AuthAPI.logout()
+    } catch (e) {
+      console.warn('Logout API failed:', e)
+    }
     localStorage.removeItem('user')
     setUser(null)
   }
