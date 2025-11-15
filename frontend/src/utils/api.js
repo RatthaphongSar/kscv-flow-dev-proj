@@ -98,3 +98,15 @@ export async function api(path, options = {}) {
     throw e;
   }
 }
+
+// Export convenience methods
+export const apiClient = {
+  get: (path, options) => api(path, { method: 'GET', ...options }),
+  post: (path, body, options) => api(path, { method: 'POST', body, ...options }),
+  put: (path, body, options) => api(path, { method: 'PUT', body, ...options }),
+  patch: (path, body, options) => api(path, { method: 'PATCH', body, ...options }),
+  delete: (path, options) => api(path, { method: 'DELETE', ...options }),
+}
+
+// Export as default for backward compatibility
+export default apiClient

@@ -22,9 +22,11 @@ import {
   Activity,
   X,
 } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
+import { apiClient } from '../utils/api'
 
-// ---------------- Mock Data ----------------
-const userAverages = {
+// Default Mock Data (fallback if API fails)
+const defaultUserAverages = {
   attendance: 92,
   assignment: 78,
   score: 84,
@@ -67,13 +69,63 @@ const COLORS = ['#8b5cf6', '#22c55e', '#0ea5e9', '#facc15']
 // MAIN COMPONENT
 // =============================================================
 export default function Dashboard() {
+  const { user } = useAuth()
   const [chartDetail, setChartDetail] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [userAverages, setUserAverages] = useState(defaultUserAverages)
+  const [attendanceData, setAttendanceData] = useState([])
   const [popup, setPopup] = useState({
     open: false,
     type: null,
     title: '',
     content: null,
   })
+
+  // Load data from API on mount
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        
+        // Get transcript (grades)
+        const transcript = await apiClient.get('/grades/transcript')
+        
+        // Get attendance
+        const attendanceRecords = await apiClient.get('/attendance/my')
+        
+        // Process transcript data
+        if (transcript?.gpa !== undefined) {
+          setUserAverages(prev => ({
+            ...prev,
+            score: Math.round(transcript.gpa * 100) / 100
+          }))
+        }
+        
+        // Process attendance data
+        if (Array.isArray(attendanceRecords) && attendanceRecords.length > 0) {
+          const presentCount = attendanceRecords.filter(a => a.status === 'present').length
+          const totalCount = attendanceRecords.length
+          const attendancePercent = Math.round((presentCount / totalCount) * 100)
+          setUserAverages(prev => ({
+            ...prev,
+            attendance: attendancePercent
+          }))
+        }
+        
+        setLoading(false)
+      } catch (err) {
+        console.error('Failed to load dashboard data:', err)
+        setError(err.message || 'Failed to load data')
+        setLoading(false)
+      }
+    }
+    
+    if (user) {
+      loadDashboardData()
+    }
+  }, [user])
 
   // ปิด Popup ด้วย ESC
   useEffect(() => {
