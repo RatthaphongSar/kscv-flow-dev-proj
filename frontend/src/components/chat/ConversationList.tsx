@@ -42,11 +42,11 @@ export default function ConversationList({
         return (
           <div
             key={room.id}
-            className="group"
+            className="group flex items-center gap-1"
           >
             <button
               onClick={() => onSelectRoom(room)}
-              className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all text-left relative
+              className={`flex-1 flex items-center gap-3 px-3 py-3 rounded-lg transition-all text-left relative
               ${
                 isActive
                   ? 'bg-[#0A4DAD] text-white shadow-md'
@@ -76,26 +76,26 @@ export default function ConversationList({
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </div>
               )}
-
-              {/* Pin button - show on hover */}
-              {onTogglePin && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onTogglePin(room.id)
-                  }}
-                  className={`flex-shrink-0 ml-2 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity ${
-                    isPinned
-                      ? 'text-amber-400 bg-amber-100/20 hover:bg-amber-200/30'
-                      : 'text-gray-400 hover:text-amber-600 hover:bg-gray-100/20'
-                  }`}
-                  title={isPinned ? 'ถอด Pin ห้องนี้' : 'เก็บไว้ (Pin) ห้องนี้'}
-                >
-                  <Pin size={16} className={isPinned ? 'fill-current' : ''} />
-                </button>
-              )}
             </button>
+
+            {/* Pin button - moved OUTSIDE button to avoid nesting */}
+            {onTogglePin && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onTogglePin(room.id)
+                }}
+                className={`flex-shrink-0 p-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity ${
+                  isPinned
+                    ? 'text-amber-400 bg-amber-100/20 hover:bg-amber-200/30'
+                    : 'text-gray-400 hover:text-amber-600 hover:bg-gray-100/20'
+                }`}
+                title={isPinned ? 'ถอด Pin ห้องนี้' : 'เก็บไว้ (Pin) ห้องนี้'}
+              >
+                <Pin size={16} className={isPinned ? 'fill-current' : ''} />
+              </button>
+            )}
           </div>
         )
       })}

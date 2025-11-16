@@ -604,8 +604,9 @@ export const pinRoom = async (req, res, next) => {
  * Returns 200 even if already unpinned (idempotent)
  */
 export const unpinRoom = async (req, res, next) => {
+  const { roomId } = req.params
+  
   try {
-    const { roomId } = req.params
     const currentUser = req.user
 
     if (!currentUser || !currentUser.id) {
