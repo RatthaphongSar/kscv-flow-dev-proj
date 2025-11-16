@@ -103,7 +103,7 @@ let _instance = null
 
 function getInstance() {
   if (!_instance) {
-    _instance = new ChatRoomPinService(prisma)
+    _instance = new ChatRoomPinService(defaultPrisma)
   }
   return _instance
 }
