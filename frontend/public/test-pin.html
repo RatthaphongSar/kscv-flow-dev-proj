@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pin System Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .log { border: 1px solid #ccc; padding: 10px; margin: 10px 0; background: #f5f5f5; max-height: 400px; overflow-y: auto; }
+        button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+        .error { color: red; }
+        .success { color: green; }
+        input { padding: 5px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Pin Feature Test</h1>
+    
+    <div>
+        <h3>1. Login</h3>
+        <input type="text" id="username" placeholder="Username" value="student1">
+        <input type="password" id="password" placeholder="Password" value="password123">
+        <button onclick="doLogin()">Login</button>
+    </div>
+
+    <div>
+        <h3>2. Get Rooms</h3>
+        <button onclick="getRooms()">Get Rooms</button>
+    </div>
+
+    <div>
+        <h3>3. Pin Operations</h3>
+        <input type="text" id="roomId" placeholder="Room ID" value="1">
+        <button onclick="pinRoom()">Pin Room</button>
+        <button onclick="unpinRoom()">Unpin Room</button>
+        <button onclick="getPinnedRooms()">Get Pinned Rooms</button>
+    </div>
+
+    <div class="log" id="log"></div>
+
+    <script>
+        function log(msg, type = 'info') {
+            const logEl = document.getElementById('log');
+            const p = document.createElement('div');
+            p.className = type;
+            p.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logEl.appendChild(p);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        async function doLogin() {
+            try {
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                log(`Logging in as ${username}...`);
+                
+                const res = await fetch('http://localhost:4001/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, password })
+                });
+                
+                log(`Response: ${res.status}`, res.ok ? 'success' : 'error');
+                const data = await res.json();
+                log(`User: ${data.username} (${data.role})`, 'success');
+                
+                // Check cookies
+                log(`Cookies set: ${document.cookie || 'none'}`);
+            } catch (e) {
+                log(`Error: ${e.message}`, 'error');
+            }
+        }
+
+        async function getRooms() {
+            try {
+                log('Getting rooms...');
+                const res = await fetch('http://localhost:4001/api/chat/rooms', {
+                    credentials: 'include'
+                });
+                log(`Response: ${res.status}`, res.ok ? 'success' : 'error');
+                const data = await res.json();
+                log(`Got ${data.length} rooms`, 'success');
+                data.forEach(r => log(`  - ${r.id}: ${r.name}`));
+            } catch (e) {
+                log(`Error: ${e.message}`, 'error');
+            }
+        }
+
+        async function pinRoom() {
+            try {
+                const roomId = document.getElementById('roomId').value;
+                log(`Pinning room ${roomId}...`);
+                
+                const res = await fetch(`http://localhost:4001/api/chat/rooms/${roomId}/pin`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: '{}'
+                });
+                
+                log(`Response: ${res.status}`, res.ok ? 'success' : 'error');
+                const data = await res.json();
+                log(`Pinned: ${JSON.stringify(data)}`, 'success');
+            } catch (e) {
+                log(`Error: ${e.message}`, 'error');
+            }
+        }
+
+        async function unpinRoom() {
+            try {
+                const roomId = document.getElementById('roomId').value;
+                log(`Unpinning room ${roomId}...`);
+                
+                const res = await fetch(`http://localhost:4001/api/chat/rooms/${roomId}/pin`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+                
+                log(`Response: ${res.status}`, res.ok ? 'success' : 'error');
+                const data = await res.json();
+                log(`Unpinned: ${JSON.stringify(data)}`, 'success');
+            } catch (e) {
+                log(`Error: ${e.message}`, 'error');
+            }
+        }
+
+        async function getPinnedRooms() {
+            try {
+                log('Getting pinned rooms...');
+                const res = await fetch('http://localhost:4001/api/chat/me/pinned', {
+                    credentials: 'include'
+                });
+                
+                log(`Response: ${res.status}`, res.ok ? 'success' : 'error');
+                const data = await res.json();
+                log(`Got ${data.length || 0} pinned rooms`, 'success');
+                if (Array.isArray(data)) {
+                    data.forEach(p => log(`  - ${p.roomId}: ${p.room?.name}`));
+                }
+            } catch (e) {
+                log(`Error: ${e.message}`, 'error');
+            }
+        }
+
+        log('Test page ready - use buttons above to test', 'success');
+    </script>
+</body>
+</html>
