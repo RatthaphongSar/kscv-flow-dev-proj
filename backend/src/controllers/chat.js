@@ -574,3 +574,112 @@ export const markMessageAsRead = async (req, res, next) => {
     return next(err)
   }
 }
+
+/**
+ * PUT /rooms/:roomId
+ * Update room name (teacher-only)
+ */
+export const updateRoom = async (req, res, next) => {
+  try {
+    const { roomId } = req.params
+    const { name } = req.body
+    const currentUser = req.user
+
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
+    }
+
+    if (!['TEACHER', 'ADMIN'].includes(currentUser.role)) {
+      return res.status(403).json({ error: 'Only teachers can update rooms' })
+    }
+
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: 'Room name is required' })
+    }
+
+    // Import service
+    const { chatRoomService } = await import('../services/chatRoom.service.js')
+
+    try {
+      const updated = await chatRoomService.updateRoom(
+        roomId,
+        name.trim(),
+        currentUser.id,
+        currentUser.role
+      )
+
+      // Notify all users in the room
+      const io = getIO()
+      io.to(roomId).emit('roomUpdated', { id: roomId, name: name.trim() })
+
+      return res.json(updated)
+    } catch (err) {
+      if (err.message.includes('Only teachers')) {
+        return res.status(403).json({ error: err.message })
+      }
+      if (err.message.includes('not found')) {
+        return res.status(404).json({ error: err.message })
+      }
+      if (err.message.includes('already exists')) {
+        return res.status(409).json({ error: err.message })
+      }
+      if (err.message.includes('Not a member')) {
+        return res.status(403).json({ error: err.message })
+      }
+      throw err
+    }
+  } catch (err) {
+    console.error('updateRoom error:', err)
+    return next(err)
+  }
+}
+
+/**
+ * DELETE /rooms/:roomId
+ * Delete room (teacher-only)
+ */
+export const deleteRoom = async (req, res, next) => {
+  try {
+    const { roomId } = req.params
+    const currentUser = req.user
+
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
+    }
+
+    if (!['TEACHER', 'ADMIN'].includes(currentUser.role)) {
+      return res.status(403).json({ error: 'Only teachers can delete rooms' })
+    }
+
+    // Import service
+    const { chatRoomService } = await import('../services/chatRoom.service.js')
+
+    try {
+      await chatRoomService.deleteRoom(
+        roomId,
+        currentUser.id,
+        currentUser.role
+      )
+
+      // Notify all users (they will refresh their room list)
+      const io = getIO()
+      io.emit('roomDeleted', { roomId })
+
+      return res.json({ success: true, roomId })
+    } catch (err) {
+      if (err.message.includes('Only teachers')) {
+        return res.status(403).json({ error: err.message })
+      }
+      if (err.message.includes('not found')) {
+        return res.status(404).json({ error: err.message })
+      }
+      if (err.message.includes('Not a member')) {
+        return res.status(403).json({ error: err.message })
+      }
+      throw err
+    }
+  } catch (err) {
+    console.error('deleteRoom error:', err)
+    return next(err)
+  }
+}

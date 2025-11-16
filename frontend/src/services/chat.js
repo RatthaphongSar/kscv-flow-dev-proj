@@ -87,4 +87,18 @@ export const ChatAPI = {
     api(`/chat/rooms/${roomId}/notes/${noteId}`, {
       method: 'DELETE',
     }),
+
+  // ========== ROOM MANAGEMENT ==========
+  // แก้ไขชื่อห้อง
+  updateRoom: (roomId, name) =>
+    api(`/chat/rooms/${roomId}`, {
+      method: 'PUT',
+      body: { name },
+    }),
+
+  // ลบห้อง
+  deleteRoom: (roomId) =>
+    api(`/chat/rooms/${roomId}`, {
+      method: 'DELETE',
+    }),
 }

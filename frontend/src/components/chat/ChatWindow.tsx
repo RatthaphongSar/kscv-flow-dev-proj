@@ -8,6 +8,7 @@ import ChatPanelTabs, { type ChatPanelTab } from './ChatPanelTabs'
 import { ChatFilesPanel } from './ChatFilesPanel'
 import { ChatNotesPanel } from './ChatNotesPanel'
 import { MembersPanel } from './MembersPanel'
+import { RoomSettingsMenu } from './RoomSettingsMenu'
 
 interface ChatWindowProps {
   activeRoom: { id: string; name?: string } | null
@@ -56,6 +57,11 @@ export default function ChatWindow({
     ? 'สนทนาแบบส่วนตัวหรือกลุ่มสำหรับวิชา / งานนี้'
     : 'เลือกห้องจากด้านซ้ายเพื่อเริ่มการสนทนา'
 
+  const handleRoomDeleted = () => {
+    // Room will be removed from the room list when deleted
+    // The component should automatically switch to no room selected
+  }
+
   return (
     <main className="flex-1 flex flex-col min-h-0 bg-[#020617]">
       {/* Header */}
@@ -69,15 +75,29 @@ export default function ChatWindow({
         </div>
 
         {/* Actions */}
-        {activeRoom && isTeacher && (
-          <button
-            onClick={() => setShowAddStudents(true)}
-            className="mr-4 px-3 py-1.5 rounded-md bg-violet-600 hover:bg-violet-500 text-white text-xs
-                       transition-colors duration-200"
-            title="เพิ่มนักเรียนเข้าห้อง"
-          >
-            ➕ เพิ่มสมาชิก
-          </button>
+        {activeRoom && (
+          <div className="flex items-center gap-2">
+            {isTeacher && (
+              <button
+                onClick={() => setShowAddStudents(true)}
+                className="px-3 py-1.5 rounded-md bg-violet-600 hover:bg-violet-500 text-white text-xs
+                           transition-colors duration-200"
+                title="เพิ่มนักเรียนเข้าห้อง"
+              >
+                ➕ เพิ่มสมาชิก
+              </button>
+            )}
+            
+            {/* Room Settings Menu */}
+            {isTeacher && (
+              <RoomSettingsMenu
+                roomId={activeRoom.id}
+                roomName={title}
+                isTeacher={isTeacher}
+                onRoomDeleted={handleRoomDeleted}
+              />
+            )}
+          </div>
         )}
       </div>
 

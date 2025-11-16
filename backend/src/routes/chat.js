@@ -110,6 +110,29 @@ router.post(
   ctrl.addMembersToRoom
 )
 
+// PUT /rooms/:roomId - Update room name (teacher-only)
+router.put(
+  '/rooms/:roomId',
+  authRequired,
+  [
+    param('roomId').isString().withMessage('roomId is required'),
+    body('name').isString().withMessage('Room name is required'),
+  ],
+  validate,
+  ctrl.updateRoom
+)
+
+// DELETE /rooms/:roomId - Delete room (teacher-only)
+router.delete(
+  '/rooms/:roomId',
+  authRequired,
+  [
+    param('roomId').isString().withMessage('roomId is required'),
+  ],
+  validate,
+  ctrl.deleteRoom
+)
+
 // ==================== CHAT NOTES ====================
 
 // GET /rooms/:roomId/notes
