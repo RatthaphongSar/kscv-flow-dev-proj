@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
+import { Trash2 } from 'lucide-react'
 import { CreateNoteModal } from './CreateNoteModal'
+import { DeleteConfirmationModal } from './DeleteConfirmationModal'
 import { useRoomNotes } from '../../hooks/useRoomNotes'
 
 interface ChatNotesPanelProps {
@@ -15,8 +17,11 @@ interface ChatNotesPanelProps {
 export const ChatNotesPanel: React.FC<ChatNotesPanelProps> = ({ roomId, isTeacher }) => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
+  const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
-  const { notes, loading, error, createNote } = useRoomNotes({ roomId })
+  const { notes, loading, error, createNote, deleteNote } = useRoomNotes({ roomId })
 
   const handleCreateNote = async (title: string, content: string) => {
     setIsCreating(true)
@@ -24,6 +29,26 @@ export const ChatNotesPanel: React.FC<ChatNotesPanelProps> = ({ roomId, isTeache
       await createNote(title, content)
     } finally {
       setIsCreating(false)
+    }
+  }
+
+  const handleDeleteClick = (noteId: string) => {
+    setDeletingNoteId(noteId)
+    setIsDeleteConfirmOpen(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deletingNoteId) return
+
+    setIsDeleting(true)
+    try {
+      await deleteNote(deletingNoteId)
+      setIsDeleteConfirmOpen(false)
+      setDeletingNoteId(null)
+    } catch (err) {
+      console.error('Error deleting note:', err)
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -83,8 +108,19 @@ export const ChatNotesPanel: React.FC<ChatNotesPanelProps> = ({ roomId, isTeache
               key={note.id}
               className="bg-slate-800 border border-slate-700 rounded-lg p-4 hover:border-slate-600 transition-colors"
             >
-              {/* Title */}
-              <h4 className="font-semibold text-gray-100 mb-2">{note.title}</h4>
+              {/* Title with Delete Button */}
+              <div className="flex items-start justify-between mb-2">
+                <h4 className="font-semibold text-gray-100 flex-1">{note.title}</h4>
+                {isTeacher && (
+                  <button
+                    onClick={() => handleDeleteClick(note.id)}
+                    className="ml-2 p-1.5 hover:bg-red-900/30 text-red-400 hover:text-red-300 rounded transition-colors flex-shrink-0"
+                    title="ลบโน้ต"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
 
               {/* Content Preview */}
               <p className="text-slate-300 text-sm mb-3 line-clamp-3">{note.content}</p>
@@ -105,6 +141,21 @@ export const ChatNotesPanel: React.FC<ChatNotesPanelProps> = ({ roomId, isTeache
         onClose={() => setIsCreateModalOpen(false)}
         onSave={handleCreateNote}
         isLoading={isCreating}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={isDeleteConfirmOpen}
+        title="ลบโน้ต"
+        message="คุณแน่ใจหรือไม่ว่าต้องการลบโน้ตนี้? การกระทำนี้ไม่สามารถย้อนกลับได้"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setIsDeleteConfirmOpen(false)
+          setDeletingNoteId(null)
+        }}
+        isLoading={isDeleting}
+        confirmText="ลบโน้ต"
+        cancelText="ยกเลิก"
       />
     </div>
   )

@@ -62,4 +62,29 @@ export const ChatAPI = {
       method: 'POST', 
       body: { memberIds } 
     }),
+
+  // ========== NOTES ==========
+  // ดึงโน้ตทั้งหมดของห้อง
+  getNotes: (roomId) =>
+    api(`/chat/rooms/${roomId}/notes`, { method: 'GET' }),
+
+  // สร้างโน้ต
+  createNote: (roomId, title, content) =>
+    api(`/chat/rooms/${roomId}/notes`, {
+      method: 'POST',
+      body: { title, content },
+    }),
+
+  // แก้ไขโน้ต
+  updateNote: (roomId, noteId, title, content) =>
+    api(`/chat/rooms/${roomId}/notes/${noteId}`, {
+      method: 'PUT',
+      body: { title, content },
+    }),
+
+  // ลบโน้ต
+  deleteNote: (roomId, noteId) =>
+    api(`/chat/rooms/${roomId}/notes/${noteId}`, {
+      method: 'DELETE',
+    }),
 }
