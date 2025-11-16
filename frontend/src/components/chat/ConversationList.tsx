@@ -1,4 +1,5 @@
 import { useUnreadCounts } from '../../hooks/useUnreadCounts'
+import { Pin } from 'lucide-react'
 
 interface Room {
   id: string
@@ -58,7 +59,7 @@ export default function ConversationList({
                   unreadCount > 0 && !isActive ? 'font-bold text-gray-900' : ''
                 }`}>
                   {room.name}
-                  {isPinned && <span className="ml-1 text-amber-400">📌</span>}
+                  {isPinned && <Pin size={14} className="ml-1 inline text-amber-400 fill-amber-400" />}
                 </div>
                 <div
                   className={`text-xs truncate ${
@@ -86,12 +87,12 @@ export default function ConversationList({
                   }}
                   className={`flex-shrink-0 ml-2 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity ${
                     isPinned
-                      ? 'text-amber-400 bg-amber-100/20'
-                      : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/20'
+                      ? 'text-amber-400 bg-amber-100/20 hover:bg-amber-200/30'
+                      : 'text-gray-400 hover:text-amber-600 hover:bg-gray-100/20'
                   }`}
-                  title={isPinned ? 'Unpin room' : 'Pin room'}
+                  title={isPinned ? 'ถอด Pin ห้องนี้' : 'เก็บไว้ (Pin) ห้องนี้'}
                 >
-                  📌
+                  <Pin size={16} className={isPinned ? 'fill-current' : ''} />
                 </button>
               )}
             </button>
