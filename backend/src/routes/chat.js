@@ -259,4 +259,40 @@ router.get(
   ctrlExt.getUnreadSummary
 )
 
+// ==================== ROOM PIN ====================
+
+// POST /rooms/:roomId/pin
+router.post(
+  '/rooms/:roomId/pin',
+  authRequired,
+  [param('roomId').isString().withMessage('roomId is required')],
+  validate,
+  ctrlExt.pinRoom
+)
+
+// DELETE /rooms/:roomId/pin
+router.delete(
+  '/rooms/:roomId/pin',
+  authRequired,
+  [param('roomId').isString().withMessage('roomId is required')],
+  validate,
+  ctrlExt.unpinRoom
+)
+
+// GET /me/pinned
+router.get(
+  '/me/pinned',
+  authRequired,
+  ctrlExt.getPinnedRooms
+)
+
+// GET /rooms/:roomId/pin/status
+router.get(
+  '/rooms/:roomId/pin/status',
+  authRequired,
+  [param('roomId').isString().withMessage('roomId is required')],
+  validate,
+  ctrlExt.checkRoomPinStatus
+)
+
 export default router

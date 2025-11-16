@@ -25,6 +25,7 @@ model User {
   chatNotes    ChatNote[]
   uploadedFiles ChatFile[]
   messageReads MessageRead[]
+  pinnedRooms  RoomPin[]
 
   // Academic Relations
   class        Class?   @relation(fields: [classId], references: [id])
@@ -56,6 +57,7 @@ model Room {
   messages Message[]
   notes    ChatNote[]
   files    ChatFile[]
+  pins     RoomPin[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -96,7 +98,7 @@ model Message {
 
   // File/Image attachment
   file      ChatFile? @relation("MessageFile", fields: [fileId], references: [id])
-  fileId    String?
+  fileId    String? @unique
 
   // Read receipts for this message
   readReceipts MessageRead[]
@@ -459,6 +461,21 @@ model ChatFile {
 
   @@index([roomId, createdAt])
   @@index([uploaderId])
+}
+
+model RoomPin {
+  id        String   @id @default(cuid())
+  pinnedAt  DateTime @default(now())
+
+  // Relations
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+
+  @@unique([roomId, userId], name: "roomId_userId")
+  @@index([userId, pinnedAt])
+  @@index([roomId])
 }
 
 model MessageRead {

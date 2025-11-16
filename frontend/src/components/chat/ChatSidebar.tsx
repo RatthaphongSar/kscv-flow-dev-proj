@@ -12,6 +12,8 @@ export default function ChatSidebar({
   currentUser,
   canCreateRoom,
   onCreateRoom,
+  pinnedRooms,
+  onTogglePin,
 }) {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<ChatFilter>('all')
@@ -24,7 +26,7 @@ export default function ChatSidebar({
    * Apply both search and filter to rooms
    * Filter logic:
    * - "all": show all rooms
-   * - "pinned": show only rooms where isPinned === true
+   * - "pinned": show only pinned rooms
    * - "unread": show only rooms where unreadCount > 0
    */
   const filteredRooms = useMemo(() => {
@@ -34,13 +36,14 @@ export default function ChatSidebar({
 
     // Apply filter based on selected tab
     if (filter === 'pinned') {
-      result = result.filter(r => r.isPinned === true)
+      const pinnedIds = new Set(pinnedRooms.map(p => p.roomId))
+      result = result.filter(r => pinnedIds.has(r.id))
     } else if (filter === 'unread') {
       result = result.filter(r => (r.unreadCount ?? 0) > 0)
     }
 
     return result
-  }, [rooms, search, filter])
+  }, [rooms, search, filter, pinnedRooms])
 
   function handleSubmitCreate(e) {
     e.preventDefault()
@@ -103,6 +106,8 @@ export default function ChatSidebar({
           rooms={filteredRooms}
           activeRoom={activeRoom}
           onSelectRoom={onSelectRoom}
+          pinnedRooms={pinnedRooms}
+          onTogglePin={onTogglePin}
         />
       </div>
 

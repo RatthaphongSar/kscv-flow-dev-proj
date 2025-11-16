@@ -19,6 +19,8 @@ export default function ChatLayout({
   onReplyMessage,
   replyingTo,
   onCancelReply,
+  pinnedRooms,
+  onTogglePin,
 }) {
   return (
     <div className="flex flex-1 min-h-0 w-full text-gray-100 overflow-hidden">
@@ -30,6 +32,8 @@ export default function ChatLayout({
         currentUser={currentUser}
         canCreateRoom={canCreateRoom}
         onCreateRoom={onCreateRoom}
+        pinnedRooms={pinnedRooms}
+        onTogglePin={onTogglePin}
       />
 
       {/* ขวา: ห้องแชท */}

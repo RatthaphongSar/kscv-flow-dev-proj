@@ -3,11 +3,13 @@ import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useChatSocket } from '../context/ChatSocketContext'
 import { ChatAPI } from '../services/chat'
+import { useRoomPin } from '../hooks/useRoomPin'
 import ChatLayout from '../components/chat/ChatLayout'
 
 export default function ChatPage() {
   const { user } = useAuth()
   const socket = useChatSocket()
+  const { pinnedRooms, loadPinnedRooms, togglePin } = useRoomPin()
 
   const [rooms, setRooms] = useState([])
   const [roomsLoading, setRoomsLoading] = useState(false)
@@ -72,6 +74,9 @@ export default function ChatPage() {
         setRoomsError('โหลดห้องสนทนาไม่สำเร็จ')
       })
       .finally(() => setRoomsLoading(false))
+
+    // โหลด pinned rooms
+    loadPinnedRooms().catch(err => console.error('Error loading pinned rooms:', err))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
@@ -387,6 +392,21 @@ export default function ChatPage() {
     [user, socket],
   )
 
+  // Pin/Unpin room
+  // -----------------------------
+  const handleTogglePin = useCallback(
+    async (roomId) => {
+      try {
+        const isPinned = pinnedRooms.some(p => p.roomId === roomId)
+        await togglePin(roomId, isPinned)
+      } catch (err) {
+        console.error('Error toggling pin:', err)
+        window.alert('ไม่สามารถบันทึกการ pin ห้องได้')
+      }
+    },
+    [pinnedRooms, togglePin],
+  )
+
   // -----------------------------
   // Render
   return (
@@ -413,6 +433,8 @@ export default function ChatPage() {
       onReplyMessage={handleReplyMessage}
       replyingTo={replyingTo}
       onCancelReply={() => setReplyingTo(null)}
+      pinnedRooms={pinnedRooms}
+      onTogglePin={handleTogglePin}
     />
   )
 }

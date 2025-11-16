@@ -4,6 +4,7 @@ import { chatNotesService } from '../services/chatNotes.service.js'
 import { chatFilesService } from '../services/chatFiles.service.js'
 import { chatReadReceiptsService } from '../services/chatReadReceipts.service.js'
 import { chatMembersService } from '../services/chatMembers.service.js'
+import { chatRoomPinService } from '../services/chatRoomPin.service.js'
 
 // ==================== CHAT NOTES ====================
 
@@ -561,6 +562,103 @@ export const getUnreadSummary = async (req, res, next) => {
     return res.json(unreadCounts)
   } catch (err) {
     console.error('getUnreadSummary error:', err)
+    return next(err)
+  }
+}
+
+// ==================== ROOM PIN ====================
+
+/**
+ * POST /rooms/:roomId/pin
+ * Pin a room for current user
+ */
+export const pinRoom = async (req, res, next) => {
+  try {
+    const { roomId } = req.params
+    const currentUser = req.user
+
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
+    }
+
+    // Verify user is member of room
+    const isMember = await prisma.roomMember.findUnique({
+      where: { roomId_userId: { roomId, userId: currentUser.id } },
+    })
+
+    if (!isMember) {
+      return res.status(403).json({ error: 'Not a member of this room' })
+    }
+
+    const pin = await chatRoomPinService.pinRoom(roomId, currentUser.id)
+    return res.status(201).json(pin)
+  } catch (err) {
+    console.error('pinRoom error:', err)
+    return next(err)
+  }
+}
+
+/**
+ * DELETE /rooms/:roomId/pin
+ * Unpin a room for current user
+ */
+export const unpinRoom = async (req, res, next) => {
+  try {
+    const { roomId } = req.params
+    const currentUser = req.user
+
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
+    }
+
+    await chatRoomPinService.unpinRoom(roomId, currentUser.id)
+    return res.json({ message: 'Room unpinned successfully' })
+  } catch (err) {
+    if (err.code === 'P2025') {
+      return res.status(404).json({ error: 'Room pin not found' })
+    }
+    console.error('unpinRoom error:', err)
+    return next(err)
+  }
+}
+
+/**
+ * GET /me/pinned
+ * Get all pinned rooms for current user
+ */
+export const getPinnedRooms = async (req, res, next) => {
+  try {
+    const currentUser = req.user
+
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
+    }
+
+    const pinnedRooms = await chatRoomPinService.getPinnedRooms(currentUser.id)
+    return res.json(pinnedRooms)
+  } catch (err) {
+    console.error('getPinnedRooms error:', err)
+    return next(err)
+  }
+}
+
+/**
+ * GET /rooms/:roomId/pin/status
+ * Check if room is pinned by current user
+ */
+export const checkRoomPinStatus = async (req, res, next) => {
+  try {
+    const { roomId } = req.params
+    const currentUser = req.user
+
+    if (!currentUser || !currentUser.id) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid user' })
+    }
+
+    const isPinned = await chatRoomPinService.isRoomPinned(roomId, currentUser.id)
+    return res.json({ roomId, isPinned })
+  } catch (err) {
+    console.error('checkRoomPinStatus error:', err)
     return next(err)
   }
 }
