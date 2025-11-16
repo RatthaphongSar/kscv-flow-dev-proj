@@ -1,5 +1,5 @@
 // backend/src/services/chatRoomPin.service.js
-import { defaultPrisma as prisma } from '../db.js'
+import { prisma as defaultPrisma } from '../db.js'
 
 export class ChatRoomPinService {
   constructor(prisma) {

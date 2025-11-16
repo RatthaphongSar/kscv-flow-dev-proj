@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Pin System Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #0A4DAD;
+        }
+        button {
+            background-color: #0A4DAD;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #08386a;
+        }
+        .success {
+            color: green;
+            background-color: #e8f5e9;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .error {
+            color: red;
+            background-color: #ffebee;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .results {
+            margin-top: 20px;
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 4px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Room Pin System Test</h1>
+        
+        <div class="section">
+            <h2>Login Test</h2>
+            <input type="text" id="username" placeholder="Username" value="student1">
+            <input type="password" id="password" placeholder="Password" value="password123">
+            <button onclick="login()">Login</button>
+            <div id="loginStatus"></div>
+        </div>
+
+        <div class="section">
+            <h2>Get Rooms</h2>
+            <button onclick="getRooms()">Get All Rooms</button>
+            <div id="roomsStatus"></div>
+        </div>
+
+        <div class="section">
+            <h2>Pin/Unpin Room</h2>
+            <input type="text" id="roomId" placeholder="Room ID">
+            <button onclick="pinRoom()">Pin Room</button>
+            <button onclick="unpinRoom()">Unpin Room</button>
+            <div id="pinStatus"></div>
+        </div>
+
+        <div class="section">
+            <h2>Get Pinned Rooms</h2>
+            <button onclick="getPinnedRooms()">Get Pinned Rooms</button>
+            <div id="pinnedStatus"></div>
+        </div>
+
+        <h3>📊 Results</h3>
+        <div class="results" id="results">Waiting for actions...</div>
+    </div>
+
+    <script>
+        let authToken = null;
+        let currentUser = null;
+
+        const log = (msg) => {
+            const resultsDiv = document.getElementById('results');
+            const now = new Date().toLocaleTimeString();
+            resultsDiv.textContent += `[${now}] ${msg}\n`;
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        };
+
+        const showStatus = (elementId, message, isError = false) => {
+            const el = document.getElementById(elementId);
+            el.innerHTML = `<div class="${isError ? 'error' : 'success'}">${message}</div>`;
+        };
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            log(`Attempting login with ${username}...`);
+            
+            try {
+                const response = await fetch('http://localhost:4001/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = data.user;
+                    log(`✓ Login successful: ${data.user.username}`);
+                    showStatus('loginStatus', `✓ Logged in as ${data.user.username}`, false);
+                    document.getElementById('results').textContent = '';
+                } else {
+                    const error = await response.text();
+                    log(`✗ Login failed: ${response.status} - ${error}`);
+                    showStatus('loginStatus', `✗ Login failed: ${error}`, true);
+                }
+            } catch (err) {
+                log(`✗ Login error: ${err.message}`);
+                showStatus('loginStatus', `✗ Error: ${err.message}`, true);
+            }
+        }
+
+        async function getRooms() {
+            if (!currentUser) {
+                showStatus('roomsStatus', '✗ Please login first', true);
+                return;
+            }
+
+            log('Fetching rooms...');
+            
+            try {
+                const response = await fetch('http://localhost:4001/api/chat/rooms', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✓ Got ${data.length} rooms`);
+                    data.forEach(room => {
+                        log(`  - Room: ${room.name} (ID: ${room.id})`);
+                    });
+                    document.getElementById('roomId').value = data[0]?.id || '';
+                    showStatus('roomsStatus', `✓ Got ${data.length} rooms`, false);
+                } else {
+                    log(`✗ Failed to get rooms: ${response.status}`);
+                    showStatus('roomsStatus', `✗ Failed: ${response.status}`, true);
+                }
+            } catch (err) {
+                log(`✗ Error: ${err.message}`);
+                showStatus('roomsStatus', `✗ Error: ${err.message}`, true);
+            }
+        }
+
+        async function pinRoom() {
+            const roomId = document.getElementById('roomId').value;
+            if (!roomId) {
+                showStatus('pinStatus', '✗ Please enter Room ID', true);
+                return;
+            }
+
+            log(`Pinning room ${roomId}...`);
+            
+            try {
+                const response = await fetch(`http://localhost:4001/api/chat/rooms/${roomId}/pin`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✓ Room pinned successfully`);
+                    log(`  PIN ID: ${data.id}`);
+                    showStatus('pinStatus', `✓ Room pinned`, false);
+                } else {
+                    const error = await response.text();
+                    log(`✗ Pin failed: ${response.status} - ${error}`);
+                    showStatus('pinStatus', `✗ Failed: ${error}`, true);
+                }
+            } catch (err) {
+                log(`✗ Error: ${err.message}`);
+                showStatus('pinStatus', `✗ Error: ${err.message}`, true);
+            }
+        }
+
+        async function unpinRoom() {
+            const roomId = document.getElementById('roomId').value;
+            if (!roomId) {
+                showStatus('pinStatus', '✗ Please enter Room ID', true);
+                return;
+            }
+
+            log(`Unpinning room ${roomId}...`);
+            
+            try {
+                const response = await fetch(`http://localhost:4001/api/chat/rooms/${roomId}/pin`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    log(`✓ Room unpinned successfully`);
+                    showStatus('pinStatus', `✓ Room unpinned`, false);
+                } else {
+                    const error = await response.text();
+                    log(`✗ Unpin failed: ${response.status} - ${error}`);
+                    showStatus('pinStatus', `✗ Failed: ${error}`, true);
+                }
+            } catch (err) {
+                log(`✗ Error: ${err.message}`);
+                showStatus('pinStatus', `✗ Error: ${err.message}`, true);
+            }
+        }
+
+        async function getPinnedRooms() {
+            log('Fetching pinned rooms...');
+            
+            try {
+                const response = await fetch('http://localhost:4001/api/chat/me/pinned', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✓ Got ${data.length} pinned rooms`);
+                    data.forEach(pin => {
+                        log(`  - ${pin.room?.name || 'Unknown'} (Pin ID: ${pin.id})`);
+                    });
+                    showStatus('pinnedStatus', `✓ Got ${data.length} pinned rooms`, false);
+                } else {
+                    const error = await response.text();
+                    log(`✗ Failed: ${response.status} - ${error}`);
+                    showStatus('pinnedStatus', `✗ Failed: ${error}`, true);
+                }
+            } catch (err) {
+                log(`✗ Error: ${err.message}`);
+                showStatus('pinnedStatus', `✗ Error: ${err.message}`, true);
+            }
+        }
+
+        // Auto-login on page load
+        window.onload = () => {
+            log('Page loaded. Click Login to start testing.');
+        };
+    </script>
+</body>
+</html>
