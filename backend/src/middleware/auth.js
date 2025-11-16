@@ -12,8 +12,19 @@ function getTokenFrom(req) {
 export function authRequired(req, res, next) {
   try {
     const token = getTokenFrom(req)
-    if (!token) return res.status(401).json({ error: 'Unauthorized' })
-    const payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET)
+    if (!token) {
+      console.warn('[Auth] No token found in request')
+      return res.status(401).json({ error: 'Unauthorized' })
+    }
+    
+    let payload
+    try {
+      payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET)
+    } catch (err) {
+      console.warn('[Auth] JWT verification failed:', err.message)
+      return res.status(401).json({ error: 'Unauthorized' })
+    }
+    
     // payload: { sub, username, role, year, major }
     // Map 'sub' to 'id' for consistency
     req.user = {
@@ -23,8 +34,10 @@ export function authRequired(req, res, next) {
       year: payload.year,
       major: payload.major
     }
+    console.log('[Auth] User authenticated:', { userId: req.user.id, username: req.user.username })
     next()
-  } catch {
-    res.status(401).json({ error: 'Unauthorized' })
+  } catch (err) {
+    console.error('[Auth] Unexpected error:', err)
+    res.status(500).json({ error: 'Internal server error' })
   }
 }

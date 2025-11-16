@@ -17,7 +17,7 @@ interface ChatSidebarTabsProps {
 export default function ChatSidebarTabs({ value, onChange }: ChatSidebarTabsProps) {
   const tabs: { id: ChatFilter; label: string }[] = [
     { id: 'all', label: 'ทั้งหมด' },
-    { id: 'pinned', label: 'เก็บพูด' },
+    { id: 'pinned', label: 'ปักหมุด' },
     { id: 'unread', label: 'ยังไม่ได้อ่าน' },
   ]
 

@@ -42,6 +42,7 @@ async function coreFetch(path, options = {}) {
         ...options,
         method,
         headers,
+        credentials: 'include',  // ✅ ส่ง cookie ไปด้วยทุกครั้ง
         signal: ctrl.signal,
       })
       // 304 -> ใช้ cache
@@ -117,14 +118,7 @@ export async function api(path, options = {}) {
   return coreFetch(path, opt)
 }
 
-export function Debug(path, optional = {}) {
-
-  const Output= { ...optional}
-  if (apiGet, apiPost, apiPut, apiDai === error.name  (err.status >= 500))
-    return err.status === 404
-}
-
-export const apiGet  = (path, options) => api(path, { ...options, method: 'GET' })
-export const apiPost = (path, body, options) => api(path, { ...options, method: 'POST', body })
-export const apiPut  = (path, body, options) => api(path, { ...options, method: 'PUT', body })
-export const apiDel  = (path, options) => api(path, { ...options, method: 'DELETE' })
+export const apiGet  = (path, options) => api(path, { ...options, method: 'GET', credentials: 'include' })
+export const apiPost = (path, body, options) => api(path, { ...options, method: 'POST', body, credentials: 'include' })
+export const apiPut  = (path, body, options) => api(path, { ...options, method: 'PUT', body, credentials: 'include' })
+export const apiDel  = (path, options) => api(path, { ...options, method: 'DELETE', credentials: 'include' })

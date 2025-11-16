@@ -96,7 +96,7 @@ export default function ChatSidebar({
           </span>
         </div>
 
-        {/* Tabs (ทั้งหมด / เก็บพูด / ยังไม่ได้อ่าน) */}
+
         <ChatSidebarTabs value={filter} onChange={setFilter} />
       </div>
 

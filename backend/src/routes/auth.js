@@ -31,13 +31,20 @@ function setAuthCookies(res, access, refresh) {
     httpOnly: true, 
     sameSite, 
     secure, 
-    maxAge: 1000*60*60*24*7 
+    maxAge: 1000*60*15 // 15 mins = JWT ACCESS exp
   })
   res.cookie('refresh_token', refresh, { 
     httpOnly: true, 
     sameSite, 
     secure, 
-    maxAge: 1000*60*60*24*30 
+    maxAge: 1000*60*60*24*30 // 30 days = JWT REFRESH exp
+  })
+  
+  console.log('[Auth] Cookies set:', {
+    secure,
+    sameSite,
+    hasAccessToken: !!access,
+    hasRefreshToken: !!refresh,
   })
 }
 
@@ -70,6 +77,7 @@ router.post('/login',
       const access  = signAccess(u)
       const refresh = signRefresh(u)
       setAuthCookies(res, access, refresh)
+      console.log('[Login] User logged in successfully:', { id: u.id, username: u.username })
       res.json({ id: u.id, username: u.username, role: u.role, year: u.year, major: u.major })
     } catch (e) { next(e) }
   }
@@ -81,15 +89,33 @@ router.post('/login',
 router.post('/refresh', async (req, res) => {
   try {
     const rt = req.cookies?.refresh_token
-    if (!rt) return res.status(401).json({ error: 'No refresh token' })
-    const { sub } = jwt.verify(rt, process.env.JWT_REFRESH_SECRET)
-    const u = await prisma.user.findUnique({ where: { id: sub } })
-    if (!u) return res.status(401).json({ error: 'Invalid refresh token' })
+    if (!rt) {
+      console.warn('[Refresh] No refresh token in cookies')
+      return res.status(401).json({ error: 'No refresh token' })
+    }
+    
+    // Verify refresh token
+    let payload
+    try {
+      payload = jwt.verify(rt, process.env.JWT_REFRESH_SECRET)
+    } catch (err) {
+      console.error('[Refresh] JWT verification failed:', err.message)
+      return res.status(401).json({ error: 'Invalid refresh token' })
+    }
+
+    const u = await prisma.user.findUnique({ where: { id: payload.sub } })
+    if (!u) {
+      console.warn('[Refresh] User not found for sub:', payload.sub)
+      return res.status(401).json({ error: 'Invalid refresh token' })
+    }
+
     const access = signAccess(u)
     setAuthCookies(res, access, rt)
+    console.log('[Refresh] Token refreshed for user:', u.username)
     res.json({ ok: true })
-  } catch {
-    res.status(401).json({ error: 'Invalid refresh token' })
+  } catch (err) {
+    console.error('[Refresh] Unexpected error:', err)
+    res.status(500).json({ error: 'Internal server error' })
   }
 })
 
