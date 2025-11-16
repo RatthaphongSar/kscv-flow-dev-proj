@@ -42,13 +42,7 @@ export const useRoomFiles = (options: UseRoomFilesOptions = {}) => {
     setError(null)
 
     try {
-      const response = await api(`/chat/rooms/${roomId}/files`)
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch files: ${response.statusText}`)
-      }
-
-      const data = await response.json()
+      const data = await api(`/chat/rooms/${roomId}/files`)
       setFiles(data || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch files')
@@ -73,16 +67,10 @@ export const useRoomFiles = (options: UseRoomFilesOptions = {}) => {
     }) => {
       if (!roomId) throw new Error('No room ID')
 
-      const response = await api(`/chat/rooms/${roomId}/files`, {
+      const newFile = await api(`/chat/rooms/${roomId}/files`, {
         method: 'POST',
         body: metadata
       })
-
-      if (!response.ok) {
-        throw new Error(`Failed to upload file: ${response.statusText}`)
-      }
-
-      const newFile = await response.json()
 
       // Prepend to list
       setFiles((prev) => [newFile, ...prev])
@@ -99,13 +87,9 @@ export const useRoomFiles = (options: UseRoomFilesOptions = {}) => {
     async (fileId: string) => {
       if (!roomId) throw new Error('No room ID')
 
-      const response = await api(`/chat/rooms/${roomId}/files/${fileId}`, {
+      await api(`/chat/rooms/${roomId}/files/${fileId}`, {
         method: 'DELETE'
       })
-
-      if (!response.ok) {
-        throw new Error(`Failed to delete file: ${response.statusText}`)
-      }
 
       setFiles((prev) => prev.filter((f) => f.id !== fileId))
     },

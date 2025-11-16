@@ -29,9 +29,7 @@ export const useRoomMembers = (options: UseRoomMembersOptions = {}) => {
     setLoading(true)
     setError(null)
     try {
-      const response = await api(`/chat/rooms/${roomId}/members`)
-      if (!response.ok) throw new Error('Failed to fetch members')
-      const data = await response.json()
+      const data = await api(`/chat/rooms/${roomId}/members`)
       setMembers(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
@@ -44,12 +42,10 @@ export const useRoomMembers = (options: UseRoomMembersOptions = {}) => {
     async (userId: string) => {
       if (!roomId) return
       try {
-        const response = await api(`/chat/rooms/${roomId}/members`, {
+        const newMember: RoomMember = await api(`/chat/rooms/${roomId}/members`, {
           method: 'POST',
           body: { userId }
         })
-        if (!response.ok) throw new Error('Failed to add member')
-        const newMember: RoomMember = await response.json()
         setMembers((prev) => [...prev, newMember])
         return newMember
       } catch (err) {
@@ -65,10 +61,9 @@ export const useRoomMembers = (options: UseRoomMembersOptions = {}) => {
     async (userId: string) => {
       if (!roomId) return
       try {
-        const response = await api(`/chat/rooms/${roomId}/members/${userId}`, {
+        await api(`/chat/rooms/${roomId}/members/${userId}`, {
           method: 'DELETE'
         })
-        if (!response.ok) throw new Error('Failed to remove member')
         setMembers((prev) => prev.filter((m) => m.id !== userId))
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown error'

@@ -31,10 +31,7 @@ export const useMessageReadReceipts = (roomId?: string) => {
       try {
         // Fetch read receipts for multiple messages
         const queryString = messageIds.map((id) => `messageId=${id}`).join('&')
-        const response = await api(`/chat/rooms/${roomId}/messages/read-receipts?${queryString}`)
-        if (!response.ok) throw new Error('Failed to fetch read receipts')
-
-        const data: MessageReadReceipt[] = await response.json()
+        const data: MessageReadReceipt[] = await api(`/chat/rooms/${roomId}/messages/read-receipts?${queryString}`)
         const receipts: Record<string, MessageReadReceipt> = {}
         data.forEach((receipt) => {
           receipts[receipt.messageId] = receipt
@@ -61,9 +58,7 @@ export const useMessageReadReceipts = (roomId?: string) => {
       if (!roomId) return []
 
       try {
-        const response = await api(`/chat/rooms/${roomId}/messages/${messageId}/readers`)
-        if (!response.ok) throw new Error('Failed to fetch readers')
-        const data: MessageReader[] = await response.json()
+        const data: MessageReader[] = await api(`/chat/rooms/${roomId}/messages/${messageId}/readers`)
         return data
       } catch (err) {
         console.error('Failed to fetch message readers:', err)

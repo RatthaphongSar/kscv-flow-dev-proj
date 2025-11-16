@@ -39,13 +39,7 @@ export const useRoomNotes = (options: UseRoomNotesOptions = {}) => {
     setError(null)
 
     try {
-      const response = await api(`/chat/rooms/${roomId}/notes`)
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch notes: ${response.statusText}`)
-      }
-
-      const data = await response.json()
+      const data = await api(`/chat/rooms/${roomId}/notes`)
       setNotes(data || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch notes')
@@ -62,16 +56,10 @@ export const useRoomNotes = (options: UseRoomNotesOptions = {}) => {
     async (title: string, content: string) => {
       if (!roomId) throw new Error('No room ID')
 
-      const response = await api(`/chat/rooms/${roomId}/notes`, {
+      const newNote = await api(`/chat/rooms/${roomId}/notes`, {
         method: 'POST',
         body: { title, content }
       })
-
-      if (!response.ok) {
-        throw new Error(`Failed to create note: ${response.statusText}`)
-      }
-
-      const newNote = await response.json()
 
       // Prepend to list
       setNotes((prev) => [newNote, ...prev])
@@ -88,16 +76,10 @@ export const useRoomNotes = (options: UseRoomNotesOptions = {}) => {
     async (noteId: string, title?: string, content?: string) => {
       if (!roomId) throw new Error('No room ID')
 
-      const response = await api(`/chat/rooms/${roomId}/notes/${noteId}`, {
+      const updated = await api(`/chat/rooms/${roomId}/notes/${noteId}`, {
         method: 'PUT',
         body: { title, content }
       })
-
-      if (!response.ok) {
-        throw new Error(`Failed to update note: ${response.statusText}`)
-      }
-
-      const updated = await response.json()
 
       setNotes((prev) =>
         prev.map((n) => (n.id === noteId ? updated : n))
@@ -115,13 +97,9 @@ export const useRoomNotes = (options: UseRoomNotesOptions = {}) => {
     async (noteId: string) => {
       if (!roomId) throw new Error('No room ID')
 
-      const response = await api(`/chat/rooms/${roomId}/notes/${noteId}`, {
+      await api(`/chat/rooms/${roomId}/notes/${noteId}`, {
         method: 'DELETE'
       })
-
-      if (!response.ok) {
-        throw new Error(`Failed to delete note: ${response.statusText}`)
-      }
 
       setNotes((prev) => prev.filter((n) => n.id !== noteId))
     },

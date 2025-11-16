@@ -19,10 +19,7 @@ export const useUnreadCounts = () => {
     setLoading(true)
     setError(null)
     try {
-      const response = await api(`/chat/unread-summary`)
-      if (!response.ok) throw new Error('Failed to fetch unread counts')
-      
-      const data: UnreadCount[] = await response.json()
+      const data: UnreadCount[] = await api(`/chat/unread-summary`)
       const counts: Record<string, number> = {}
       data.forEach((item) => {
         counts[item.roomId] = item.unreadCount
