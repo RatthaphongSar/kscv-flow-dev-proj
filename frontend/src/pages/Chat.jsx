@@ -247,6 +247,14 @@ export default function ChatPage() {
 
       console.log('✅ Message sent:', newMessage)
 
+      // Determine message type
+      let messageType = 'text'
+      if (newMessage.file?.mimeType?.startsWith('image/')) {
+        messageType = 'image'
+      } else if (newMessage.file) {
+        messageType = 'file'
+      }
+
       setMessages((prev) => [
         ...prev,
         {
@@ -258,6 +266,7 @@ export default function ChatPage() {
           createdAt: new Date().toISOString(),
           replyToId,
           file: newMessage.file || null,
+          type: messageType,
         },
       ])
 
