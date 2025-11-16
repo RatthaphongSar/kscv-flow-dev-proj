@@ -601,6 +601,7 @@ export const pinRoom = async (req, res, next) => {
 /**
  * DELETE /rooms/:roomId/pin
  * Unpin a room for current user
+ * Returns 200 even if already unpinned (idempotent)
  */
 export const unpinRoom = async (req, res, next) => {
   try {
@@ -614,8 +615,10 @@ export const unpinRoom = async (req, res, next) => {
     await chatRoomPinService.unpinRoom(roomId, currentUser.id)
     return res.json({ message: 'Room unpinned successfully' })
   } catch (err) {
+    // P2025 = record not found (already unpinned) - treat as success (idempotent)
     if (err.code === 'P2025') {
-      return res.status(404).json({ error: 'Room pin not found' })
+      console.log('[Pin] Room already unpinned:', roomId)
+      return res.json({ message: 'Room already unpinned' })
     }
     console.error('unpinRoom error:', err)
     return next(err)

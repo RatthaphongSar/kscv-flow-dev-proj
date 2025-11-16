@@ -44,16 +44,22 @@ export function useRoomPin() {
 
   /**
    * Unpin a room for current user
+   * Idempotent: returns success even if already unpinned
    */
   const unpinRoom = useCallback(async (roomId: string) => {
     try {
       setLoading(true)
       setError('')
-      await api(`/chat/rooms/${roomId}/pin`, {
+      const response = await api(`/chat/rooms/${roomId}/pin`, {
         method: 'DELETE'
       })
-      return { message: 'Room unpinned successfully' }
+      return response || { message: 'Room unpinned successfully' }
     } catch (err) {
+      // If already unpinned, treat as success
+      if (err instanceof Error && err.message === 'Room pin not found') {
+        console.log('[Pin] Room already unpinned:', roomId)
+        return { message: 'Room already unpinned' }
+      }
       const message = err instanceof Error ? err.message : 'Failed to unpin room'
       setError(message)
       throw err
