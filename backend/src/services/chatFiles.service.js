@@ -2,8 +2,8 @@
 import { prisma as defaultPrisma } from '../db.js'
 
 export class ChatFilesService {
-  constructor(prisma = defaultPrisma) {
-    this.prisma = prisma
+  constructor(prisma) {
+    this.prisma = prisma || defaultPrisma
   }
 
   async getFilesByRoom(roomId) {
@@ -77,5 +77,21 @@ export class ChatFilesService {
   }
 }
 
-// Export instance with prisma passed explicitly
-export const chatFilesService = new ChatFilesService(defaultPrisma)
+// Lazy singleton instance
+let _instance = null
+
+export function getChatFilesService() {
+  if (!_instance) {
+    _instance = new ChatFilesService(defaultPrisma)
+  }
+  return _instance
+}
+
+// Default export for backward compatibility
+export const chatFilesService = {
+  getFilesByRoom(...args) { return getChatFilesService().getFilesByRoom(...args) },
+  getFileById(...args) { return getChatFilesService().getFileById(...args) },
+  saveFileMetadata(...args) { return getChatFilesService().saveFileMetadata(...args) },
+  deleteFile(...args) { return getChatFilesService().deleteFile(...args) },
+  formatFileSize(...args) { return getChatFilesService().formatFileSize(...args) },
+}

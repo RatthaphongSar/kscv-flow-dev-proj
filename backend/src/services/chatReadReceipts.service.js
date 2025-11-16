@@ -2,8 +2,8 @@
 import { prisma as defaultPrisma } from '../db.js'
 
 export class ChatReadReceiptsService {
-  constructor(prisma = defaultPrisma) {
-    this.prisma = prisma
+  constructor(prisma) {
+    this.prisma = prisma || defaultPrisma
   }
 
   async markRoomAsRead(roomId, userId) {
@@ -94,5 +94,20 @@ export class ChatReadReceiptsService {
   }
 }
 
-// Export instance with prisma passed explicitly
-export const chatReadReceiptsService = new ChatReadReceiptsService(defaultPrisma)
+// Lazy singleton instance
+let _instance = null
+
+export function getChatReadReceiptsService() {
+  if (!_instance) {
+    _instance = new ChatReadReceiptsService(defaultPrisma)
+  }
+  return _instance
+}
+
+// Default export for backward compatibility
+export const chatReadReceiptsService = {
+  markRoomAsRead(...args) { return getChatReadReceiptsService().markRoomAsRead(...args) },
+  getUnreadCounts(...args) { return getChatReadReceiptsService().getUnreadCounts(...args) },
+  getMessageReadCount(...args) { return getChatReadReceiptsService().getMessageReadCount(...args) },
+  getMessageReaders(...args) { return getChatReadReceiptsService().getMessageReaders(...args) },
+}
