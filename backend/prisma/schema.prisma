@@ -26,6 +26,8 @@ model User {
   uploadedFiles ChatFile[]
   messageReads MessageRead[]
   pinnedRooms  RoomPin[]
+  deletedMessages DeletedMessagePerUser[]
+  pinnedMessages PinnedMessage[]
 
   // Academic Relations
   class        Class?   @relation(fields: [classId], references: [id])
@@ -58,6 +60,7 @@ model Room {
   notes    ChatNote[]
   files    ChatFile[]
   pins     RoomPin[]
+  pinnedMessages PinnedMessage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -79,16 +82,17 @@ model RoomMember {
 
 model Message {
   id        String   @id @default(cuid())
-  content   String
+  content   String?
   type      String   @default("text") // text, image, file
   createdAt DateTime @default(now())
   edited    Boolean  @default(false)
   editedAt  DateTime?
+  deletedForEveryone Boolean @default(false)  // ลบสำหรับทุกคน
 
   // Relations
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
-  room      Room     @relation(fields: [roomId], references: [id])
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
   roomId    String
   
   // Reply support
@@ -103,8 +107,45 @@ model Message {
   // Read receipts for this message
   readReceipts MessageRead[]
 
+  // Delete tracking per user (ลบเฉพาะสำหรับตัวเอง)
+  deletedForUsers DeletedMessagePerUser[]
+
+  // Pinned messages
+  pinnedIn PinnedMessage[]
+
   @@index([roomId, createdAt])
   @@index([replyToId])
+  @@index([userId])
+}
+
+// ============ MESSAGE DELETION PER USER ============
+model DeletedMessagePerUser {
+  id        String   @id @default(cuid())
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  deletedAt DateTime @default(now())
+
+  @@unique([messageId, userId])
+  @@index([userId])
+  @@index([messageId])
+}
+
+// ============ PINNED MESSAGES ============
+model PinnedMessage {
+  id        String   @id @default(cuid())
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId String
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId    String
+  user      User     @relation(fields: [pinnedBy], references: [id], onDelete: Cascade)
+  pinnedBy  String
+  pinnedAt  DateTime @default(now())
+
+  @@unique([messageId, roomId])
+  @@index([roomId, pinnedAt])
+  @@index([pinnedBy])
 }
 
 // ============ ACADEMIC MODELS ============

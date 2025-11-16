@@ -321,4 +321,80 @@ router.get(
   ctrlExt.checkRoomPinStatus
 )
 
+// ==================== MESSAGE MANAGEMENT ====================
+
+// DELETE /rooms/:roomId/messages/:messageId (enhanced with mode query)
+router.delete(
+  '/rooms/:roomId/messages/:messageId',
+  authRequired,
+  [
+    param('roomId').isString().withMessage('roomId is required'),
+    param('messageId').isString().withMessage('messageId is required'),
+    query('mode').optional().isIn(['me', 'everyone']).withMessage('mode must be me or everyone'),
+  ],
+  validate,
+  ctrl.deleteMessageEnhanced
+)
+
+// PATCH /rooms/:roomId/messages/:messageId (enhanced)
+router.patch(
+  '/rooms/:roomId/messages/:messageId',
+  authRequired,
+  [
+    param('roomId').isString().withMessage('roomId is required'),
+    param('messageId').isString().withMessage('messageId is required'),
+    body('content').isString().notEmpty().withMessage('content is required'),
+  ],
+  validate,
+  ctrl.editMessageEnhanced
+)
+
+// POST /rooms/:roomId/messages/:messageId/reply
+router.post(
+  '/rooms/:roomId/messages/:messageId/reply',
+  authRequired,
+  uploadMiddleware.array('files', 1), // max 1 file for reply
+  handleUploadError,
+  [
+    param('roomId').isString().withMessage('roomId is required'),
+    param('messageId').isString().withMessage('messageId is required'),
+    body('content').isString().notEmpty().withMessage('content is required'),
+  ],
+  validate,
+  ctrl.replyToMessage
+)
+
+// POST /rooms/:roomId/messages/:messageId/pin
+router.post(
+  '/rooms/:roomId/messages/:messageId/pin',
+  authRequired,
+  [
+    param('roomId').isString().withMessage('roomId is required'),
+    param('messageId').isString().withMessage('messageId is required'),
+  ],
+  validate,
+  ctrl.pinMessage
+)
+
+// DELETE /rooms/:roomId/messages/:messageId/pin
+router.delete(
+  '/rooms/:roomId/messages/:messageId/pin',
+  authRequired,
+  [
+    param('roomId').isString().withMessage('roomId is required'),
+    param('messageId').isString().withMessage('messageId is required'),
+  ],
+  validate,
+  ctrl.unpinMessage
+)
+
+// GET /rooms/:roomId/pins
+router.get(
+  '/rooms/:roomId/pins',
+  authRequired,
+  [param('roomId').isString().withMessage('roomId is required')],
+  validate,
+  ctrl.getPinnedMessages
+)
+
 export default router

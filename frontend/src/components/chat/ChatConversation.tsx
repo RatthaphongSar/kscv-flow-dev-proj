@@ -1,11 +1,12 @@
 // frontend/src/components/chat/ChatConversation.tsx
 import { useEffect, useRef, useState } from 'react'
 import MessageBubble from './MessageBubble'
+import PinnedSection from '../PinnedSection'
 
 interface ChatConversationProps {
   roomId: string | null
   messages: any[]
-  currentUser: { id: string; username?: string } | null
+  currentUser: { id: string; username?: string; role?: string } | null
   onDeleteMessage?: (messageId: string) => void
   onEditMessage?: (messageId: string, newContent: string) => void
   onReplyMessage?: (messageId: string) => void
@@ -21,6 +22,7 @@ export default function ChatConversation({
 }: ChatConversationProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const [isAtBottom, setIsAtBottom] = useState(true)
+  const isRoomAdmin = currentUser?.role === 'TEACHER' || currentUser?.role === 'ADMIN'
 
   // ASC sort: oldest → newest
   const safeMessages = Array.isArray(messages)
@@ -61,6 +63,18 @@ export default function ChatConversation({
 
   return (
     <div className="flex-1 min-h-0 overflow-hidden flex flex-col bg-[#020617] relative w-full">
+      {/* Pinned messages section */}
+      {_roomId && (
+        <PinnedSection
+          roomId={_roomId}
+          currentUserId={currentUser?.id || ''}
+          isRoomAdmin={isRoomAdmin}
+          onUnpin={() => {
+            // Message will be removed from pinned list automatically
+          }}
+        />
+      )}
+
       {/* Scroll container */}
       <div
         ref={scrollRef}

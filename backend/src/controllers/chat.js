@@ -683,3 +683,280 @@ export const deleteRoom = async (req, res, next) => {
     return next(err)
   }
 }
+
+/**
+ * DELETE /rooms/:roomId/messages/:messageId
+ * Delete message (per-user or for everyone)
+ * query: mode=me|everyone (default: me)
+ */
+export const deleteMessageEnhanced = async (req, res, next) => {
+  try {
+    const { roomId, messageId } = req.params
+    const { mode = 'me' } = req.query
+    const userId = req.user?.id
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' })
+    }
+
+    if (!['me', 'everyone'].includes(mode)) {
+      return res.status(400).json({ error: 'Invalid mode: use me or everyone' })
+    }
+
+    // Import service
+    const {
+      deleteMessageForUser,
+      deleteMessageForEveryone,
+    } = await import('../services/messageService.js')
+
+    try {
+      let result
+      if (mode === 'everyone') {
+        result = await deleteMessageForEveryone(messageId, userId)
+      } else {
+        result = await deleteMessageForUser(messageId, userId)
+      }
+
+      // Emit socket event
+      const io = getIO()
+      if (mode === 'everyone') {
+        io.to(roomId).emit('messageDeletedForEveryone', { messageId })
+      } else {
+        io.to(`user_${userId}`).emit('messageDeletedForUser', { messageId, userId })
+      }
+
+      return res.json(result)
+    } catch (err) {
+      if (err.message.includes('Unauthorized')) {
+        return res.status(403).json({ error: err.message })
+      }
+      if (err.message.includes('not found')) {
+        return res.status(404).json({ error: err.message })
+      }
+      throw err
+    }
+  } catch (err) {
+    console.error('deleteMessageEnhanced error:', err)
+    return next(err)
+  }
+}
+
+/**
+ * PATCH /rooms/:roomId/messages/:messageId
+ * Edit message
+ */
+export const editMessageEnhanced = async (req, res, next) => {
+  try {
+    const { roomId, messageId } = req.params
+    const { content } = req.body
+    const userId = req.user?.id
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' })
+    }
+
+    if (!content || typeof content !== 'string' || !content.trim()) {
+      return res.status(400).json({ error: 'Content is required and cannot be empty' })
+    }
+
+    // Import service
+    const { editMessage } = await import('../services/messageService.js')
+
+    try {
+      const updatedMessage = await editMessage(messageId, userId, content)
+
+      // Emit socket event
+      const io = getIO()
+      io.to(roomId).emit('messageEdited', updatedMessage)
+
+      return res.json(updatedMessage)
+    } catch (err) {
+      if (err.message.includes('Unauthorized')) {
+        return res.status(403).json({ error: err.message })
+      }
+      if (err.message.includes('not found')) {
+        return res.status(404).json({ error: err.message })
+      }
+      throw err
+    }
+  } catch (err) {
+    console.error('editMessageEnhanced error:', err)
+    return next(err)
+  }
+}
+
+/**
+ * POST /rooms/:roomId/messages/:messageId/reply
+ * Reply to a message
+ */
+export const replyToMessage = async (req, res, next) => {
+  try {
+    const { roomId, messageId } = req.params
+    const { content } = req.body
+    const userId = req.user?.id
+    const files = req.files || []
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' })
+    }
+
+    if (!content || typeof content !== 'string' || !content.trim()) {
+      return res.status(400).json({ error: 'Content is required' })
+    }
+
+    // Import service
+    const { replyMessage } = await import('../services/messageService.js')
+
+    try {
+      let fileId = null
+
+      // Process file if attached
+      if (files.length > 0) {
+        const file = files[0]
+        const chatFile = await prisma.chatFile.create({
+          data: {
+            fileName: file.originalname,
+            mimeType: file.mimetype,
+            sizeBytes: file.size,
+            url: `/uploads/${file.filename}`,
+            room: { connect: { id: roomId } },
+            uploader: { connect: { id: userId } },
+          },
+        })
+        fileId = chatFile.id
+      }
+
+      const reply = await replyMessage(roomId, userId, content, messageId, fileId)
+
+      // Emit socket event
+      const io = getIO()
+      io.to(roomId).emit('messageReplied', reply)
+
+      return res.status(201).json(reply)
+    } catch (err) {
+      if (err.message.includes('not found') || err.message.includes('Cannot reply')) {
+        return res.status(404).json({ error: err.message })
+      }
+      if (err.message.includes('different room')) {
+        return res.status(400).json({ error: err.message })
+      }
+      throw err
+    }
+  } catch (err) {
+    console.error('replyToMessage error:', err)
+    return next(err)
+  }
+}
+
+/**
+ * POST /rooms/:roomId/messages/:messageId/pin
+ * Pin a message
+ */
+export const pinMessage = async (req, res, next) => {
+  try {
+    const { roomId, messageId } = req.params
+    const userId = req.user?.id
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' })
+    }
+
+    // Import service
+    const { pinMessage: pinMessageService } = await import(
+      '../services/pinnedMessageService.js'
+    )
+
+    try {
+      const pinned = await pinMessageService(messageId, roomId, userId)
+
+      // Emit socket event
+      const io = getIO()
+      io.to(roomId).emit('messagePinned', pinned)
+
+      return res.status(201).json(pinned)
+    } catch (err) {
+      if (err.message.includes('Unauthorized')) {
+        return res.status(403).json({ error: err.message })
+      }
+      if (err.message.includes('not found') || err.message.includes('does not belong')) {
+        return res.status(404).json({ error: err.message })
+      }
+      throw err
+    }
+  } catch (err) {
+    console.error('pinMessage error:', err)
+    return next(err)
+  }
+}
+
+/**
+ * DELETE /rooms/:roomId/messages/:messageId/pin
+ * Unpin a message
+ */
+export const unpinMessage = async (req, res, next) => {
+  try {
+    const { roomId, messageId } = req.params
+    const userId = req.user?.id
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' })
+    }
+
+    // Import service
+    const { unpinMessage: unpinMessageService } = await import(
+      '../services/pinnedMessageService.js'
+    )
+
+    try {
+      const result = await unpinMessageService(messageId, roomId, userId)
+
+      // Emit socket event
+      const io = getIO()
+      io.to(roomId).emit('messageUnpinned', result)
+
+      return res.json(result)
+    } catch (err) {
+      if (err.message.includes('Unauthorized')) {
+        return res.status(403).json({ error: err.message })
+      }
+      if (err.message.includes('not found')) {
+        return res.status(404).json({ error: err.message })
+      }
+      throw err
+    }
+  } catch (err) {
+    console.error('unpinMessage error:', err)
+    return next(err)
+  }
+}
+
+/**
+ * GET /rooms/:roomId/pins
+ * Get all pinned messages in a room
+ */
+export const getPinnedMessages = async (req, res, next) => {
+  try {
+    const { roomId } = req.params
+    const userId = req.user?.id
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' })
+    }
+
+    // Import service
+    const { getPinnedMessages: getPinnedMessagesService } = await import(
+      '../services/pinnedMessageService.js'
+    )
+
+    try {
+      const pins = await getPinnedMessagesService(roomId)
+      return res.json(pins)
+    } catch (err) {
+      console.error('getPinnedMessages error:', err)
+      throw err
+    }
+  } catch (err) {
+    console.error('getPinnedMessages error:', err)
+    return next(err)
+  }
+}

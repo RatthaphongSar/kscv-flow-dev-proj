@@ -25,18 +25,21 @@ function signRefresh(u) {
 function setAuthCookies(res, access, refresh) {
   const isProd = process.env.NODE_ENV === 'production'
   const secure = isProd || process.env.FORCE_SECURE_COOKIES === 'true'
+  // Dev (HTTP): use 'lax'; Prod (HTTPS): use 'strict'
   const sameSite = isProd ? 'strict' : 'lax'
   
   res.cookie('access_token', access, { 
     httpOnly: true, 
     sameSite, 
     secure, 
+    path: '/',
     maxAge: 1000*60*15 // 15 mins = JWT ACCESS exp
   })
   res.cookie('refresh_token', refresh, { 
     httpOnly: true, 
     sameSite, 
     secure, 
+    path: '/',
     maxAge: 1000*60*60*24*30 // 30 days = JWT REFRESH exp
   })
   

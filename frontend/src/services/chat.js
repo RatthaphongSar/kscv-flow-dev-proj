@@ -101,4 +101,51 @@ export const ChatAPI = {
     api(`/chat/rooms/${roomId}`, {
       method: 'DELETE',
     }),
+
+  // ========== MESSAGE MANAGEMENT ==========
+  // ลบข้อความสำหรับตัวเอง หรือลบสำหรับทุกคน
+  deleteMessageEnhanced: (roomId, messageId, mode = 'me') =>
+    api(`/chat/rooms/${roomId}/messages/${messageId}?mode=${mode}`, {
+      method: 'DELETE',
+    }),
+
+  // แก้ไขข้อความ (เพิ่มเติมด้วยการติดตาม editedAt)
+  editMessageEnhanced: (roomId, messageId, content) =>
+    api(`/chat/rooms/${roomId}/messages/${messageId}`, {
+      method: 'PATCH',
+      body: { content },
+    }),
+
+  // ตอบกลับข้อความ (reply)
+  replyToMessage: (roomId, messageId, content, files = null) => {
+    if (files && files instanceof FormData) {
+      return api(`/chat/rooms/${roomId}/messages/${messageId}/reply`, {
+        method: 'POST',
+        body: files,
+        headers: {}, // ให้ browser ตั้ง Content-Type
+      })
+    }
+    return api(`/chat/rooms/${roomId}/messages/${messageId}/reply`, {
+      method: 'POST',
+      body: { content },
+    })
+  },
+
+  // ปักหมุด (pin) ข้อความ
+  pinMessage: (roomId, messageId) =>
+    api(`/chat/rooms/${roomId}/messages/${messageId}/pin`, {
+      method: 'POST',
+    }),
+
+  // ถอนปักหมุด (unpin) ข้อความ
+  unpinMessage: (roomId, messageId) =>
+    api(`/chat/rooms/${roomId}/messages/${messageId}/pin`, {
+      method: 'DELETE',
+    }),
+
+  // ดึงข้อความที่ปักหมุดทั้งหมดในห้อง
+  getPinnedMessages: (roomId) =>
+    api(`/chat/rooms/${roomId}/pins`, {
+      method: 'GET',
+    }),
 }
