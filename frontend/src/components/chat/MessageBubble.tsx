@@ -8,6 +8,17 @@ interface MessageFile {
   width?: number
   height?: number
   mimeType?: string
+  sizeBytes?: number
+  fileSize?: number
+}
+
+// Helper function to format file size
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i]
 }
 
 interface MessageBubbleProps {
@@ -228,6 +239,43 @@ export default function MessageBubble({
                   {edited && (
                     <span className="text-[9px] opacity-70 ml-1">(แก้ไข)</span>
                   )}
+
+                  {/* File Attachment (images or documents) */}
+                  {file && file.mimeType && (
+                    file.mimeType.startsWith('image/') ? (
+                      // Render image
+                      <div className="mt-2 relative group">
+                        <img
+                          src={file.url}
+                          alt={file.fileName}
+                          onClick={() => setImageViewerOpen(true)}
+                          className="rounded-lg object-cover cursor-pointer hover:opacity-90 transition-opacity max-w-xs max-h-80"
+                        />
+                      </div>
+                    ) : (
+                      // Render document download link
+                      <a
+                        href={file.url}
+                        download={file.fileName}
+                        className="mt-2 flex items-center gap-2 p-2 bg-opacity-20 bg-blue-400 rounded-lg hover:bg-opacity-30 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M8 16.5a1 1 0 11-2 0 1 1 0 012 0zM15 7a2 2 0 11-4 0 2 2 0 014 0z" />
+                          <path d="M2.458 12C.732 10.943 0 10.298 0 9.5 0 8.119 1.343 7 3 7h12c1.657 0 3 1.119 3 2.5 0 .798.732 1.443 2.458 2.5M11 19H5a3 3 0 01-3-3V7a3 3 0 013-3h6m0 0h6a3 3 0 013 3v9a3 3 0 01-3 3h-6m0-13v6m0 0v6" />
+                        </svg>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-medium truncate">{file.fileName}</div>
+                          {(file.sizeBytes || file.fileSize) && (
+                            <div className="text-xs opacity-75">{formatFileSize(file.sizeBytes || file.fileSize || 0)}</div>
+                          )}
+                        </div>
+                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                      </a>
+                    )
+                  )}
+
                   <div
                     className={`text-[10px] mt-1 ${
                       isOwn ? 'text-violet-100 text-right' : 'text-gray-400 text-right'
@@ -319,6 +367,32 @@ export default function MessageBubble({
           )}
         </div>
       </div>
+
+      {/* Image Viewer Modal (for images in text messages or image-type messages) */}
+      {imageViewerOpen && file?.mimeType?.startsWith('image/') && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center"
+            onClick={() => setImageViewerOpen(false)}
+          >
+            <div className="relative max-w-4xl max-h-[90vh] p-4">
+              <img
+                src={file.url}
+                alt={file.fileName}
+                className="max-w-full max-h-full object-contain rounded-lg"
+              />
+              <button
+                onClick={() => setImageViewerOpen(false)}
+                className="absolute top-2 right-2 p-2 bg-black/50 hover:bg-black/70 text-white rounded-lg transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

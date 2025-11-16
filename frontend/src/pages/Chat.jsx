@@ -24,6 +24,7 @@ export default function ChatPage() {
   const [socketConnected, setSocketConnected] = useState(false)
   const [sendLoading, setSendLoading] = useState(false)
   const [sendError, setSendError] = useState('')
+  const [selectedFiles, setSelectedFiles] = useState([])
 
   // typing indicator
   const [typingMap, setTypingMap] = useState({}) // { userId: { username, last } }
@@ -192,7 +193,10 @@ export default function ChatPage() {
     
     setSendError('')
     
-    if (!text.trim()) {
+    const trimmed = text.trim()
+    const hasFiles = selectedFiles.length > 0
+    
+    if (!trimmed && !hasFiles) {
       setSendError('ข้อความว่างเปล่า')
       return
     }
@@ -214,18 +218,32 @@ export default function ChatPage() {
     }
 
     setSendLoading(true)
-    const trimmed = text.trim()
     const replyToId = replyingTo?.id || null
 
     try {
-      console.log('📤 Sending message:', { roomId: activeRoom.id, userId: user.id, content: trimmed, replyToId })
+      console.log('📤 Sending message:', { roomId: activeRoom.id, userId: user.id, content: trimmed, hasFiles, fileCount: selectedFiles.length })
       
-      const newMessage = await ChatAPI.sendMessage(
-        activeRoom.id,
-        user.id,
-        trimmed,
-        replyToId,
-      )
+      let formData = null
+      let newMessage = null
+
+      // ถ้ามีไฟล์ ส่งเป็น multipart/form-data
+      if (hasFiles) {
+        formData = new FormData()
+        if (trimmed) formData.append('content', trimmed)
+        if (replyToId) formData.append('replyToId', replyToId)
+        selectedFiles.forEach((f, idx) => {
+          formData.append('files', f.file)
+        })
+        newMessage = await ChatAPI.sendMessage(activeRoom.id, user.id, trimmed, replyToId, formData)
+      } else {
+        // ส่งข้อความธรรมดา (ไม่มีไฟล์)
+        newMessage = await ChatAPI.sendMessage(
+          activeRoom.id,
+          user.id,
+          trimmed,
+          replyToId,
+        )
+      }
 
       console.log('✅ Message sent:', newMessage)
 
@@ -236,19 +254,21 @@ export default function ChatPage() {
           roomId: activeRoom.id,
           userId: user.id,
           user: { username: user.username },
-          content: trimmed,
+          content: trimmed || '',
           createdAt: new Date().toISOString(),
           replyToId,
+          file: newMessage.file || null,
         },
       ])
 
       socket.emit?.('chatMessage', {
         roomId: activeRoom.id,
         userId: user.id,
-        text: trimmed,
+        text: trimmed || '[File uploaded]',
       })
 
       setText('')
+      setSelectedFiles([])
       setReplyingTo(null)
       setTypingMap((prev) => {
         const next = { ...prev }
@@ -263,7 +283,7 @@ export default function ChatPage() {
     }
   }
 
-  // -----------------------------
+  // --------------------------------------------------
   // พิมพ์ข้อความ + ยิง event typing
   // -----------------------------
   const handleChangeText = useCallback(
@@ -282,6 +302,80 @@ export default function ChatPage() {
   )
 
   // -----------------------------
+  // จัดการไฟล์ที่แนบมา
+  // -----------------------------
+  const handleAttachFiles = useCallback((files) => {
+    if (!files || files.length === 0) return
+    
+    const maxFileSize = 10 * 1024 * 1024 // 10 MB
+    const allowedTypes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/plain',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    ]
+    
+    const newFiles = []
+    let hasError = false
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      
+      // ตรวจสอบขนาดไฟล์
+      if (file.size > maxFileSize) {
+        setSendError(`ไฟล์ ${file.name} ใหญ่เกิน 10 MB`)
+        hasError = true
+        break
+      }
+
+      // ตรวจสอบประเภทไฟล์
+      if (!allowedTypes.includes(file.type)) {
+        setSendError(`ไฟล์ ${file.name} ไม่ได้รับการสนับสนุน`)
+        hasError = true
+        break
+      }
+
+      newFiles.push({
+        id: `${Date.now()}-${i}`,
+        file,
+        filename: file.name,
+        fileSize: file.size,
+        mimeType: file.type,
+        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
+      })
+    }
+
+    if (hasError) return
+
+    setSelectedFiles((prev) => [...prev, ...newFiles])
+  }, [])
+
+  // ลบไฟล์ที่เลือก
+  const handleRemoveFile = useCallback((fileId) => {
+    setSelectedFiles((prev) => {
+      const updated = prev.filter((f) => f.id !== fileId)
+      // Clear preview URL
+      const removed = prev.find((f) => f.id === fileId)
+      if (removed?.preview) {
+        URL.revokeObjectURL(removed.preview)
+      }
+      return updated
+    })
+  }, [])
+
+  // ลบไฟล์ทั้งหมด
+  const handleClearFiles = useCallback(() => {
+    selectedFiles.forEach((f) => {
+      if (f.preview) URL.revokeObjectURL(f.preview)
+    })
+    setSelectedFiles([])
+  }, [selectedFiles])
+
   // ลบข้อความ
   // -----------------------------
   const handleDeleteMessage = useCallback(
@@ -303,8 +397,6 @@ export default function ChatPage() {
     },
     [activeRoom, socket],
   )
-
-  // -----------------------------
   // แก้ไขข้อความ
   // -----------------------------
   const handleEditMessage = useCallback(
@@ -435,6 +527,10 @@ export default function ChatPage() {
       onCancelReply={() => setReplyingTo(null)}
       pinnedRooms={pinnedRooms}
       onTogglePin={handleTogglePin}
+      selectedFiles={selectedFiles}
+      onAttachFiles={handleAttachFiles}
+      onRemoveFile={handleRemoveFile}
+      onClearFiles={handleClearFiles}
     />
   )
 }

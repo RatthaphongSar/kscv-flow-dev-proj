@@ -81,6 +81,19 @@ export default function ChatConversation({
                 minute: '2-digit',
               })
 
+            // Determine message type and file info
+            let type: 'text' | 'image' | 'file' = 'text'
+            let file = null
+
+            if (m?.file) {
+              file = m.file
+              if (file.mimeType?.startsWith('image/')) {
+                type = 'image'
+              } else {
+                type = 'file'
+              }
+            }
+
             return (
               <div key={m.id} data-message-id={m.id}>
                 <MessageBubble
@@ -89,6 +102,8 @@ export default function ChatConversation({
                   username={username}
                   content={content}
                   time={time || ''}
+                  type={type}
+                  file={file}
                   edited={m?.edited || false}
                   replyTo={m?.replyTo || null}
                   onDelete={onDeleteMessage}

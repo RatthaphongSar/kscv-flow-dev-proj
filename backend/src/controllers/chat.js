@@ -176,7 +176,8 @@ export const listMessages = async (req, res, next) => {
         user: true,
         replyTo: {
           include: { user: true }
-        }
+        },
+        file: true
       },
     })
     res.json(msgs)
@@ -187,20 +188,24 @@ export const listMessages = async (req, res, next) => {
 
 /**
  * POST /rooms/:roomId/messages
- * ส่งข้อความในห้อง
+ * ส่งข้อความในห้อง (รองรับไฟล์แนบ)
  * ใช้ userId จาก JWT เป็นหลัก
- * body: { content, replyToId? }
+ * body: { content?, replyToId? }
+ * files: multipart/form-data (files[])
  */
 export const sendMessage = async (req, res, next) => {
   try {
     const { roomId } = req.params
     const { content, replyToId } = req.body
     const userId = req.user?.id || req.body.userId
+    const files = req.files || [] // from multer
 
-    if (!userId || !content) {
-      return res
-        .status(400)
-        .json({ error: 'userId and content are required' })
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' })
+    }
+
+    if (!content && files.length === 0) {
+      return res.status(400).json({ error: 'Message must have content or files' })
     }
 
     const room = await prisma.room.findUnique({ where: { id: roomId } })
@@ -210,9 +215,7 @@ export const sendMessage = async (req, res, next) => {
       where: { roomId_userId: { roomId, userId } },
     })
     if (!member) {
-      return res
-        .status(403)
-        .json({ error: 'Not a member of this room' })
+      return res.status(403).json({ error: 'Not a member of this room' })
     }
 
     // ตรวจสอบ replyToId ถ้ามี
@@ -226,27 +229,85 @@ export const sendMessage = async (req, res, next) => {
       }
     }
 
+    // Determine message type
+    let messageType = 'text'
+    if (files.length > 0) {
+      const firstFile = files[0]
+      messageType = firstFile.mimetype.startsWith('image/') ? 'image' : 'file'
+    }
+
+    // Create message
+    const messageData = {
+      content: content || '📎 File attachment',
+      type: messageType,
+      userId,
+      roomId,
+      ...(replyToId && { replyToId })
+    }
+
     const message = await prisma.message.create({
-      data: { 
-        content, 
-        userId, 
-        roomId,
-        ...(replyToId && { replyToId })
-      },
-      include: { 
-        user: true,
+      data: messageData,
+      include: {
+        user: { select: { id: true, username: true } },
         replyTo: {
-          include: { user: true }
-        }
+          include: { user: { select: { id: true, username: true } } }
+        },
+        file: true,
+        readReceipts: { select: { userId: true } }
       },
     })
 
+    // Process files if any
+    let attachedFile = null
+    if (files && files.length > 0) {
+      try {
+        const file = files[0] // multer stores as array
+        
+        // Create file record in database
+        const chatFile = await prisma.chatFile.create({
+          data: {
+            fileName: file.originalname,
+            mimeType: file.mimetype,
+            sizeBytes: file.size,
+            url: `/uploads/${file.filename}`,
+            room: { connect: { id: roomId } },
+            uploader: { connect: { id: userId } }
+          }
+        })
+
+        // Link file to message
+        await prisma.message.update({
+          where: { id: message.id },
+          data: { fileId: chatFile.id }
+        })
+
+        attachedFile = chatFile
+      } catch (fileErr) {
+        console.error('[sendMessage] File processing error:', fileErr)
+        // Continue without file if error
+      }
+    }
+
+    // Fetch updated message with file info
+    const finalMessage = await prisma.message.findUnique({
+      where: { id: message.id },
+      include: {
+        user: { select: { id: true, username: true } },
+        replyTo: {
+          include: { user: { select: { id: true, username: true } } }
+        },
+        file: true,
+        readReceipts: { select: { userId: true } }
+      }
+    })
+
+    // Emit event
     try {
       const io = getIO()
-      io.to(roomId).emit('chatMessage', message)
+      io.to(roomId).emit('chatMessage', finalMessage)
     } catch (_) {}
 
-    return res.status(201).json(message)
+    return res.status(201).json(finalMessage)
   } catch (err) {
     console.error('sendMessage error:', err)
     return next(err)

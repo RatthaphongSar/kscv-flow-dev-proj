@@ -24,11 +24,20 @@ export const ChatAPI = {
     }),
 
   // ส่งข้อความ — ตอนนี้ backend จะใช้ user จาก JWT เป็นหลัก
-  sendMessage: (roomId, _userId, content, replyToId = null) =>
-    api(`/chat/rooms/${roomId}/messages`, {
+  // รองรับ FormData ที่มี files (multipart/form-data)
+  sendMessage: (roomId, _userId, content, replyToId = null, files = null) => {
+    if (files && files instanceof FormData) {
+      return api(`/chat/rooms/${roomId}/messages`, {
+        method: 'POST',
+        body: files,
+        headers: {}, // ให้ browser ตั้ง Content-Type: multipart/form-data เอง
+      })
+    }
+    return api(`/chat/rooms/${roomId}/messages`, {
       method: 'POST',
       body: { content, replyToId },
-    }),
+    })
+  },
 
   // แก้ไขข้อความ
   editMessage: (roomId, messageId, content) =>

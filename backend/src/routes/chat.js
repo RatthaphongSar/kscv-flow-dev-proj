@@ -5,6 +5,7 @@ import * as ctrlExt from '../controllers/chatExtended.js'
 import { body, param, query } from 'express-validator'
 import { validate } from '../middleware/validate.js'
 import { authRequired } from '../middleware/auth.js'
+import { uploadMiddleware, handleUploadError } from '../middleware/upload.js'
 
 const router = Router()
 
@@ -32,13 +33,15 @@ router.get('/students', authRequired, ctrl.getStudents)
 // List rooms for current user (จาก JWT)
 router.get('/rooms', authRequired, ctrl.listRooms)
 
-// Send message
+// Send message (with file upload support)
 router.post(
   '/rooms/:roomId/messages',
   authRequired,
+  uploadMiddleware.array('files', 10), // max 10 files
+  handleUploadError,
   [
     param('roomId').isString().withMessage('roomId is required'),
-    body('content').isString().withMessage('content is required'),
+    body('content').optional().isString(),
   ],
   validate,
   ctrl.sendMessage

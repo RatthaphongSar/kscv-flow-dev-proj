@@ -24,6 +24,9 @@ interface ChatWindowProps {
   replyingTo?: { id: string; username: string; content: string } | null
   onCancelReply?: () => void
   onAttachFiles?: (files: FileList) => void
+  selectedFiles?: any[]
+  onRemoveFile?: (fileId: string) => void
+  onClearFiles?: () => void
 }
 
 export default function ChatWindow({
@@ -41,6 +44,8 @@ export default function ChatWindow({
   replyingTo,
   onCancelReply,
   onAttachFiles,
+  selectedFiles = [],
+  onRemoveFile,
 }: ChatWindowProps) {
   const [showAddStudents, setShowAddStudents] = useState(false)
   const [activeTab, setActiveTab] = useState<ChatPanelTab>('chat')
@@ -138,6 +143,44 @@ export default function ChatWindow({
               </button>
             </div>
           )}
+
+          {/* File Preview Gallery */}
+          {selectedFiles.length > 0 && (
+            <div className="mb-3 flex flex-wrap gap-2">
+              {selectedFiles.map((file) => (
+                <div key={file.id} className="relative">
+                  {file.preview ? (
+                    <div className="relative group">
+                      <img
+                        src={file.preview}
+                        alt={file.filename}
+                        className="h-16 w-16 object-cover rounded-lg"
+                      />
+                      <button
+                        onClick={() => onRemoveFile?.(file.id)}
+                        className="absolute -top-2 -right-2 w-5 h-5 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center text-xs"
+                        title="Remove file"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="relative h-16 w-16 bg-gray-700 rounded-lg flex items-center justify-center">
+                      <span className="text-xs text-gray-300 text-center px-1">{file.filename.split('.').pop()?.toUpperCase()}</span>
+                      <button
+                        onClick={() => onRemoveFile?.(file.id)}
+                        className="absolute -top-2 -right-2 w-5 h-5 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center text-xs"
+                        title="Remove file"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           <MessageInput 
             text={text} 
             setText={setText} 

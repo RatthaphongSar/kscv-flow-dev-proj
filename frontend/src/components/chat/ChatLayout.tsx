@@ -21,6 +21,10 @@ export default function ChatLayout({
   onCancelReply,
   pinnedRooms,
   onTogglePin,
+  selectedFiles,
+  onAttachFiles,
+  onRemoveFile,
+  onClearFiles,
 }) {
   return (
     <div className="flex flex-1 min-h-0 w-full text-gray-100 overflow-hidden">
@@ -51,6 +55,10 @@ export default function ChatLayout({
         onReplyMessage={onReplyMessage}
         replyingTo={replyingTo}
         onCancelReply={onCancelReply}
+        selectedFiles={selectedFiles}
+        onAttachFiles={onAttachFiles}
+        onRemoveFile={onRemoveFile}
+        onClearFiles={onClearFiles}
       />
     </div>
   )

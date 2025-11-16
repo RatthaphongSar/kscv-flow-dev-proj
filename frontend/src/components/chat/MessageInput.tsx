@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { Send } from 'lucide-react'
 
 interface MessageInputProps {
   text: string
@@ -71,6 +72,7 @@ export default function MessageInput({
         multiple
         onChange={handleFileChange}
         className="hidden"
+        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.pptx"
         aria-label="Select files to attach"
       />
 
@@ -109,7 +111,11 @@ export default function MessageInput({
                    transition-colors duration-200 font-semibold"
         title="ส่งข้อความ (Enter)"
       >
-        {isLoading ? '⏳' : '→'}
+        {isLoading ? (
+          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        ) : (
+          <Send size={18} />
+        )}
       </button>
     </form>
   )
