@@ -101,8 +101,8 @@ export function getChatMembersService() {
 
 // Default export for backward compatibility
 export const chatMembersService = {
-  getRoomMembers(...args) { return getChatMembersService().getRoomMembers(...args) },
-  getAvailableMembers(...args) { return getChatMembersService().getAvailableMembers(...args) },
-  addMember(...args) { return getChatMembersService().addMember(...args) },
-  removeMember(...args) { return getChatMembersService().removeMember(...args) },
+  getRoomMembers(...args) { return getChatMembersService().getRoomMembers.call(getChatMembersService(), ...args) },
+  getAvailableMembers(...args) { return getChatMembersService().getAvailableMembers.call(getChatMembersService(), ...args) },
+  addMember(...args) { return getChatMembersService().addMember.call(getChatMembersService(), ...args) },
+  removeMember(...args) { return getChatMembersService().removeMember.call(getChatMembersService(), ...args) },
 }

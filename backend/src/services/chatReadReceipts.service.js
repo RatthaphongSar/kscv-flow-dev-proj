@@ -106,8 +106,8 @@ export function getChatReadReceiptsService() {
 
 // Default export for backward compatibility
 export const chatReadReceiptsService = {
-  markRoomAsRead(...args) { return getChatReadReceiptsService().markRoomAsRead(...args) },
-  getUnreadCounts(...args) { return getChatReadReceiptsService().getUnreadCounts(...args) },
-  getMessageReadCount(...args) { return getChatReadReceiptsService().getMessageReadCount(...args) },
-  getMessageReaders(...args) { return getChatReadReceiptsService().getMessageReaders(...args) },
+  markRoomAsRead(...args) { return getChatReadReceiptsService().markRoomAsRead.call(getChatReadReceiptsService(), ...args) },
+  getUnreadCounts(...args) { return getChatReadReceiptsService().getUnreadCounts.call(getChatReadReceiptsService(), ...args) },
+  getMessageReadCount(...args) { return getChatReadReceiptsService().getMessageReadCount.call(getChatReadReceiptsService(), ...args) },
+  getMessageReaders(...args) { return getChatReadReceiptsService().getMessageReaders.call(getChatReadReceiptsService(), ...args) },
 }

@@ -89,9 +89,9 @@ export function getChatFilesService() {
 
 // Default export for backward compatibility
 export const chatFilesService = {
-  getFilesByRoom(...args) { return getChatFilesService().getFilesByRoom(...args) },
-  getFileById(...args) { return getChatFilesService().getFileById(...args) },
-  saveFileMetadata(...args) { return getChatFilesService().saveFileMetadata(...args) },
-  deleteFile(...args) { return getChatFilesService().deleteFile(...args) },
-  formatFileSize(...args) { return getChatFilesService().formatFileSize(...args) },
+  getFilesByRoom(...args) { return getChatFilesService().getFilesByRoom.call(getChatFilesService(), ...args) },
+  getFileById(...args) { return getChatFilesService().getFileById.call(getChatFilesService(), ...args) },
+  saveFileMetadata(...args) { return getChatFilesService().saveFileMetadata.call(getChatFilesService(), ...args) },
+  deleteFile(...args) { return getChatFilesService().deleteFile.call(getChatFilesService(), ...args) },
+  formatFileSize(...args) { return getChatFilesService().formatFileSize.call(getChatFilesService(), ...args) },
 }

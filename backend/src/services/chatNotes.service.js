@@ -107,9 +107,9 @@ export function getChatNotesService() {
 
 // Default export for backward compatibility
 export const chatNotesService = {
-  getNotesByRoom(...args) { return getChatNotesService().getNotesByRoom(...args) },
-  getNoteById(...args) { return getChatNotesService().getNoteById(...args) },
-  createNote(...args) { return getChatNotesService().createNote(...args) },
-  updateNote(...args) { return getChatNotesService().updateNote(...args) },
-  deleteNote(...args) { return getChatNotesService().deleteNote(...args) },
+  getNotesByRoom(...args) { return getChatNotesService().getNotesByRoom.call(getChatNotesService(), ...args) },
+  getNoteById(...args) { return getChatNotesService().getNoteById.call(getChatNotesService(), ...args) },
+  createNote(...args) { return getChatNotesService().createNote.call(getChatNotesService(), ...args) },
+  updateNote(...args) { return getChatNotesService().updateNote.call(getChatNotesService(), ...args) },
+  deleteNote(...args) { return getChatNotesService().deleteNote.call(getChatNotesService(), ...args) },
 }
