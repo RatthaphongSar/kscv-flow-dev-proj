@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as ctrl from '../controllers/classes.js';
+import * as ctrl from '../controllers/class.controller.js';
 import { body, param, query } from 'express-validator';
 const router = Router();
 

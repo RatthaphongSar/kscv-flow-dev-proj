@@ -144,7 +144,7 @@ export default function App() {
           </button>
         </div>
 
-        <nav className="flex flex-col p-4 gap-2 text-sm overflow-y-auto h-full">
+        <nav className="flex flex-col p-4 gap-2 text-sm overflow-y-auto flex-1 min-h-0">
           <NavItem to="/dashboard" icon={Home} label="Dashboard" />
           <NavItem to="/announcements" icon={MessageSquare} label="Announcements" />
           <NavItem to="/assignment" icon={MessageSquare} label="Assignment" />
@@ -175,8 +175,8 @@ export default function App() {
       </div>
 
       {/* ============ MAIN CONTENT ============ */}
-      <main className="flex flex-1 min-h-0 w-full justify-center overflow-hidden">
-        <div className="w-full max-w-[1400px] flex flex-1 min-h-0 overflow-hidden bg-[#020617]">
+      <main className="flex flex-1 min-h-0 w-full justify-center overflow-y-auto">
+        <div className="w-full max-w-[1400px] flex flex-1 min-h-0 overflow-auto bg-[#020617]">
           <AppRoutes />
         </div>
       </main>

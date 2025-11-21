@@ -30,16 +30,17 @@ model User {
   pinnedMessages PinnedMessage[]
 
   // Academic Relations
-  class        Class?   @relation(fields: [classId], references: [id])
-  classId      String?
-
+  teacherClasses  Class[]  @relation("TeacherClasses")
+  studentEnrollments Enrollment[] @relation("StudentEnrollments")
+  studentJoinRequests JoinRequest[] @relation("StudentJoinRequests")
   teacherAssignments Assignment[] @relation("TeacherAssignments")
   assignmentSubmissions AssignmentSubmission[]
 
   studentAttendances Attendance[] @relation("StudentAttendance")
 
-  grades       Grade[]
-  studentLeaves Leave[] @relation("StudentLeaves")
+  gradeRecords   GradeRecord[] @relation("StudentGrades")
+  studentExamGrades Grade[] @relation("StudentExamGrades")
+  studentLeaves  Leave[] @relation("StudentLeaves")
   advisorApprovals Leave[] @relation("AdvisorApprovals")
 
   advisor      Advisor?
@@ -151,42 +152,50 @@ model PinnedMessage {
 // ============ ACADEMIC MODELS ============
 
 model Assignment {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  dueDate     DateTime
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                    String   @id @default(cuid())
+  title                 String
+  description           String?
+  assignmentType        String   @default("homework") // homework, quiz, project, exam
+  maxScore              Float    @default(100)
+  dueDate               DateTime
+  requiredFilesCount    Int      @default(1) // จำนวนไฟล์ที่ต้องส่ง
+  maxSubmissionCount    Int      @default(1) // จำนวนครั้งที่อนุญาตให้ส่ง
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   // Relations
-  teacher   User   @relation("TeacherAssignments", fields: [teacherId], references: [id])
-  teacherId String
-  class     Class  @relation(fields: [classId], references: [id])
-  classId   String
+  teacher               User     @relation("TeacherAssignments", fields: [teacherId], references: [id])
+  teacherId             String
+  class                 Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classId               String
 
-  submissions AssignmentSubmission[]
+  submissions           AssignmentSubmission[]
 
   @@index([classId, dueDate])
+  @@index([teacherId])
 }
 
 model AssignmentSubmission {
-  id           String   @id @default(cuid())
-  submittedAt  DateTime @default(now())
-  fileUrl      String?
-  content      String?
-  grade        Float?
-  feedback     String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                String   @id @default(cuid())
+  submittedAt       DateTime @default(now())
+  fileUrl           String?
+  content           String?
+  grade             Float?
+  feedback          String?
+  status            String   @default("not_submitted") // not_submitted, submitted, graded, late, requested_resubmit
+  submissionCount   Int      @default(0) // จำนวนครั้งที่ส่งแล้ว
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   // Relations
-  student      User       @relation(fields: [studentId], references: [id])
-  studentId    String
-  assignment   Assignment @relation(fields: [assignmentId], references: [id])
-  assignmentId String
+  student           User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId         String
+  assignment        Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  assignmentId      String
 
   @@unique([assignmentId, studentId])
   @@index([studentId, submittedAt])
+  @@index([status])
 }
 
 model Attendance {
@@ -198,13 +207,14 @@ model Attendance {
   updatedAt DateTime @updatedAt
 
   // Relations
-  student   User   @relation("StudentAttendance", fields: [studentId], references: [id])
+  student   User   @relation("StudentAttendance", fields: [studentId], references: [id], onDelete: Cascade)
   studentId String
-  class     Class  @relation(fields: [classId], references: [id])
+  class     Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
   classId   String
 
   @@unique([studentId, classId, date])
   @@index([classId, date])
+  @@index([studentId])
 }
 
 model Exam {
@@ -218,7 +228,7 @@ model Exam {
   updatedAt DateTime @updatedAt
 
   // Relations
-  class   Class   @relation(fields: [classId], references: [id])
+  class   Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
   classId String
 
   grades Grade[]
@@ -236,9 +246,9 @@ model Grade {
   updatedAt DateTime @updatedAt
 
   // Relations
-  student User   @relation(fields: [studentId], references: [id])
+  student User   @relation("StudentExamGrades", fields: [studentId], references: [id], onDelete: Cascade)
   studentId String
-  exam    Exam  @relation(fields: [examId], references: [id])
+  exam    Exam  @relation(fields: [examId], references: [id], onDelete: Cascade)
   examId  String
 
   @@unique([examId, studentId])
@@ -323,22 +333,95 @@ model Schedule {
 }
 
 model Class {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  level     Int      // 1, 2, 3
-  major     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(cuid())
+  code            String   // e.g., "ENG-101"
+  name            String
+  section         String   @default("1")  // Section number
+  credits         Int      @default(3)    // Credit hours
+  semester        String?                 // e.g., "1/2567", "2/2567"
+  academicYear    Int?                    // e.g., 2567
+  room            String?                 // Room number/location
+  capacity        Int?                    // Max students
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  students      User[]
-  assignments   Assignment[]
-  attendances   Attendance[]
-  exams         Exam[]
-  schedules     Schedule[]
-  resources     Resource[]
-  organizations ClassOrganization[]
+  // Relations
+  teacher         User     @relation("TeacherClasses", fields: [teacherId], references: [id])
+  teacherId       String
 
-  @@index([major, level])
+  students        Enrollment[]
+  joinRequests    JoinRequest[] @relation("ClassJoinRequests")
+  assignments     Assignment[]
+  attendances     Attendance[]
+  exams           Exam[]
+  schedules       Schedule[]
+  resources       Resource[]
+  announcementPin AnnouncementPin[]
+  gradeItems      GradeItem[]
+  classOrganizations ClassOrganization[]
+  materials       TeachingMaterial[] @relation("ClassMaterials")
+
+  @@unique([code, section, semester])
+  @@index([teacherId])
+  @@index([code])
+  @@index([semester])
+}
+
+model Enrollment {
+  id              String   @id @default(cuid())
+  enrolledAt      DateTime @default(now())
+  status          String   @default("active") // active, dropped, completed
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  student         User     @relation("StudentEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
+  studentId       String
+  class           Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classId         String
+
+  @@unique([classId, studentId])
+  @@index([studentId])
+  @@index([classId])
+}
+
+model GradeItem {
+  id              String   @id @default(cuid())
+  name            String   // e.g., "Midterm Exam", "Assignment 1"
+  itemType        String   @default("assignment") // assignment, exam, quiz, participation
+  maxScore        Float    @default(100)
+  weight          Float    @default(0.1) // 0.1 = 10%
+  description     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  class           Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classId         String
+
+  gradeRecords    GradeRecord[]
+
+  @@index([classId])
+}
+
+model GradeRecord {
+  id              String   @id @default(cuid())
+  score           Float
+  percentage      Float?
+  grade           String?  // A, B, C, D, F
+  feedback        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  student         User     @relation("StudentGrades", fields: [studentId], references: [id], onDelete: Cascade)
+  studentId       String
+  gradeItem       GradeItem @relation(fields: [gradeItemId], references: [id], onDelete: Cascade)
+  gradeItemId     String
+
+  @@unique([gradeItemId, studentId])
+  @@index([studentId])
+  @@index([gradeItemId])
 }
 
 model Advisor {
@@ -456,10 +539,24 @@ model Resource {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  class   Class  @relation(fields: [classId], references: [id])
+  class   Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
   classId String
 
   @@index([classId, fileType])
+}
+
+model AnnouncementPin {
+  id              String   @id @default(cuid())
+  title           String
+  content         String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  class           Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classId         String
+
+  @@index([classId, createdAt])
 }
 
 // ============ CHAT EXTENDED MODELS ============
@@ -531,4 +628,44 @@ model MessageRead {
 
   @@unique([messageId, userId])
   @@index([userId, readAt])
+}
+
+// ============ NEW FEATURES: JOIN REQUESTS, TEACHING MATERIALS ============
+
+model JoinRequest {
+  id              String   @id @default(cuid())
+  status          String   @default("pending") // pending, approved, rejected
+  reason          String?  // reason for rejection
+  respondedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  student         User     @relation("StudentJoinRequests", fields: [studentId], references: [id], onDelete: Cascade)
+  studentId       String
+  class           Class    @relation("ClassJoinRequests", fields: [classId], references: [id], onDelete: Cascade)
+  classId         String
+
+  @@unique([classId, studentId])
+  @@index([studentId])
+  @@index([classId, status])
+}
+
+model TeachingMaterial {
+  id              String   @id @default(cuid())
+  title           String
+  description     String?
+  type            String   // FILE or LINK
+  fileUrl         String?  // URL for file storage
+  linkUrl         String?  // External link
+  fileType        String?  // pdf, docx, pptx, etc
+  createdBy       String   // teacher ID
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  class           Class    @relation("ClassMaterials", fields: [classId], references: [id], onDelete: Cascade)
+  classId         String
+
+  @@index([classId, createdAt])
 }

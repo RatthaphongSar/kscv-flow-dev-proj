@@ -1,0 +1,689 @@
+================================================================================
+KVC REGISTRATION SYSTEM - SERVICE REQUIREMENTS DOCUMENT
+Registration Website untuk Teacher & Student (Separate Registration Flows)
+================================================================================
+
+PROJECT OVERVIEW:
+================================================================================
+- Objective: Build a separate Registration Website สำหรับ Enrollment ครูและนักเรียน
+- Shared Infrastructure: ใช้ Database เดียว (PostgreSQL via Prisma), APIs จาก Backend เดียว, Port เดียว
+- Security: HTTPS Required (Non-negotiable)
+- Integration: ต้องรองรับการสื่อสารกับ KVC Main Backend API
+- Database: PostgreSQL (Existing Prisma Schema - เพิ่มเติม models if needed)
+- Technology Stack: ตามโครงสร้างปัจจุบัน (Node.js/Express Backend, React Frontend)
+
+================================================================================
+1. INFRASTRUCTURE & DEPLOYMENT REQUIREMENTS
+================================================================================
+
+1.1 Server Configuration
+   - Backend Server: Node.js + Express (Existing: Port 4000)
+   - Frontend Server: Vite Dev / Build Output (Existing: Port 5173 dev, 3000 prod)
+   - Database: PostgreSQL (Existing - shared with main app)
+   - SSL/TLS Certificates: REQUIRED for HTTPS
+     * Production: Valid certificates (Let's Encrypt or similar)
+     * Development: Self-signed certificates OK (path: backend/certs/)
+   - Port Allocation:
+     * Backend API: 4000 (HTTP) / 4001 (HTTPS) ✓ EXISTING
+     * Frontend Dev: 5173 (HTTP only - dev mode)
+     * Frontend Prod: 443 (HTTPS) or 3000 (HTTP with reverse proxy)
+     * Reverse Proxy (Optional): nginx on port 443 for HTTPS routing
+
+1.2 Environment Configuration
+   - Backend .env Variables Required:
+     * PORT=4000
+     * HTTPS=1 (Enable HTTPS)
+     * HTTPS_PORT=4001
+     * HTTPS_CERT=certs/certificate.pem
+     * HTTPS_KEY=certs/private-key.pem
+     * DATABASE_URL=postgresql://user:password@localhost:5432/kvc_db
+     * CORS_ORIGIN=https://registration.localhost:3000 (registration frontend domain)
+     * JWT_SECRET=(secure random string)
+     * NODE_ENV=production
+
+   - Frontend .env Variables:
+     * VITE_API_URL=https://localhost:4001/api (or production domain)
+     * VITE_AUTH_ENDPOINT=https://localhost:4001/api/auth
+     * VITE_REGISTRATION_API=https://localhost:4001/api/registration
+
+
+================================================================================
+2. DATABASE SCHEMA REQUIREMENTS (Prisma Models)
+================================================================================
+
+2.1 New/Extended Models Required
+
+   User Model (EXTEND existing):
+   - Add field: registrationStatus: String (PENDING, APPROVED, REJECTED, COMPLETED)
+   - Add field: registrationType: String (STUDENT, TEACHER)
+   - Add field: registrationData: Json (store temporary registration form data)
+   - Add field: registrationVerifiedAt: DateTime (when admin verified)
+   - Add relation: registrationSubmissions: RegistrationSubmission[]
+
+   NEW: RegistrationSubmission Model
+   - id: String (unique)
+   - userId: String (FK to User - nullable for guest submissions)
+   - type: String (STUDENT, TEACHER) - enum
+   - status: String (DRAFT, SUBMITTED, UNDER_REVIEW, APPROVED, REJECTED)
+   - email: String
+   - phone: String
+   - firstName: String
+   - lastName: String
+   - idNumber: String (Thai ID or Employee ID)
+   - dateOfBirth: DateTime
+   - address: String
+   - educationLevel: String (for teachers: Bachelor, Master, PhD)
+   - specialization: String (for teachers: subject area)
+   - experience: Int (for teachers: years)
+   - certification: String (file path for uploaded documents)
+   - documents: String[] (array of file paths)
+   - submittedAt: DateTime
+   - reviewedAt: DateTime (nullable)
+   - reviewedBy: String (FK to User - nullable)
+   - rejectionReason: String (nullable)
+   - createdAt: DateTime
+   - updatedAt: DateTime
+
+   NEW: RegistrationDocument Model
+   - id: String
+   - submissionId: String (FK to RegistrationSubmission)
+   - fileName: String
+   - fileType: String (pdf, jpg, png, docx)
+   - filePath: String (stored in uploads/registration/)
+   - size: Int
+   - uploadedAt: DateTime
+
+   NEW: RegistrationEmail Model (for OTP/verification)
+   - id: String
+   - email: String
+   - otp: String (6 digits)
+   - otpExpiresAt: DateTime
+   - verified: Boolean
+   - createdAt: DateTime
+   - expiresAt: DateTime
+
+
+2.2 Database Relationships
+   - User -> RegistrationSubmission (1 to many)
+   - RegistrationSubmission -> RegistrationDocument (1 to many)
+   - RegistrationSubmission -> User (reviewer foreign key, nullable)
+   - Enrollment (existing) -> Registration (student pathway)
+   - Class (existing) -> Teacher (from registration approval)
+
+
+================================================================================
+3. API ENDPOINTS REQUIREMENTS
+================================================================================
+
+3.1 Backend API Routes - Authentication & Registration
+
+   POST /api/registration/auth/send-otp
+   - Purpose: Send OTP to email for verification
+   - Body: { email: string }
+   - Response: { success: boolean, message: string, expiresIn: number }
+   - Status: 200 | 400 (invalid email) | 429 (rate limit)
+   - HTTPS: ✓ Required
+
+   POST /api/registration/auth/verify-otp
+   - Purpose: Verify OTP and generate temp session token
+   - Body: { email: string, otp: string }
+   - Response: { success: boolean, tempToken: string, expiresIn: number }
+   - Status: 200 | 400 (invalid OTP) | 401 (expired)
+   - HTTPS: ✓ Required
+
+   GET /api/registration/check-email/:email
+   - Purpose: Check if email already registered
+   - Response: { exists: boolean, type: string (STUDENT|TEACHER|NONE) }
+   - Status: 200
+   - HTTPS: ✓ Required
+
+3.2 Student Registration Endpoints
+
+   POST /api/registration/student/validate-id
+   - Purpose: Validate Thai Student ID against existing students
+   - Body: { studentId: string }
+   - Response: { valid: boolean, name: string (if found), message: string }
+   - Status: 200
+   - HTTPS: ✓ Required
+
+   POST /api/registration/student/submit
+   - Purpose: Submit student registration form
+   - Auth: Temp token from OTP verification OR empty
+   - Body: FormData {
+       email: string,
+       phone: string,
+       firstName: string,
+       lastName: string,
+       studentId: string,
+       dateOfBirth: string (ISO),
+       address: string,
+       files: FileList (identification documents)
+     }
+   - Response: { submissionId: string, status: string }
+   - Status: 201 | 400 | 401 | 422
+   - HTTPS: ✓ Required
+
+   GET /api/registration/student/status/:submissionId
+   - Purpose: Check registration status
+   - Response: { status: string, message: string, rejectionReason?: string }
+   - Status: 200 | 404
+   - HTTPS: ✓ Required
+
+3.3 Teacher Registration Endpoints
+
+   POST /api/registration/teacher/validate-id
+   - Purpose: Validate Thai National ID or Employee ID
+   - Body: { idNumber: string }
+   - Response: { valid: boolean, suggestions?: string[], message: string }
+   - Status: 200
+   - HTTPS: ✓ Required
+
+   POST /api/registration/teacher/submit
+   - Purpose: Submit teacher registration form (multi-step)
+   - Auth: Temp token from OTP verification
+   - Body: FormData {
+       email: string,
+       phone: string,
+       firstName: string,
+       lastName: string,
+       idNumber: string,
+       dateOfBirth: string,
+       address: string,
+       educationLevel: string,
+       specialization: string,
+       experience: number,
+       certifications: FileList,
+       documents: FileList
+     }
+   - Response: { submissionId: string, status: string }
+   - Status: 201 | 400 | 401 | 422
+   - HTTPS: ✓ Required
+
+   GET /api/registration/teacher/status/:submissionId
+   - Purpose: Check teacher registration status
+   - Response: { status: string, message: string, rejectionReason?: string }
+   - Status: 200 | 404
+   - HTTPS: ✓ Required
+
+3.4 Admin Review Endpoints (Protected by JWT + ADMIN role)
+
+   GET /api/registration/admin/submissions
+   - Purpose: List all pending registrations
+   - Query: { type?: STUDENT|TEACHER, status?: SUBMITTED|UNDER_REVIEW, page?: number, limit?: number }
+   - Response: { submissions: [], total: number, page: number }
+   - Auth: JWT + ADMIN role
+   - Status: 200 | 401 | 403
+   - HTTPS: ✓ Required
+
+   GET /api/registration/admin/submission/:submissionId
+   - Purpose: View detailed registration submission
+   - Auth: JWT + ADMIN role
+   - Response: { submission: {...}, documents: [...] }
+   - Status: 200 | 404 | 403
+   - HTTPS: ✓ Required
+
+   POST /api/registration/admin/approve/:submissionId
+   - Purpose: Approve registration and create user account
+   - Auth: JWT + ADMIN role
+   - Body: { notes?: string, tempPassword?: string }
+   - Response: { success: boolean, userId: string, message: string }
+   - Status: 200 | 400 | 403 | 404
+   - HTTPS: ✓ Required
+
+   POST /api/registration/admin/reject/:submissionId
+   - Purpose: Reject registration with reason
+   - Auth: JWT + ADMIN role
+   - Body: { reason: string (required) }
+   - Response: { success: boolean, message: string }
+   - Status: 200 | 400 | 403 | 404
+   - HTTPS: ✓ Required
+
+3.5 File Upload Endpoints
+
+   POST /api/registration/upload
+   - Purpose: Upload registration documents (temporary)
+   - Auth: Optional (temp token or anonymous)
+   - Body: FormData { file: File, submissionId?: string }
+   - Response: { fileName: string, fileUrl: string, size: number }
+   - Status: 201 | 400 | 413 (too large)
+   - HTTPS: ✓ Required
+   - File Size Limits:
+     * Individual: 5MB max
+     * Total per submission: 20MB max
+     * Allowed: PDF, JPEG, PNG, DOCX
+
+   DELETE /api/registration/upload/:fileId
+   - Purpose: Delete temporary uploaded file
+   - Auth: Optional (temp token or owner)
+   - Response: { success: boolean }
+   - Status: 200 | 404
+   - HTTPS: ✓ Required
+
+
+================================================================================
+4. FRONTEND - REGISTRATION WEBSITE REQUIREMENTS
+================================================================================
+
+4.1 Student Registration Flow (3-Page Wizard)
+
+   Page 1: Email & OTP Verification
+   - Input: Email address
+   - Action: Send OTP button
+   - OTP input: 6-digit code (auto-submit when complete)
+   - Timer: 5-minute countdown
+   - Resend button (cooldown 30 seconds)
+   - Submit/Next button
+   - Validation: Email format, OTP expiry check
+
+   Page 2: Basic Information
+   - Fields:
+     * First Name (Thai/English)
+     * Last Name (Thai/English)
+     * Student ID (13 digits)
+     * Date of Birth (date picker)
+     * Phone Number (10 digits)
+     * Address (text area)
+   - Validation: All required, format validation
+   - Back button, Continue button
+
+   Page 3: Document Upload & Confirmation
+   - Upload: Student ID card (front & back) - REQUIRED
+   - Upload: Proof of enrollment (if applicable)
+   - Upload: Additional documents (optional)
+   - File size validation on client-side
+   - Progress indicators for uploads
+   - Summary of entered data (read-only)
+   - Accept Terms & Conditions checkbox
+   - Submit button
+   - Success message with submission ID
+
+4.2 Teacher Registration Flow (4-Page Wizard)
+
+   Page 1: Email & OTP Verification
+   - Same as student (email + OTP)
+
+   Page 2: Personal Information
+   - Fields:
+     * First Name (Thai/English)
+     * Last Name (Thai/English)
+     * Thai National ID (13 digits) OR Employee ID
+     * Date of Birth (date picker)
+     * Phone Number (10 digits)
+     * Address (text area)
+   - Validation: All required, Thai ID format check
+
+   Page 3: Professional Information
+   - Fields:
+     * Education Level (Dropdown: Bachelor, Master, PhD)
+     * Field of Specialization (text)
+     * Years of Teaching Experience (number)
+     * Current Employer (text, optional)
+     * Previous Teaching History (text area, optional)
+   - Validation: Experience >= 0
+
+   Page 4: Document Upload & Confirmation
+   - Upload: National ID card (front & back) - REQUIRED
+   - Upload: Teaching certificate / diploma - REQUIRED
+   - Upload: Additional credentials (optional)
+   - Upload: Work experience documents (optional)
+   - File validation & progress
+   - Summary review (all data read-only)
+   - Terms & Conditions checkbox
+   - Submit button
+   - Success page with submission ID & next steps
+
+4.3 Status Tracking Page
+
+   User Input: Submission ID + Email
+   - Display: Current status (PENDING, APPROVED, REJECTED)
+   - Display: Timeline of actions
+   - Display: Rejection reason (if applicable)
+   - Option: Download submission receipt
+   - Option: Contact admin (link to support)
+
+4.4 General UI/UX Requirements
+
+   Design System:
+   - Color Scheme: Blue (#0A4DAD) primary, White (#F5F9FF) background
+   - Font: Clean, readable sans-serif (Tailwind default or custom)
+   - Responsive: Mobile-first, tablet & desktop support
+   - Accessibility: WCAG 2.1 AA compliance
+     * Color contrast ratios
+     * Keyboard navigation
+     * Screen reader friendly
+     * Form labels & ARIA attributes
+
+   Navigation:
+   - Student Registration
+   - Teacher Registration
+   - Check Status
+   - Login (existing user)
+   - FAQ / Help
+   - Support Contact
+
+   Components:
+   - Multi-step form wizard with progress indicator
+   - Input validation with error messages
+   - File upload with preview
+   - Loading spinners for API calls
+   - Toast notifications for success/error
+   - Modal for confirmations
+   - Responsive data table for status (admin view)
+
+
+================================================================================
+5. SECURITY REQUIREMENTS
+================================================================================
+
+5.1 HTTPS/TLS
+   - ALL traffic must be HTTPS
+   - Self-signed certificates in development (backend/certs/)
+   - Valid certificates in production
+   - HSTS header: Strict-Transport-Security: max-age=31536000
+   - SSL/TLS version: 1.2 minimum
+   - Cipher suites: Modern, strong only
+
+5.2 Authentication & Authorization
+   - OTP via email (6 digits, 5-minute expiry)
+   - JWT tokens for authenticated endpoints
+   - Temp token for registration form (short-lived, ~30 minutes)
+   - Session management: HttpOnly cookies for JWT (if used)
+   - Role-based access: ADMIN, TEACHER, STUDENT
+   - Rate limiting: 5 OTP requests per email/hour, 100 requests/minute per IP
+
+5.3 Data Protection
+   - Input validation on ALL endpoints (express-validator)
+   - SQL injection prevention (Prisma parameterized queries)
+   - XSS prevention (sanitize outputs, Content-Security-Policy headers)
+   - CSRF tokens for form submissions
+   - Password hashing: bcrypt (for temp passwords)
+   - Data encryption at rest (if PII stored): application-level or DB-level
+   - File upload security:
+     * Whitelist file types: PDF, JPEG, PNG, DOCX
+     * Scan files for malware (optional: ClamAV integration)
+     * Store outside web root
+     * Random file names (UUID)
+     * No direct path exposure
+
+5.4 Audit & Logging
+   - Log all registration submissions (timestamp, IP, user agent)
+   - Log all admin approvals/rejections (admin user, reason, timestamp)
+   - Log all failed OTP attempts
+   - Sensitive data NOT logged (passwords, OTPs, full ID numbers)
+   - Log retention: 90 days minimum
+   - Log format: Structured (JSON) with timestamp, level, message
+
+5.5 Privacy & Compliance
+   - Privacy Policy: Displayed before registration
+   - Data retention: Clear policy (when data is deleted)
+   - User consent: Explicit checkbox for data processing
+   - Right to deletion: API endpoint for users to request data removal
+   - GDPR-like compliance (if applicable)
+
+
+================================================================================
+6. INTEGRATION WITH EXISTING KVC BACKEND
+================================================================================
+
+6.1 Database Shared Access
+   - Use existing PostgreSQL database
+   - Add new Prisma models (see section 2.1)
+   - Run migrations: `npx prisma migrate dev --name registration_system`
+   - No breaking changes to existing models
+
+6.2 Existing APIs to Reuse
+   - POST /api/auth/login - for user login after approval
+   - GET /api/users/:id - fetch user profile after registration
+   - Potentially: Class/Enrollment data for student context
+
+6.3 Middleware Reuse
+   - Use existing auth middleware (src/middleware/auth.js)
+   - Use existing validation middleware (src/middleware/validate.js)
+   - Use existing error handling
+   - Use existing CORS & helmet configurations
+
+6.4 Backend Folder Structure to Extend
+   - src/controllers/registration.js (NEW)
+   - src/routes/registration.js (NEW)
+   - src/middleware/registrationAuth.js (NEW - for temp tokens)
+   - src/services/registrationService.js (NEW)
+   - src/validators/registrationValidator.js (NEW)
+   - prisma/migrations/timestamp_registration_system (NEW)
+
+6.5 Frontend Folder Structure to Add
+   - frontend/src/pages/Registration/ (NEW directory)
+     * StudentRegistration.jsx
+     * TeacherRegistration.jsx
+     * RegistrationStatus.jsx
+   - frontend/src/components/RegistrationForm/ (NEW directory)
+     * StepIndicator.jsx
+     * OTPForm.jsx
+     * DocumentUpload.jsx
+     * FormWizard.jsx
+   - frontend/src/services/registrationService.js (NEW)
+   - frontend/src/context/RegistrationContext.jsx (NEW)
+   - frontend/src/hooks/useOTP.js (NEW)
+   - frontend/src/hooks/useRegistration.js (NEW)
+
+
+================================================================================
+7. DEPLOYMENT & DEVOPS REQUIREMENTS
+================================================================================
+
+7.1 Development Environment
+   - Backend: npm run dev (nodemon on port 4000/4001)
+   - Frontend: npm run dev (Vite on port 5173)
+   - Database: PostgreSQL running locally or on Docker
+   - HTTPS: Use self-signed certs from backend/certs/
+
+7.2 Production Environment
+   - Backend: PM2 or systemd service
+   - Frontend: Build output served by nginx with HTTPS
+   - Database: Managed PostgreSQL (RDS, Heroku, etc.)
+   - HTTPS: Valid certificates (Let's Encrypt auto-renewal recommended)
+   - Reverse proxy: nginx for HTTPS termination and routing
+
+7.3 Docker (Optional but Recommended)
+   - Dockerfile for backend registration service
+   - docker-compose.yml for local development (backend + postgres + frontend)
+   - Container image size: <500MB for backend, <200MB for frontend
+
+7.4 CI/CD (Recommended)
+   - GitHub Actions workflow
+   - Test stages: lint, unit tests, integration tests
+   - Build stages: Backend build, Frontend build
+   - Deploy stage: Push to production environment
+
+7.5 Monitoring & Logging
+   - Error tracking: Sentry or similar
+   - Performance monitoring: Application performance monitoring (APM)
+   - Log aggregation: ELK stack or similar
+   - Alerts: Critical errors, high response times
+
+7.6 Backup & Disaster Recovery
+   - Database backups: Daily (automated)
+   - File uploads: Backup strategy (S3, GCS, local NAS)
+   - Restore procedure: Documented and tested
+   - RTO/RPO targets: Define as per business requirements
+
+
+================================================================================
+8. TESTING REQUIREMENTS
+================================================================================
+
+8.1 Unit Tests
+   - Backend controllers: 80%+ code coverage
+   - Validation functions: 100% coverage
+   - Service functions: 70%+ coverage
+
+8.2 Integration Tests
+   - OTP flow: Send → Verify → Token generation
+   - Student registration: Full form submission → Admin approval → User account creation
+   - Teacher registration: Full form submission → Admin approval → User account creation
+   - Error scenarios: Invalid OTP, expired token, duplicate email, file upload failures
+
+8.3 End-to-End Tests
+   - Complete student registration workflow
+   - Complete teacher registration workflow
+   - Admin review & approval workflow
+   - Rejection & retry flow
+   - Status tracking
+
+8.4 Security Tests
+   - HTTPS enforcement (HTTP → HTTPS redirect)
+   - Rate limiting (OTP, API)
+   - Input validation (SQL injection, XSS)
+   - File upload security (malicious files)
+   - Authentication/Authorization checks
+
+
+================================================================================
+9. PERFORMANCE REQUIREMENTS
+================================================================================
+
+9.1 Response Times
+   - OTP send: < 2 seconds
+   - OTP verify: < 1 second
+   - Form submit: < 3 seconds
+   - Admin listing: < 1 second (paginated)
+   - File upload: Depends on file size, aim for < 5 seconds per file
+
+9.2 Scalability
+   - Support: 1000+ concurrent registrations
+   - Database query optimization: Indexes on email, ID number, status
+   - API rate limiting: 100 requests/minute per IP (configurable)
+   - Caching: Redis for OTP/temp tokens (optional)
+
+9.3 Uptime & Reliability
+   - Target: 99.5% uptime
+   - Graceful error handling: User-friendly error messages
+   - Circuit breaker for external services (email, file storage)
+   - Retry logic for transient failures
+
+
+================================================================================
+10. DOCUMENTATION REQUIREMENTS
+================================================================================
+
+10.1 For Developers
+   - API documentation: OpenAPI/Swagger (extend existing docs/openapi.yaml)
+   - Setup guide: How to run dev environment with registration system
+   - Architecture diagrams: Data flow, deployment diagram
+   - Code comments: JSDoc for functions, inline for complex logic
+   - Database schema documentation: Prisma schema with relationships
+
+10.2 For Users
+   - User guide: Step-by-step registration process (PDF)
+   - FAQ: Common questions and troubleshooting
+   - Support contact: Email, phone, contact form
+
+10.3 For Admins
+   - Admin guide: How to review and approve registrations
+   - Dashboard guide: Viewing submissions, generating reports
+   - Troubleshooting: Common issues and resolutions
+
+10.4 For Operations
+   - Deployment guide: How to deploy to production
+   - Runbook: Common operational tasks
+   - Disaster recovery procedure: Steps to restore from backup
+   - Log interpretation: How to read and analyze logs
+
+
+================================================================================
+11. TIMELINE & DELIVERABLES (REFERENCE - Adjust as needed)
+================================================================================
+
+Phase 1: Planning & Setup (Week 1)
+   - Database schema design & Prisma models
+   - API endpoint specification & OpenAPI documentation
+   - Frontend wireframes & component design
+   - Environment setup (HTTPS, database)
+
+Phase 2: Backend Development (Weeks 2-3)
+   - API implementation (registration endpoints)
+   - Authentication (OTP system)
+   - File upload handling
+   - Database migrations
+   - Unit & integration tests
+
+Phase 3: Frontend Development (Weeks 2-3, parallel)
+   - Student registration form (3 pages)
+   - Teacher registration form (4 pages)
+   - Status tracking page
+   - Admin dashboard (submission review)
+   - UI components & styling
+
+Phase 4: Integration & Testing (Week 4)
+   - End-to-end testing
+   - Security testing
+   - Performance testing
+   - HTTPS verification
+
+Phase 5: Deployment & Documentation (Week 5)
+   - Production deployment
+   - User documentation
+   - Admin training
+   - Support setup
+
+Phase 6: Post-Launch (Ongoing)
+   - Bug fixes & monitoring
+   - User feedback & improvements
+   - Analytics & reporting
+
+
+================================================================================
+12. COMPLIANCE & LEGAL REQUIREMENTS
+================================================================================
+
+12.1 Data Protection
+   - Compliance: Thai Personal Data Protection Act (PDPA), if applicable
+   - Privacy Policy: Required before registration
+   - Terms of Service: Required acceptance before submission
+   - Consent: Explicit for email/phone usage
+
+12.2 Accessibility
+   - WCAG 2.1 Level AA compliance
+   - Thai language support (UTF-8)
+   - Screen reader compatibility
+   - Keyboard navigation
+
+12.3 Standards & Best Practices
+   - REST API design: RESTful conventions
+   - Security: OWASP Top 10 mitigation
+   - Code quality: ESLint, Prettier
+   - Testing: Jest or similar
+
+
+================================================================================
+13. APPENDIX: SUPPORTING NOTES
+================================================================================
+
+13.1 Technology Stack Confirmation
+   - Backend: Node.js 18+, Express 4.x, Prisma ORM 6.x
+   - Database: PostgreSQL 12+
+   - Frontend: React 18.x, Vite 5.x, Tailwind CSS 3.x
+   - HTTPS: Native Node.js https module (or nginx reverse proxy)
+   - File Storage: Local filesystem (backend/uploads/registration/) or S3
+
+13.2 Known Constraints
+   - Shared database with main KVC app (migration planning required)
+   - HTTPS mandatory (self-signed OK for dev, valid certs for prod)
+   - Port 4000/4001 already in use by main backend (consider separate service if scaling)
+   - File upload size limits (5MB per file, 20MB total)
+
+13.3 Future Enhancements (Out of Scope for MVP)
+   - Multi-language support (English, Thai)
+   - Email notifications (approval, rejection, status updates)
+   - SMS verification as alternative to email
+   - Integration with external identity verification services
+   - Bulk registration import (CSV)
+   - Customizable form fields by admin
+   - Advanced reporting & analytics
+
+
+================================================================================
+END OF DOCUMENT
+================================================================================
+Last Updated: 2025-11-19
+Next Review: Upon project kickoff
+Prepared For: Development Team / Project Manager

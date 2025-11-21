@@ -11,9 +11,15 @@ export const login = async (req, res) => {
   try {
     const { username, password } = req.body
 
+    console.log(`[Login] Attempting login with username: ${username}`)
+
     // Find user
     const user = await prisma.user.findUnique({ where: { username } })
+    
+    console.log(`[Login] Query result for username '${username}':`, user ? `Found user ${user.id}` : 'User not found')
+    
     if (!user || !user.passwordHash) {
+      console.log(`[Login] Failed: user not found or no password hash`)
       return res.status(401).json({ error: 'Invalid username or password' })
     }
 

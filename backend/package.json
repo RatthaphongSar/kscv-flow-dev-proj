@@ -7,6 +7,7 @@
     "start": "node src/server.js",
     "lint": "eslint .",
     "seed:user": "node scripts/seed-user.js",
+    "seed:class": "node prisma/seed.js",
     "backfill:pwd": "node scripts/backfill-password-hash.js"
   },
   "dependencies": {

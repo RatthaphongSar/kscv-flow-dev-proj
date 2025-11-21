@@ -42,11 +42,11 @@ export default function AppRoutes() {
       {/* Wati for Chat.tsx */}
       
       <Route path="/chat" element={<Protected><ChatPage /></Protected>} />
-      <Route path="/class" element={<Class />} />
-      <Route path="/meeting" element={<Meeting />} />
-      <Route path="/checkline" element={<Checkline />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/leaves" element={<Leaves />} />
+      <Route path="/class" element={<Protected><Class /></Protected>} />
+      <Route path="/meeting" element={<Protected><Meeting /></Protected>} />
+      <Route path="/checkline" element={<Protected><Checkline /></Protected>} />
+      <Route path="/profile" element={<Protected><Profile /></Protected>} />
+      <Route path="/leaves" element={<Protected><Leaves /></Protected>} />
     </Routes>
   )
 }

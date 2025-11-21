@@ -9,16 +9,11 @@ import {
   Info,
   Users,
 } from "lucide-react";
+import { classApi } from "../api/classApi";
 
 // ======================================
-// Mock ข้อมูล – สามารถต่อ backend ได้ทันที
+// Mock ข้อมูล attendance – ใช้ชั่วคราว
 // ======================================
-const mockClasses = [
-  { id: "c1", name: "Web Application Development", code: "CS-201", teacher: "Aj. Kritsada" },
-  { id: "c2", name: "Business Mathematics", code: "MA-110", teacher: "Aj. Ratchanee" },
-  { id: "c3", name: "English for Communication", code: "ENG-101", teacher: "Aj. Supaporn" },
-];
-
 const mockCheckline = [
   { id: "cl1", classId: "c1", date: "2025-03-31", status: "present", checkinTime: "09:03", note: "เข้าตรงเวลา" },
   { id: "cl2", classId: "c1", date: "2025-04-01", status: "late", checkinTime: "10:07", note: "สายเนื่องจากรถติด" },
@@ -57,15 +52,38 @@ const LATE_TIME = 8 * 60;
 export default function ChecklinePage() {
   const nowInitial = new Date();
   const [now, setNow] = useState(nowInitial);
+  const [classes, setClasses] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
 
-  const [selectedClass, setSelectedClass] = useState("c1");
+  const [selectedClass, setSelectedClass] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
 
   // ใหม่! ย้อนดูสัปดาห์ย้อนหลังได้
   const [weekOffset, setWeekOffset] = useState(0);
+
+  // Fetch classes on mount
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        setLoading(true);
+        const data = await classApi.getClasses();
+        setClasses(data || []);
+        if (data && data.length > 0) {
+          setSelectedClass(data[0].id);
+        }
+      } catch (err) {
+        console.error("Error fetching classes:", err);
+        setClasses([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchClasses();
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 30_000);
@@ -109,17 +127,22 @@ export default function ChecklinePage() {
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
-          {mockClasses.map(cls => {
-            const active = cls.id === selectedClass;
-            return (
-              <button
-                key={cls.id}
-                onClick={() => {
-                  setSelectedClass(cls.id);
-                  setSelectedDate(null);
-                }}
-                className={`w-full text-left rounded-lg px-3 py-2 border ${
-                  active
+          {loading ? (
+            <div className="px-3 py-2 text-xs text-gray-400">กำลังโหลด...</div>
+          ) : classes.length === 0 ? (
+            <div className="px-3 py-2 text-xs text-gray-400">ไม่มีรายวิชา</div>
+          ) : (
+            classes.map(cls => {
+              const active = cls.id === selectedClass;
+              return (
+                <button
+                  key={cls.id}
+                  onClick={() => {
+                    setSelectedClass(cls.id);
+                    setSelectedDate(null);
+                  }}
+                  className={`w-full text-left rounded-lg px-3 py-2 border ${
+                    active
                     ? "bg-violet-600 border-violet-500 text-white"
                     : "bg-transparent text-gray-300 border-[#1f2937] hover:bg-slate-800"
                 }`}
@@ -128,7 +151,8 @@ export default function ChecklinePage() {
                 <div className="text-[11px]">{cls.name}</div>
               </button>
             );
-          })}
+            })
+          )}
         </div>
       </aside>
 

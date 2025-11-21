@@ -11,6 +11,6 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    https: true,
+    // https: true,  // Disabled for development to match http backend
   },
 });

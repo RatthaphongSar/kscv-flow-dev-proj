@@ -1,9 +1,9 @@
 // frontend/src/components/PageShell.jsx
 export default function PageShell({ title, subtitle, right, children }) {
   return (
-    <div className="h-[calc(100vh-112px)] w-full bg-[#020617] text-gray-100 px-4 py-4">
+    <div className="w-full h-full bg-[#020617] text-gray-100 px-4 py-4 flex flex-col overflow-hidden">
       {/* จำกัดความกว้างกลางจอ + จัดเป็นคอลัมน์ */}
-      <div className="h-full max-w-6xl mx-auto flex flex-col gap-4">
+      <div className="w-full max-w-6xl mx-auto flex flex-col gap-4 flex-1 min-h-0 overflow-hidden">
         {/* Header ของแต่ละหน้า */}
         <div className="flex items-center justify-between gap-2">
           <div>
@@ -21,7 +21,7 @@ export default function PageShell({ title, subtitle, right, children }) {
         </div>
 
         {/* Content zone → ให้เป็นตัว scroll, พื้นหลังเข้มเหมือนหน้าอื่น */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto min-h-0">
           {children}
         </div>
       </div>

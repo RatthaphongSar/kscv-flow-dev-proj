@@ -7,7 +7,10 @@ import advisorRoutes from './advisor.js'
 import assignmentsRoutes from './assignments.js'
 import attendanceRoutes from './attendance.js'
 import authRoutes from './auth.js'
-import classesRoutes from './classes.js'
+import classRoutes from './class.routes.js'
+import classEnrollmentRoutes from './classEnrollment.routes.js'
+import assignmentExtendedRoutes from './assignmentExtended.routes.js'
+import teachingMaterialRoutes from './teachingMaterial.routes.js'
 import clubsRoutes from './clubs.js'
 import communityRoutes from './community.js'
 import examsRoutes from './exams.js'
@@ -31,7 +34,10 @@ router.use('/advisor', advisorRoutes)
 router.use('/assignments', assignmentsRoutes)
 router.use('/attendance', attendanceRoutes)
 router.use('/auth', authRoutes)
-router.use('/classes', classesRoutes)
+router.use('/classes', classRoutes)
+router.use('/classes/enrollment', classEnrollmentRoutes)
+router.use('/assignments', assignmentExtendedRoutes)
+router.use('/classes/materials', teachingMaterialRoutes)
 router.use('/clubs', clubsRoutes)
 router.use('/community', communityRoutes)
 router.use('/exams', examsRoutes)

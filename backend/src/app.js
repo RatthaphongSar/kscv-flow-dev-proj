@@ -12,6 +12,7 @@ import cookieParser from 'cookie-parser'
 import { fileURLToPath } from 'url'
 import path from 'path'
 import { apiRouter } from './routes/index.js'
+import { mockAuthMiddleware } from './middleware/mockAuth.js'
  
 // ----- Utils: parse CORS allowlist -----
 function parseCorsOrigins(raw) {
@@ -71,6 +72,9 @@ export const createApp = () => {
   })
 
   app.get('/health', (_req, res) => res.json({ ok: true }))
+
+  // Mock auth middleware (for testing/development)
+  app.use('/api', mockAuthMiddleware)
 
   // API หลัก
   app.use('/api', apiRouter)

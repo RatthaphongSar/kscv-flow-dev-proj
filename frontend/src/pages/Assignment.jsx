@@ -1,4 +1,6 @@
+import { useState, useEffect } from "react"
 import PageShell from "../components/PageShell"
+import { classApi } from "../api/classApi"
 import {
   FileText,
   Clock,
@@ -8,6 +10,7 @@ import {
   Filter,
 } from "lucide-react"
 
+// Mock assignments - temporary fallback
 const mockAssignments = [
   {
     id: 1,
@@ -15,7 +18,7 @@ const mockAssignments = [
     courseCode: "CS-201",
     courseName: "Web Application Development",
     due: "2025-04-02 23:59",
-    status: "in_progress", // in_progress | not_started | submitted | late | missing
+    status: "in_progress",
   },
   {
     id: 2,
@@ -76,16 +79,58 @@ function statusBadge(status) {
 }
 
 export default function Assignment() {
-  const total = mockAssignments.length
-  const submitted = mockAssignments.filter(a => a.status === "submitted").length
-  const inProgress = mockAssignments.filter(a => a.status === "in_progress").length
-  const notStarted = mockAssignments.filter(a => a.status === "not_started").length
+  const [classes, setClasses] = useState([])
+  const [assignments, setAssignments] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  // Fetch all classes and their assignments on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const classData = await classApi.getClasses()
+        setClasses(classData || [])
+
+        // Fetch assignments for each class
+        const allAssignments = []
+        for (const cls of (classData || [])) {
+          try {
+            const classAssignments = await classApi.getClassAssignments(cls.id)
+            // Add class info to each assignment for display
+            const withClassInfo = (classAssignments || []).map(a => ({
+              ...a,
+              class: cls,
+              courseCode: cls.code,
+              courseName: cls.name,
+            }))
+            allAssignments.push(...withClassInfo)
+          } catch (err) {
+            console.error(`Error fetching assignments for class ${cls.id}:`, err)
+          }
+        }
+        setAssignments(allAssignments)
+      } catch (err) {
+        console.error("Error fetching data:", err)
+        // Fallback to mock data
+        setAssignments(mockAssignments)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  const total = assignments.length
+  const submitted = assignments.filter(a => a.status === "submitted").length
+  const inProgress = assignments.filter(a => a.status === "in_progress").length
+  const notStarted = assignments.filter(a => a.status === "not_started").length
 
   return (
     <PageShell
       title="Assignments"
       subtitle="ภาพรวมงานที่ได้รับมอบหมายจากทุกวิชา และสถานะการส่งของคุณ"
-      right="Ready to connect to /api/assignments"
+      right={loading ? "กำลังโหลด..." : `${total} งาน`}
     >
       <div className="grid gap-4 lg:grid-cols-[1.8fr,1.1fr]">
         {/* ===== MAIN LIST ===== */}
@@ -107,22 +152,27 @@ export default function Assignment() {
 
           {/* List */}
           <div className="space-y-2 text-xs">
-            {mockAssignments.map(a => (
-              <div
-                key={a.id}
-                className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 rounded-xl border border-[#1f2937] bg-[#020617] px-3 py-2 hover:bg-slate-900"
-              >
-                <div>
-                  <div className="text-sm text-gray-100">
-                    {a.title}
-                  </div>
-                  <div className="text-[11px] text-gray-400 mt-0.5 flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1">
-                      <span className="text-violet-300 font-medium">{a.courseCode}</span>
+            {loading ? (
+              <div className="text-center py-4 text-gray-400">กำลังโหลด...</div>
+            ) : assignments.length === 0 ? (
+              <div className="text-center py-4 text-gray-400">ไม่มีงานที่ได้รับมอบหมาย</div>
+            ) : (
+              assignments.map(a => (
+                <div
+                  key={a.id}
+                  className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 rounded-xl border border-[#1f2937] bg-[#020617] px-3 py-2 hover:bg-slate-900"
+                >
+                  <div>
+                    <div className="text-sm text-gray-100">
+                      {a.title}
+                    </div>
+                    <div className="text-[11px] text-gray-400 mt-0.5 flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1">
+                        <span className="text-violet-300 font-medium">{a.courseCode}</span>
+                        <span className="text-gray-500">·</span>
+                        <span>{a.courseName}</span>
+                      </span>
                       <span className="text-gray-500">·</span>
-                      <span>{a.courseName}</span>
-                    </span>
-                    <span className="text-gray-500">·</span>
                     <span className="inline-flex items-center gap-1">
                       ส่งภายใน
                       <Clock size={11} className="inline text-gray-400" />
@@ -138,7 +188,8 @@ export default function Assignment() {
                   {statusBadge(a.status)}
                 </div>
               </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
