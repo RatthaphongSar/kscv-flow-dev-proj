@@ -5,7 +5,7 @@
 
 import { Router } from 'express';
 import { body, param, query } from 'express-validator';
-import { authRequired } from '../middleware/devAuth.js';
+import { authRequired } from '../middleware/auth.js';
 import * as ctrl from '../controllers/classEnrollment.controller.js';
 
 const router = Router();
