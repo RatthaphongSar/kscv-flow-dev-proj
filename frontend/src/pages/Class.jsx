@@ -349,28 +349,21 @@ export default function ClassPage() {
     
     const checkJoinStatus = async () => {
       try {
-        // Try to get join requests for this class
-        // If we can fetch them (200), we know the student is enrolled or a teacher
-        // If we get 401/403, we're not enrolled
+        // For students, we determine enrollment by checking if they can access class data
+        // If they can fetch assignments, they're enrolled
         try {
-          const joinRequests = await classApi.getJoinRequests(selectedId);
-          // If we can get join requests, we're likely a teacher or already enrolled
-          // Check if we're the current user by looking at assignments/attendance
           const assignments = await classApi.getClassAssignments(selectedId);
-          const isEnrolled = !!assignments && assignments.length >= 0; // Basic check
-          
-          const studentRequest = joinRequests?.find(r => r.studentId === user?.id);
-          
+          // If we can get assignments without error, student is enrolled
           setJoinRequestStatus(prev => ({
             ...prev,
             [selectedId]: {
-              isEnrolled,
-              joinRequest: studentRequest,
+              isEnrolled: true,
+              joinRequest: null, // Students don't see join requests
               lastChecked: new Date()
             }
           }));
         } catch (enrollErr) {
-          // Likely not enrolled yet
+          // If we get an error fetching assignments, student is not enrolled yet
           setJoinRequestStatus(prev => ({
             ...prev,
             [selectedId]: {
