@@ -22,10 +22,6 @@ import ClassManagement from "../components/class/ClassManagement";
 import ClassAssignmentCreator from "../components/class/ClassAssignmentCreator";
 import { classApi } from "../api/classApi";
 
-
-
-};
-
 // format date
 function formatDate(d) {
   if (!d) return "-";
@@ -1151,7 +1147,7 @@ export default function ClassPage() {
 
                 <div className="grid grid-cols-7 gap-1">
                   {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map((d) => {
-                    const isClassDay = selectedClass.day.includes(d.slice(0,3));
+                    const isClassDay = selectedClass?.day?.includes(d.slice(0,3)) || false;
                     return (
                       <div
                         key={d}
