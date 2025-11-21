@@ -349,21 +349,37 @@ export default function ClassPage() {
     
     const checkJoinStatus = async () => {
       try {
-        // Get class to check if student is enrolled
-        const classData = await classApi.getClass(selectedId);
-        
-        // Check if student is in join requests
-        const joinRequests = await classApi.getJoinRequests(selectedId);
-        const studentRequest = joinRequests?.find(r => r.studentId === user?.id);
-        
-        setJoinRequestStatus(prev => ({
-          ...prev,
-          [selectedId]: {
-            isEnrolled: classData._count?.students > 0, // Very basic check
-            joinRequest: studentRequest,
-            lastChecked: new Date()
-          }
-        }));
+        // Try to get join requests for this class
+        // If we can fetch them (200), we know the student is enrolled or a teacher
+        // If we get 401/403, we're not enrolled
+        try {
+          const joinRequests = await classApi.getJoinRequests(selectedId);
+          // If we can get join requests, we're likely a teacher or already enrolled
+          // Check if we're the current user by looking at assignments/attendance
+          const assignments = await classApi.getClassAssignments(selectedId);
+          const isEnrolled = !!assignments && assignments.length >= 0; // Basic check
+          
+          const studentRequest = joinRequests?.find(r => r.studentId === user?.id);
+          
+          setJoinRequestStatus(prev => ({
+            ...prev,
+            [selectedId]: {
+              isEnrolled,
+              joinRequest: studentRequest,
+              lastChecked: new Date()
+            }
+          }));
+        } catch (enrollErr) {
+          // Likely not enrolled yet
+          setJoinRequestStatus(prev => ({
+            ...prev,
+            [selectedId]: {
+              isEnrolled: false,
+              joinRequest: null,
+              lastChecked: new Date()
+            }
+          }));
+        }
       } catch (err) {
         console.error("Error checking join status:", err);
       }
@@ -383,12 +399,27 @@ export default function ClassPage() {
         ...prev,
         [selectedId]: {
           ...prev[selectedId],
-          joinRequest: result
+          joinRequest: result,
+          isEnrolled: true // Mark as enrolled after successful join or if already enrolled
         }
       }));
     } catch (err) {
       console.error("Error requesting to join:", err);
-      alert(err?.response?.data?.message || 'Failed to send join request');
+      const errorMessage = err?.data?.message || err?.message || 'Failed to send join request';
+      
+      // If already enrolled, mark it as such
+      if (errorMessage.includes('Already enrolled')) {
+        setJoinRequestStatus(prev => ({
+          ...prev,
+          [selectedId]: {
+            ...prev[selectedId],
+            isEnrolled: true
+          }
+        }));
+        alert('You are already enrolled in this class');
+      } else {
+        alert(errorMessage);
+      }
     } finally {
       setJoinRequestLoading(false);
     }
