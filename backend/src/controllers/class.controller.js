@@ -503,6 +503,201 @@ export const getClassSchedule = async (req, res) => {
   }
 };
 
+// ==================== SCHEDULE MANAGEMENT ====================
+
+export const createClassSchedule = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { classId } = req.params;
+    const { role } = req.user || {};
+
+    if (role !== 'TEACHER') {
+      return res.status(403).json({ error: 'Only teachers can manage schedules' });
+    }
+
+    const { dayOfWeek, startTime, endTime, room, building, scheduleType } = req.body;
+
+    const schedule = await ClassService.createSchedule({
+      classId,
+      dayOfWeek,
+      startTime,
+      endTime,
+      room,
+      building,
+      scheduleType,
+    });
+
+    return res.status(201).json({
+      success: true,
+      data: schedule,
+    });
+  } catch (error) {
+    console.error('Error creating schedule:', error);
+    return res.status(500).json({ error: 'Failed to create schedule' });
+  }
+};
+
+export const updateClassSchedule = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { classId, scheduleId } = req.params;
+    const { role } = req.user || {};
+
+    if (role !== 'TEACHER') {
+      return res.status(403).json({ error: 'Only teachers can manage schedules' });
+    }
+
+    const { dayOfWeek, startTime, endTime, room, building, scheduleType } = req.body;
+
+    const schedule = await ClassService.updateSchedule(scheduleId, {
+      dayOfWeek,
+      startTime,
+      endTime,
+      room,
+      building,
+      scheduleType,
+    });
+
+    return res.json({
+      success: true,
+      data: schedule,
+    });
+  } catch (error) {
+    console.error('Error updating schedule:', error);
+    return res.status(500).json({ error: 'Failed to update schedule' });
+  }
+};
+
+export const deleteClassSchedule = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { classId, scheduleId } = req.params;
+    const { role } = req.user || {};
+
+    if (role !== 'TEACHER') {
+      return res.status(403).json({ error: 'Only teachers can manage schedules' });
+    }
+
+    await ClassService.deleteSchedule(scheduleId);
+
+    return res.json({
+      success: true,
+      message: 'Schedule deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting schedule:', error);
+    return res.status(500).json({ error: 'Failed to delete schedule' });
+  }
+};
+
+// ==================== ASSIGNMENT PLAN MANAGEMENT ====================
+
+export const createClassAssignmentPlan = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { classId } = req.params;
+    const { id: userId, role } = req.user || {};
+
+    if (role !== 'TEACHER') {
+      return res.status(403).json({ error: 'Only teachers can manage assignment plans' });
+    }
+
+    const { title, assignmentType, maxScore, dueDate } = req.body;
+
+    const plan = await ClassService.createAssignmentPlan({
+      classId,
+      teacherId: userId,
+      title,
+      assignmentType,
+      maxScore,
+      dueDate,
+    });
+
+    return res.status(201).json({
+      success: true,
+      data: plan,
+    });
+  } catch (error) {
+    console.error('Error creating assignment plan:', error);
+    return res.status(500).json({ error: 'Failed to create assignment plan' });
+  }
+};
+
+export const updateClassAssignmentPlan = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { classId, planId } = req.params;
+    const { role } = req.user || {};
+
+    if (role !== 'TEACHER') {
+      return res.status(403).json({ error: 'Only teachers can manage assignment plans' });
+    }
+
+    const { title, assignmentType, maxScore, dueDate } = req.body;
+
+    const plan = await ClassService.updateAssignmentPlan(planId, {
+      title,
+      assignmentType,
+      maxScore,
+      dueDate,
+    });
+
+    return res.json({
+      success: true,
+      data: plan,
+    });
+  } catch (error) {
+    console.error('Error updating assignment plan:', error);
+    return res.status(500).json({ error: 'Failed to update assignment plan' });
+  }
+};
+
+export const deleteClassAssignmentPlan = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { classId, planId } = req.params;
+    const { role } = req.user || {};
+
+    if (role !== 'TEACHER') {
+      return res.status(403).json({ error: 'Only teachers can manage assignment plans' });
+    }
+
+    await ClassService.deleteAssignmentPlan(planId);
+
+    return res.json({
+      success: true,
+      message: 'Assignment plan deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting assignment plan:', error);
+    return res.status(500).json({ error: 'Failed to delete assignment plan' });
+  }
+};
+
 // ==================== ANNOUNCEMENTS ====================
 
 export const getAnnouncements = async (req, res) => {

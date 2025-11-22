@@ -397,6 +397,71 @@ export class ClassService {
     });
   }
 
+  async createSchedule(data) {
+    return prisma.schedule.create({
+      data: {
+        classId: data.classId,
+        dayOfWeek: data.dayOfWeek,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        room: data.room,
+        building: data.building,
+        scheduleType: data.scheduleType || 'lecture',
+      },
+    });
+  }
+
+  async updateSchedule(scheduleId, data) {
+    return prisma.schedule.update({
+      where: { id: scheduleId },
+      data: {
+        dayOfWeek: data.dayOfWeek,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        room: data.room,
+        building: data.building,
+        scheduleType: data.scheduleType,
+      },
+    });
+  }
+
+  async deleteSchedule(scheduleId) {
+    return prisma.schedule.delete({
+      where: { id: scheduleId },
+    });
+  }
+
+  async createAssignmentPlan(data) {
+    return prisma.assignment.create({
+      data: {
+        classId: data.classId,
+        teacherId: data.teacherId || 'teacher-001', // Will be provided by controller
+        title: data.title,
+        assignmentType: data.assignmentType || 'homework',
+        maxScore: data.maxScore || 0,
+        dueDate: data.dueDate ? new Date(data.dueDate) : new Date(),
+      },
+    });
+  }
+
+  async updateAssignmentPlan(planId, data) {
+    return prisma.assignment.update({
+      where: { id: planId },
+      data: {
+        title: data.title,
+        assignmentType: data.assignmentType,
+        maxScore: data.maxScore,
+        dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
+      },
+    });
+  }
+
+  async deleteAssignmentPlan(planId) {
+    return prisma.assignment.delete({
+      where: { id: planId },
+    });
+  }
+
   async createAnnouncement(data) {
     return prisma.announcementPin.create({
       data,

@@ -209,6 +209,74 @@ router.get(
   ctrl.getClassSchedule
 );
 
+router.post(
+  '/:classId/schedule',
+  authRequired,
+  param('classId').isString().trim().notEmpty(),
+  body('dayOfWeek').isInt({ min: 0, max: 6 }).withMessage('Day of week must be 0-6'),
+  body('startTime').isString().trim().notEmpty().withMessage('Start time is required'),
+  body('endTime').isString().trim().notEmpty().withMessage('End time is required'),
+  body('room').optional().isString(),
+  body('building').optional().isString(),
+  body('scheduleType').optional().isString(),
+  ctrl.createClassSchedule
+);
+
+router.patch(
+  '/:classId/schedule/:scheduleId',
+  authRequired,
+  param('classId').isString().trim().notEmpty(),
+  param('scheduleId').isString().trim().notEmpty(),
+  body('dayOfWeek').optional().isInt({ min: 0, max: 6 }),
+  body('startTime').optional().isString(),
+  body('endTime').optional().isString(),
+  body('room').optional().isString(),
+  body('building').optional().isString(),
+  body('scheduleType').optional().isString(),
+  ctrl.updateClassSchedule
+);
+
+router.delete(
+  '/:classId/schedule/:scheduleId',
+  authRequired,
+  param('classId').isString().trim().notEmpty(),
+  param('scheduleId').isString().trim().notEmpty(),
+  ctrl.deleteClassSchedule
+);
+
+// ==================== ASSIGNMENT PLANS ====================
+
+router.post(
+  '/:classId/assignment-plans',
+  authRequired,
+  param('classId').isString().trim().notEmpty(),
+  body('title').notEmpty().withMessage('Title is required'),
+  body('assignmentType').optional().isString(),
+  body('maxScore').optional().isFloat({ min: 0 }),
+  body('dueDate').optional().isISO8601(),
+  ctrl.createClassAssignmentPlan
+);
+
+router.patch(
+  '/:classId/assignment-plans/:planId',
+  authRequired,
+  param('classId').isString().trim().notEmpty(),
+  param('planId').isString().trim().notEmpty(),
+  body('title').optional().isString(),
+  body('assignmentType').optional().isString(),
+  body('maxScore').optional().isFloat({ min: 0 }),
+  body('dueDate').optional().isISO8601(),
+  ctrl.updateClassAssignmentPlan
+);
+
+router.delete(
+  '/:classId/assignment-plans/:planId',
+  authRequired,
+  param('classId').isString().trim().notEmpty(),
+  param('planId').isString().trim().notEmpty(),
+  ctrl.deleteClassAssignmentPlan
+);
+
 // ==================== ANNOUNCEMENTS ====================
 
 router.get(
