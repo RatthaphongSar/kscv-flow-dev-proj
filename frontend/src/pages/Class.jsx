@@ -20,6 +20,8 @@ import ClassSchedule from "../components/class/ClassSchedule";
 import ClassStudents from "../components/class/ClassStudents";
 import ClassManagement from "../components/class/ClassManagement";
 import ClassAssignmentCreator from "../components/class/ClassAssignmentCreator";
+import ClassScheduleManager from "../components/class/ClassScheduleManager";
+import JoinRequestModal from "../components/class/JoinRequestModal";
 import { classApi } from "../api/classApi";
 
 // format date
@@ -41,6 +43,7 @@ export default function ClassPage() {
   const [selectedId, setSelectedId] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [isJoinRequestModalOpen, setIsJoinRequestModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -628,15 +631,25 @@ export default function ClassPage() {
 
             {userRole === "TEACHER" && (
               <button
-                onClick={() => setActiveTab("students")}
+                onClick={() => setActiveTab("scheduleManager")}
                 className={`pb-2 border-b-2 flex items-center gap-1 whitespace-nowrap ${
-                  activeTab === "students"
+                  activeTab === "scheduleManager"
                     ? "border-violet-500 text-gray-100"
                     : "border-transparent text-gray-400 hover:text-gray-200"
                 }`}
               >
+                <Calendar size={14} />
+                จัดการตารางเรียน
+              </button>
+            )}
+
+            {userRole === "TEACHER" && (
+              <button
+                onClick={() => setIsJoinRequestModalOpen(true)}
+                className="pb-2 border-b-2 flex items-center gap-1 whitespace-nowrap border-transparent text-gray-400 hover:text-gray-200 relative"
+              >
                 <Users size={14} />
-                จัดการนักเรียน
+                คำขอเข้าร่วม
               </button>
             )}
 
@@ -680,7 +693,7 @@ export default function ClassPage() {
 
           {selectedClass && (
             <div className={`${
-              activeTab === "announcements" || activeTab === "schedule" || activeTab === "students" || activeTab === "createAssignments" || activeTab === "settings"
+              activeTab === "announcements" || activeTab === "schedule" || activeTab === "students" || activeTab === "createAssignments" || activeTab === "settings" || activeTab === "scheduleManager"
                 ? "grid gap-3 md:gap-4"
                 : "grid gap-3 md:gap-4 grid-cols-1 md:grid-cols-2"
             }`}>
@@ -1095,10 +1108,10 @@ export default function ClassPage() {
               </div>
             )}
 
-            {/* Create Assignments */}
-            {activeTab === "createAssignments" && (
+            {/* Schedule Manager - Teacher Only */}
+            {activeTab === "scheduleManager" && userRole === "TEACHER" && (
               <div className="col-span-full">
-                <ClassAssignmentCreator classId={selectedId} userRole={userRole} />
+                <ClassScheduleManager classId={selectedId} className={selectedClass?.name} />
               </div>
             )}
 
@@ -1254,6 +1267,14 @@ export default function ClassPage() {
           </div>
         </div>
       )}
+
+      {/* Join Request Modal */}
+      <JoinRequestModal 
+        isOpen={isJoinRequestModalOpen} 
+        onClose={() => setIsJoinRequestModalOpen(false)} 
+        classId={selectedId}
+        className={selectedClass?.name}
+      />
     </div>
   );
 }

@@ -491,6 +491,74 @@ export const classApi = {
     });
     return response;
   },
+
+  // ==================== SCHEDULE MANAGEMENT ====================
+
+  /**
+   * Create class schedule item
+   */
+  async createSchedule(classId: string, scheduleData: any) {
+    const response: any = await api(`/classes/${classId}/schedule`, {
+      method: 'POST',
+      body: scheduleData,
+    });
+    return response?.data;
+  },
+
+  /**
+   * Update class schedule item
+   */
+  async updateSchedule(classId: string, scheduleId: string, updateData: any) {
+    const response: any = await api(`/classes/${classId}/schedule/${scheduleId}`, {
+      method: 'PATCH',
+      body: updateData,
+    });
+    return response?.data;
+  },
+
+  /**
+   * Delete class schedule item
+   */
+  async deleteSchedule(classId: string, scheduleId: string) {
+    const response: any = await api(`/classes/${classId}/schedule/${scheduleId}`, {
+      method: 'DELETE',
+    });
+    return response?.data;
+  },
+
+  // ==================== ASSIGNMENT PLANNING ====================
+
+  /**
+   * Create assignment plan for class
+   */
+  async createAssignmentPlan(classId: string, planData: any) {
+    const response: any = await api(`/classes/${classId}/assignment-plans`, {
+      method: 'POST',
+      body: planData,
+    });
+    return response?.data;
+  },
+
+  /**
+   * Update assignment plan
+   */
+  async updateAssignmentPlan(classId: string, planId: string, updateData: any) {
+    const response: any = await api(`/classes/${classId}/assignment-plans/${planId}`, {
+      method: 'PATCH',
+      body: updateData,
+    });
+    return response?.data;
+  },
+
+  /**
+   * Delete assignment plan
+   */
+  async deleteAssignmentPlan(classId: string, planId: string) {
+    const response: any = await api(`/classes/${classId}/assignment-plans/${planId}`, {
+      method: 'DELETE',
+    });
+    return response?.data;
+  },
 };
 
 export default classApi;
