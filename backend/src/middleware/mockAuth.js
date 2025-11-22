@@ -2,6 +2,7 @@
  * Mock authentication middleware for testing
  * Sets req.user based on Authorization header token
  * Allows public endpoints like /auth/login to proceed
+ * Only intercepts requests without Bearer tokens
  */
 
 export const mockAuthMiddleware = (req, res, next) => {
@@ -13,7 +14,12 @@ export const mockAuthMiddleware = (req, res, next) => {
 
   const authHeader = req.headers.authorization || '';
 
-  // Parse Bearer token (format: "bearer-token-XXX")
+  // If Authorization header with Bearer token exists, let the actual auth middleware handle it
+  if (authHeader.startsWith('Bearer ')) {
+    return next();
+  }
+
+  // Parse Bearer-like token for mock auth (format: "bearer-token-XXX" or similar)
   const token = authHeader.replace('bearer ', '').toLowerCase();
 
   if (token.includes('teacher')) {
@@ -37,8 +43,8 @@ export const mockAuthMiddleware = (req, res, next) => {
       email: 'admin@university.edu',
       role: 'ADMIN',
     };
-  } else if (authHeader) {
-    // If Authorization header exists but token not recognized, deny
+  } else if (authHeader && !authHeader.startsWith('Bearer ')) {
+    // If Authorization header exists but it's not Bearer format and not recognized, deny
     return res.status(401).json({ error: 'Invalid token' });
   }
 
