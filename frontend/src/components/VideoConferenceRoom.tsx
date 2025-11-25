@@ -6,7 +6,7 @@ import {
   Video,
   VideoOff,
   Share2,
-  Share2Off,
+  Eye,
   Hand,
   MessageCircle,
   Users,
@@ -256,7 +256,7 @@ export function VideoConferenceRoom({
                 }`}
                 title={isScreenSharing ? 'Stop sharing' : 'Share screen'}
               >
-                {isScreenSharing ? <Share2Off size={20} /> : <Share2 size={20} />}
+                {isScreenSharing ? <Eye size={20} /> : <Share2 size={20} />}
               </button>
 
               {/* Raise Hand */}
