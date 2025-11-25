@@ -671,6 +671,109 @@ export const classApi = {
     });
     return response?.data;
   },
+
+  // ==================== MEETINGS ====================
+
+  /**
+   * Create a new meeting
+   */
+  async createMeeting(meetingData: any) {
+    const response: any = await api('/meetings', {
+      method: 'POST',
+      body: JSON.stringify(meetingData),
+    });
+    return response?.data;
+  },
+
+  /**
+   * List meetings (optionally filtered by classId or status)
+   */
+  async listMeetings(filters?: { classId?: string; status?: string; userId?: string }) {
+    const params = new URLSearchParams();
+    if (filters?.classId) params.append('classId', filters.classId);
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.userId) params.append('userId', filters.userId);
+    
+    const response: any = await api(`/meetings?${params.toString()}`);
+    return response?.data || [];
+  },
+
+  /**
+   * Get a specific meeting with participants
+   */
+  async getMeeting(meetingId: string) {
+    const response: any = await api(`/meetings/${meetingId}`);
+    return response?.data;
+  },
+
+  /**
+   * Update a meeting
+   */
+  async updateMeeting(meetingId: string, updateData: any) {
+    const response: any = await api(`/meetings/${meetingId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updateData),
+    });
+    return response?.data;
+  },
+
+  /**
+   * Delete a meeting
+   */
+  async deleteMeeting(meetingId: string) {
+    const response: any = await api(`/meetings/${meetingId}`, {
+      method: 'DELETE',
+    });
+    return response?.data;
+  },
+
+  /**
+   * Start a meeting (teacher only)
+   */
+  async startMeeting(meetingId: string) {
+    const response: any = await api(`/meetings/${meetingId}/start`, {
+      method: 'POST',
+    });
+    return response?.data;
+  },
+
+  /**
+   * End a meeting (teacher only)
+   */
+  async endMeeting(meetingId: string) {
+    const response: any = await api(`/meetings/${meetingId}/end`, {
+      method: 'POST',
+    });
+    return response?.data;
+  },
+
+  /**
+   * Join a meeting (student)
+   */
+  async joinMeeting(meetingId: string) {
+    const response: any = await api(`/meetings/${meetingId}/join`, {
+      method: 'POST',
+    });
+    return response?.data;
+  },
+
+  /**
+   * Leave a meeting (student)
+   */
+  async leaveMeeting(meetingId: string) {
+    const response: any = await api(`/meetings/${meetingId}/leave`, {
+      method: 'POST',
+    });
+    return response?.data;
+  },
+
+  /**
+   * Get meeting participants
+   */
+  async getMeetingParticipants(meetingId: string) {
+    const response: any = await api(`/meetings/${meetingId}/participants`);
+    return response?.data || [];
+  },
 };
 
 export default classApi;

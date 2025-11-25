@@ -49,6 +49,10 @@ model User {
   communities  CommunityMember[]
   serviceRequests ServiceRequest[]
 
+  // Meeting Relations
+  teacherMeetings Meeting[] @relation("TeacherMeetings")
+  studentMeetings MeetingParticipant[] @relation("StudentMeetings")
+
   @@index([role, year, major])
 }
 
@@ -261,6 +265,51 @@ model Exam {
   @@index([classId, date])
 }
 
+model Meeting {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  type        String   @default("online") // online | onsite
+  platform    String?  // Microsoft Teams, Google Meet, Zoom, etc (only for online)
+  location    String?  // Room number/name (only for onsite)
+  startTime   DateTime
+  endTime     DateTime
+  status      String   @default("scheduled") // scheduled | active | completed | cancelled
+  capacity    Int?     // Max participants
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  teacher     User     @relation("TeacherMeetings", fields: [teacherId], references: [id], onDelete: Cascade)
+  teacherId   String
+  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classId     String
+  participants MeetingParticipant[]
+
+  @@index([classId, startTime])
+  @@index([teacherId, startTime])
+  @@index([status])
+}
+
+model MeetingParticipant {
+  id        String   @id @default(cuid())
+  status    String   @default("joined") // joined | left | declined
+  joinedAt  DateTime @default(now())
+  leftAt    DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  meetingId String
+  student   User    @relation("StudentMeetings", fields: [studentId], references: [id], onDelete: Cascade)
+  studentId String
+
+  @@unique([meetingId, studentId])
+  @@index([meetingId])
+  @@index([studentId])
+}
+
 model Grade {
   id        String   @id @default(cuid())
   score     Float
@@ -380,6 +429,7 @@ model Class {
   attendances     Attendance[]
   attendanceSessions AttendanceSession[]
   exams           Exam[]
+  meetings        Meeting[]
   schedules       Schedule[]
   resources       Resource[]
   announcementPin AnnouncementPin[]
