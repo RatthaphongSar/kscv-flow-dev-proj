@@ -1,6 +1,6 @@
 // backend/src/controllers/videoConferencing.js
 import * as videoService from '../services/videoConferencing.js'
-import { db } from '../db.js'
+import { prisma } from '../db.js'
 
 /**
  * Start recording a video call
@@ -12,7 +12,7 @@ export async function startRecording(req, res) {
     const userId = req.user.id
 
     // Verify user is teacher of the meeting
-    const meeting = await db.meeting.findUnique({
+    const meeting = await prisma.meeting.findUnique({
       where: { id: meetingId },
       include: { class: true },
     })
@@ -26,7 +26,7 @@ export async function startRecording(req, res) {
     }
 
     // Start recording (just mark in database)
-    const updated = await db.meeting.update({
+    const updated = await prisma.meeting.update({
       where: { id: meetingId },
       data: {
         recordingStartedAt: new Date(),
@@ -54,7 +54,7 @@ export async function stopRecording(req, res) {
     const { recordingUrl } = req.body
 
     // Verify user is teacher of the meeting
-    const meeting = await db.meeting.findUnique({
+    const meeting = await prisma.meeting.findUnique({
       where: { id: meetingId },
     })
 
@@ -70,7 +70,7 @@ export async function stopRecording(req, res) {
       ? Math.floor((new Date() - meeting.recordingStartedAt) / 1000)
       : 0
 
-    const updated = await db.meeting.update({
+    const updated = await prisma.meeting.update({
       where: { id: meetingId },
       data: {
         recordingStoppedAt: new Date(),
@@ -98,7 +98,7 @@ export async function getRecordingStatus(req, res) {
   try {
     const { id: meetingId } = req.params
 
-    const meeting = await db.meeting.findUnique({
+    const meeting = await prisma.meeting.findUnique({
       where: { id: meetingId },
       select: {
         recordingStartedAt: true,
@@ -140,7 +140,7 @@ export async function getVideoParticipants(req, res) {
     const { id: meetingId } = req.params
 
     // Get current video session if active
-    const activeSessions = await db.videoSession.findMany({
+    const activeSessions = await prisma.videoSession.findMany({
       where: {
         meetingId,
         status: 'active',
@@ -215,7 +215,7 @@ export async function getQualityStats(req, res) {
     // Get latest stats from last 5 minutes
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
 
-    const stats = await db.callStats.findMany({
+    const stats = await prisma.callStats.findMany({
       where: {
         meeting: { id: meetingId },
         recordedAt: { gte: fiveMinutesAgo },
@@ -318,3 +318,4 @@ export async function getChatHistory(req, res) {
     res.status(500).json({ error: 'Failed to get chat history' })
   }
 }
+

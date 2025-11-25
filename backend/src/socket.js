@@ -338,7 +338,7 @@ export function initSocket(httpServer) {
         console.error('[Video] Error logging stats:', error)
       }
     })
-
+  })
 
   return io
 }

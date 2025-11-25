@@ -1,12 +1,12 @@
 // backend/src/routes/videoConferencing.js
 import { Router } from 'express'
 import * as ctrl from '../controllers/videoConferencing.js'
-import { authenticateToken } from '../middleware/auth.js'
+import { authRequired } from '../middleware/auth.js'
 
 const router = Router()
 
 // All routes require authentication
-router.use(authenticateToken)
+router.use(authRequired)
 
 // ============ RECORDING ENDPOINTS ============
 

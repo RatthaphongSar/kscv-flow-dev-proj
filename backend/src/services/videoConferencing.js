@@ -1,5 +1,5 @@
 // backend/src/services/videoConferencing.js
-import { db } from '../db.js'
+import { prisma } from '../db.js'
 
 /**
  * Video Conferencing Service
@@ -17,7 +17,7 @@ const userConnections = new Map()
  */
 export async function startVideoSession(meetingId) {
   try {
-    const meeting = await db.meeting.findUnique({
+    const meeting = await prisma.meeting.findUnique({
       where: { id: meetingId },
     })
 
@@ -25,7 +25,7 @@ export async function startVideoSession(meetingId) {
       throw new Error('Meeting not found')
     }
 
-    const videoSession = await db.videoSession.create({
+    const videoSession = await prisma.videoSession.create({
       data: {
         status: 'active',
         meeting: { connect: { id: meetingId } },
@@ -54,12 +54,12 @@ export async function startVideoSession(meetingId) {
 export async function endVideoSession(meetingId, sessionId) {
   try {
     const duration = Math.floor(
-      (new Date() - new Date(await db.videoSession.findUnique({
+      (new Date() - new Date(await prisma.videoSession.findUnique({
         where: { id: sessionId },
       }))?.startedAt) / 1000
     )
 
-    const videoSession = await db.videoSession.update({
+    const videoSession = await prisma.videoSession.update({
       where: { id: sessionId },
       data: {
         status: 'completed',
@@ -87,7 +87,7 @@ export async function endVideoSession(meetingId, sessionId) {
 export async function joinVideoCall(meetingId, userId, sessionId) {
   try {
     // Check if already in session
-    const existing = await db.videoParticipant.findUnique({
+    const existing = await prisma.videoParticipant.findUnique({
       where: {
         sessionId_userId: {
           sessionId,
@@ -101,7 +101,7 @@ export async function joinVideoCall(meetingId, userId, sessionId) {
     }
 
     // Create new participant record
-    const participant = await db.videoParticipant.create({
+    const participant = await prisma.videoParticipant.create({
       data: {
         user: { connect: { id: userId } },
         session: { connect: { id: sessionId } },
@@ -137,7 +137,7 @@ export async function joinVideoCall(meetingId, userId, sessionId) {
  */
 export async function leaveVideoCall(meetingId, userId, sessionId) {
   try {
-    const participant = await db.videoParticipant.update({
+    const participant = await prisma.videoParticipant.update({
       where: {
         sessionId_userId: {
           sessionId,
@@ -173,7 +173,7 @@ export async function leaveVideoCall(meetingId, userId, sessionId) {
  */
 export async function getActiveParticipants(sessionId) {
   try {
-    const participants = await db.videoParticipant.findMany({
+    const participants = await prisma.videoParticipant.findMany({
       where: {
         sessionId,
         leftAt: null,
@@ -204,7 +204,7 @@ export async function getActiveParticipants(sessionId) {
  */
 export async function toggleCamera(sessionId, userId, enabled) {
   try {
-    const participant = await db.videoParticipant.update({
+    const participant = await prisma.videoParticipant.update({
       where: {
         sessionId_userId: {
           sessionId,
@@ -237,7 +237,7 @@ export async function toggleCamera(sessionId, userId, enabled) {
  */
 export async function toggleMicrophone(sessionId, userId, enabled) {
   try {
-    const participant = await db.videoParticipant.update({
+    const participant = await prisma.videoParticipant.update({
       where: {
         sessionId_userId: {
           sessionId,
@@ -269,7 +269,7 @@ export async function toggleMicrophone(sessionId, userId, enabled) {
  */
 export async function startScreenShare(meetingId, userId) {
   try {
-    const screenSession = await db.screenShareSession.create({
+    const screenSession = await prisma.screenShareSession.create({
       data: {
         presenter: { connect: { id: userId } },
         meeting: { connect: { id: meetingId } },
@@ -295,12 +295,12 @@ export async function startScreenShare(meetingId, userId) {
  */
 export async function stopScreenShare(screenSessionId) {
   try {
-    const screenSession = await db.screenShareSession.update({
+    const screenSession = await prisma.screenShareSession.update({
       where: { id: screenSessionId },
       data: {
         stoppedAt: new Date(),
         duration: Math.floor(
-          (new Date() - new Date(await db.screenShareSession.findUnique({
+          (new Date() - new Date(await prisma.screenShareSession.findUnique({
             where: { id: screenSessionId },
           }))?.startedAt) / 1000
         ),
@@ -327,7 +327,7 @@ export async function stopScreenShare(screenSessionId) {
  */
 export async function logCallStats(sessionId, meetingId, stats) {
   try {
-    const callStats = await db.callStats.create({
+    const callStats = await prisma.callStats.create({
       data: {
         session: { connect: { id: sessionId } },
         meeting: { connect: { id: meetingId } },
@@ -357,7 +357,7 @@ export async function logCallStats(sessionId, meetingId, stats) {
  */
 export async function getCallStats(sessionId) {
   try {
-    const stats = await db.callStats.findMany({
+    const stats = await prisma.callStats.findMany({
       where: { sessionId },
       orderBy: { recordedAt: 'desc' },
       take: 100, // Last 100 records
@@ -380,7 +380,7 @@ export async function getCallStats(sessionId) {
  */
 export async function saveChatMessage(meetingId, userId, content, senderName) {
   try {
-    const message = await db.chatMessage.create({
+    const message = await prisma.chatMessage.create({
       data: {
         content,
         senderName,
@@ -409,7 +409,7 @@ export async function saveChatMessage(meetingId, userId, content, senderName) {
  */
 export async function getChatHistory(meetingId, limit = 50) {
   try {
-    const messages = await db.chatMessage.findMany({
+    const messages = await prisma.chatMessage.findMany({
       where: { meetingId },
       include: {
         sender: {
