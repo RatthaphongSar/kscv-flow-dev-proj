@@ -49,6 +49,11 @@ model User {
   communities  CommunityMember[]
   serviceRequests ServiceRequest[]
 
+  // Video Conferencing Relations
+  videoParticipants VideoParticipant[] @relation("UserVideoParticipant")
+  screenSessions ScreenShareSession[] @relation("ScreenPresenter")
+  chatMessages ChatMessage[] @relation("ChatSender")
+
   // Meeting Relations
   teacherMeetings Meeting[] @relation("TeacherMeetings")
   studentMeetings MeetingParticipant[] @relation("StudentMeetings")
@@ -276,6 +281,15 @@ model Meeting {
   endTime     DateTime
   status      String   @default("scheduled") // scheduled | active | completed | cancelled
   capacity    Int?     // Max participants
+  
+  // Video conferencing features
+  recordingStartedAt   DateTime?
+  recordingStoppedAt   DateTime?
+  recordingUrl         String?        // S3/storage URL
+  recordingDuration    Int?           // in seconds
+  hasTranscription     Boolean        @default(false)
+  transcriptionUrl     String?
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -285,6 +299,10 @@ model Meeting {
   class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
   classId     String
   participants MeetingParticipant[]
+  videoSessions VideoSession[]
+  screenSessions ScreenShareSession[]
+  callStats CallStats[]
+  chatMessages ChatMessage[]
 
   @@index([classId, startTime])
   @@index([teacherId, startTime])
@@ -308,6 +326,116 @@ model MeetingParticipant {
   @@unique([meetingId, studentId])
   @@index([meetingId])
   @@index([studentId])
+}
+
+// ============ VIDEO CONFERENCING MODELS ============
+
+model VideoSession {
+  id              String    @id @default(cuid())
+  status          String    @default("active") // active | completed | failed
+  startedAt       DateTime  @default(now())
+  endedAt         DateTime?
+  recordingUrl    String?   // S3 storage
+  recordingSize   Int?      // bytes
+  duration        Int?      // seconds
+  
+  // Relations
+  meeting         Meeting   @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  meetingId       String
+  participants    VideoParticipant[]
+  stats           CallStats[]
+  
+  @@index([meetingId, startedAt])
+}
+
+model VideoParticipant {
+  id              String    @id @default(cuid())
+  userId          String
+  joinedAt        DateTime  @default(now())
+  leftAt          DateTime?
+  
+  // Video quality metrics
+  videoEnabled    Boolean   @default(true)
+  audioEnabled    Boolean   @default(true)
+  screenShared    Boolean   @default(false)
+  
+  // Stats
+  videoQuality    String?   // HD, SD, LOW
+  audioQuality    String?   // excellent, good, fair, poor
+  jitterMs        Int?      // milliseconds
+  packetLoss      Float?    // percentage
+  
+  // Relations
+  user            User      @relation("UserVideoParticipant", fields: [userId], references: [id], onDelete: Cascade)
+  session         VideoSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId       String
+  
+  @@unique([sessionId, userId])
+  @@index([sessionId])
+  @@index([userId])
+}
+
+model ScreenShareSession {
+  id              String    @id @default(cuid())
+  presenterId     String
+  screenUrl       String?   // Recording of screen
+  startedAt       DateTime  @default(now())
+  stoppedAt       DateTime?
+  duration        Int?
+  
+  // Relations
+  presenter       User      @relation("ScreenPresenter", fields: [presenterId], references: [id], onDelete: Cascade)
+  meeting         Meeting   @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  meetingId       String
+  
+  @@index([meetingId, startedAt])
+  @@index([presenterId])
+}
+
+model CallStats {
+  id              String    @id @default(cuid())
+  
+  // Video metrics
+  videoBitrate    Int?      // kbps
+  videoFramerate  Int?      // fps
+  videoResolution String?   // 1920x1080, 1280x720, etc
+  
+  // Audio metrics
+  audioBitrate    Int?      // kbps
+  audioLevel      Int?      // 0-100
+  
+  // Network metrics
+  latencyMs       Int?      // round trip time
+  jitterMs        Int?      // variation
+  packetLossPercent Float?
+  bandwidth       Int?      // kbps available
+  
+  recordedAt      DateTime  @default(now())
+  
+  // Relations
+  session         VideoSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId       String
+  meeting         Meeting   @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  meetingId       String
+  
+  @@index([sessionId, recordedAt])
+  @@index([meetingId])
+}
+
+model ChatMessage {
+  id              String    @id @default(cuid())
+  content         String
+  senderName      String
+  createdAt       DateTime  @default(now())
+  
+  // Relations
+  sender          User      @relation("ChatSender", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId        String
+  meeting         Meeting   @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  meetingId       String
+  
+  @@index([meetingId, createdAt])
+  @@index([senderId])
 }
 
 model Grade {

@@ -18,6 +18,7 @@ import examsRoutes from './exams.js'
 import gradesRoutes from './grades.js'
 import leavesRoutes from './leaves.js'
 import meetingsRoutes from './meetings.js'
+import videoConferencingRoutes from './videoConferencing.js'
 import organizationRoutes from './organization.js'
 import registerRoutes from './register.js'
 import resourcesRoutes from './resources.js'
@@ -45,6 +46,7 @@ router.use('/exams', examsRoutes)
 router.use('/grades', gradesRoutes)
 router.use('/leaves', leavesRoutes)
 router.use('/meetings', meetingsRoutes)
+router.use('/meetings', videoConferencingRoutes)
 router.use('/organization', organizationRoutes)
 router.use('/register', registerRoutes)
 router.use('/resources', resourcesRoutes)
