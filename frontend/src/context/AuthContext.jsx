@@ -67,6 +67,9 @@ export function AuthProvider({ children }) {
   async function login(username, password) {
     const userData = await AuthAPI.login(username, password)
     localStorage.setItem('user', JSON.stringify(userData))
+    if (userData.accessToken) {
+      localStorage.setItem('access_token', userData.accessToken)
+    }
     setUser(userData)
     return userData
   }
@@ -78,6 +81,7 @@ export function AuthProvider({ children }) {
       console.warn('Logout API failed:', e)
     }
     localStorage.removeItem('user')
+    localStorage.removeItem('access_token')
     setUser(null)
   }
 

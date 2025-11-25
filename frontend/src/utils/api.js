@@ -27,6 +27,14 @@ export async function api(path, options = {}) {
   const finalHeaders = new Headers(headers);
   let finalBody = body;
 
+  // Add mock auth token for testing (reads from localStorage)
+  if (!finalHeaders.has('Authorization')) {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      finalHeaders.set('Authorization', `Bearer ${token}`);
+    }
+  }
+
   if (body && !(body instanceof FormData) && !finalHeaders.has('Content-Type')) {
     finalHeaders.set('Content-Type', 'application/json');
   }
@@ -78,7 +86,8 @@ export async function api(path, options = {}) {
 
     if (!res.ok) {
       const data = await jsonOrNull(res);
-      const err = new Error(data?.error || `HTTP ${res.status}`);
+      console.log('[API Error] Status:', res.status, 'Data:', data);
+      const err = new Error(data?.message || data?.error || `HTTP ${res.status}`);
       err.status = res.status;
       err.data = data;
       err.url = `${API_BASE}${path}`;

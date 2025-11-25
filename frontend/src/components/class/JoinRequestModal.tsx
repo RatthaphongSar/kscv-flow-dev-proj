@@ -7,15 +7,21 @@ import React, { useState, useEffect } from 'react';
 import { X, Check, XCircle, AlertCircle, Users, Mail, BookOpen } from 'lucide-react';
 import classApi from '../../api/classApi';
 
+interface Student {
+  id: string;
+  username: string;
+  email: string;
+  major?: string;
+  year?: number;
+}
+
 interface JoinRequest {
   id: string;
   studentId: string;
-  studentName: string;
-  studentEmail: string;
-  studentMajor?: string;
+  student: Student;
   classId: string;
   status: 'pending' | 'approved' | 'rejected';
-  requestedAt: string;
+  createdAt: string;
 }
 
 interface JoinRequestModalProps {
@@ -240,21 +246,21 @@ const JoinRequestModal: React.FC<JoinRequestModalProps> = ({ isOpen, onClose, cl
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                            {request.studentName.charAt(0).toUpperCase()}
+                            {request.student?.username?.charAt(0).toUpperCase() || '?'}
                           </div>
                           <div>
-                            <h3 className="font-semibold text-gray-100">{request.studentName}</h3>
-                            {request.studentMajor && (
+                            <h3 className="font-semibold text-gray-100">{request.student?.username || 'Unknown'}</h3>
+                            {request.student?.major && (
                               <p className="text-xs text-slate-400 flex items-center gap-1 mt-1">
                                 <BookOpen className="w-3 h-3" />
-                                {request.studentMajor}
+                                {request.student.major}
                               </p>
                             )}
                           </div>
                         </div>
                         <p className="text-sm text-slate-400 flex items-center gap-2 ml-13">
                           <Mail className="w-3 h-3" />
-                          {request.studentEmail}
+                          {request.student?.email || 'No email'}
                         </p>
                       </div>
 
@@ -267,7 +273,7 @@ const JoinRequestModal: React.FC<JoinRequestModalProps> = ({ isOpen, onClose, cl
 
                     {/* Request Date */}
                     <p className="text-xs text-slate-500 mb-3">
-                      ขอเข้าร่วมเมื่อ: {new Date(request.requestedAt).toLocaleDateString('th-TH', {
+                      ขอเข้าร่วมเมื่อ: {new Date(request.createdAt).toLocaleDateString('th-TH', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric',

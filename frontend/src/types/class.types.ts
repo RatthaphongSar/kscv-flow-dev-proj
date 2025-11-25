@@ -37,7 +37,8 @@ export interface Assignment {
   description?: string;
   assignmentType: string; // homework, quiz, project, exam
   maxScore: number;
-  dueDate: string;
+  assignedAt: string;     // เวลาที่ครูสั่งงาน
+  dueDate: string;        // เดทไลน์ส่งงาน
   createdAt: string;
   updatedAt: string;
   submissions?: AssignmentSubmission[];

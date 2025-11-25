@@ -2,7 +2,38 @@
 import { useEffect, useState } from 'react';
 import { Attendance, AttendanceSummary } from '../../types/class.types';
 import classApi from '../../api/classApi';
-import { Users, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { Users, AlertCircle, CheckCircle2, XCircle, Settings, Calendar } from 'lucide-react';
+import AttendanceSessionModal from './AttendanceSessionModal';
+
+interface AttendanceSession {
+  id: string;
+  subject: string;
+  type: 'lesson' | 'midterm' | 'final' | 'quiz' | 'collection';
+  startDate: string;
+  endDate?: string;
+  status: 'active' | 'completed' | 'cancelled';
+  description?: string;
+  createdAt?: string;
+  _count?: {
+    attendances: number;
+  };
+}
+
+const typeLabels: { [key: string]: string } = {
+  lesson: 'เรียน',
+  midterm: 'สอบกลางภาค',
+  final: 'สอบปลายภาค',
+  quiz: 'สอบย่อย',
+  collection: 'เก็บคะแนน',
+};
+
+const typeColors: { [key: string]: string } = {
+  lesson: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
+  midterm: 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200',
+  final: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
+  quiz: 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200',
+  collection: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
+};
 
 interface ClassAttendanceProps {
   classId: string | null;
@@ -17,15 +48,18 @@ export default function ClassAttendance({
 }: ClassAttendanceProps) {
   const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [summary, setSummary] = useState<AttendanceSummary | null>(null);
+  const [sessions, setSessions] = useState<AttendanceSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
+  const [showSessionModal, setShowSessionModal] = useState(false);
 
   useEffect(() => {
     if (classId) {
       loadAttendance();
+      loadSessions();
       if (userId) {
         loadSummary();
       }
@@ -43,6 +77,15 @@ export default function ClassAttendance({
       setError('Failed to load attendance');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadSessions = async () => {
+    try {
+      const data = await classApi.getAttendanceSessions(classId!);
+      setSessions(data);
+    } catch (err) {
+      console.error('Error loading sessions:', err);
     }
   };
 
@@ -98,6 +141,27 @@ export default function ClassAttendance({
         </div>
       )}
 
+      {/* Teacher: Attendance Management */}
+      {userRole === 'TEACHER' && (
+        <div className="flex items-center justify-between p-4 rounded-lg bg-blue-50 dark:bg-slate-700 border border-blue-200 dark:border-slate-600 mb-6">
+          <div>
+            <h3 className="font-semibold text-slate-900 dark:text-white mb-1">
+              การเข้าเรียน ({sessions.length} รอบ)
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              ตั้งค่าช่วงเรียน สอบ หรือเก็บคะแนน
+            </p>
+          </div>
+          <button
+            onClick={() => setShowSessionModal(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition"
+          >
+            <Settings size={16} />
+            ตั้งค่า
+          </button>
+        </div>
+      )}
+
       {/* Student Summary */}
       {summary && userRole === 'STUDENT' && (
         <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-slate-700 dark:to-slate-600 rounded-lg p-5 border border-blue-200 dark:border-slate-500">
@@ -135,6 +199,112 @@ export default function ClassAttendance({
                 {summary.percentage}%
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Attendance Sessions List (For All Users) */}
+      {sessions.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="font-semibold text-slate-900 dark:text-white text-lg">
+            {userRole === 'STUDENT' ? 'รอบการเข้าเรียน' : 'Session Attendance'}
+          </h3>
+          <div className="grid gap-3">
+            {sessions.map((session) => (
+              <div
+                key={session.id}
+                className="p-4 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:shadow-md transition"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${typeColors[session.type]}`}>
+                        {typeLabels[session.type]}
+                      </span>
+                      <h4 className="font-semibold text-slate-900 dark:text-white">
+                        {session.subject}
+                      </h4>
+                    </div>
+
+                    <div className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
+                      {session.createdAt && (
+                        <div className="flex items-center gap-2">
+                          <Calendar size={14} />
+                          <span>
+                            สร้างเมื่อ: {(() => {
+                              try {
+                                const date = new Date(session.createdAt);
+                                if (isNaN(date.getTime())) return 'Invalid Date';
+                                return date.toLocaleDateString('th-TH', {
+                                  year: 'numeric',
+                                  month: '2-digit',
+                                  day: '2-digit',
+                                }) + ' ' + date.toLocaleTimeString('th-TH', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                });
+                              } catch {
+                                return 'Invalid Date';
+                              }
+                            })()}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <Calendar size={14} />
+                        <span>
+                          ช่วงเวลา: {(() => {
+                            try {
+                              const startDate = new Date(session.startDate);
+                              if (isNaN(startDate.getTime())) return 'Invalid Date';
+                              let result = startDate.toLocaleDateString('th-TH', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                              });
+                              if (session.endDate) {
+                                const endDate = new Date(session.endDate);
+                                if (!isNaN(endDate.getTime())) {
+                                  result += ` ถึง ${endDate.toLocaleDateString('th-TH', {
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                  })}`;
+                                }
+                              }
+                              return result;
+                            } catch {
+                              return 'Invalid Date';
+                            }
+                          })()}
+                        </span>
+                      </div>
+                      {session.description && (
+                        <div className="text-slate-500 dark:text-slate-400 mt-1">{session.description}</div>
+                      )}
+                    </div>
+
+                    {userRole !== 'STUDENT' && (
+                      <div className="mt-2 text-xs text-blue-600 dark:text-blue-400 font-medium">
+                        นักเรียนเข้าแล้ว: {session._count?.attendances || 0} คน
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="text-right">
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                      session.status === 'active' 
+                        ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                        : session.status === 'completed'
+                        ? 'bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200'
+                        : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+                    }`}>
+                      {session.status === 'active' ? 'กำลังดำเนิน' : session.status === 'completed' ? 'สิ้นสุด' : 'ยกเลิก'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -261,6 +431,14 @@ export default function ClassAttendance({
           </div>
         </div>
       )}
+
+      {/* Attendance Session Modal */}
+      <AttendanceSessionModal
+        isOpen={showSessionModal}
+        onClose={() => setShowSessionModal(false)}
+        classId={classId!}
+        onSessionsUpdated={loadAttendance}
+      />
     </div>
   );
 }

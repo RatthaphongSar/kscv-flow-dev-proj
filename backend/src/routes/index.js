@@ -11,6 +11,7 @@ import classRoutes from './class.routes.js'
 import classEnrollmentRoutes from './classEnrollment.routes.js'
 import assignmentExtendedRoutes from './assignmentExtended.routes.js'
 import teachingMaterialRoutes from './teachingMaterial.routes.js'
+import submissionRoutes from './submission.routes.js'
 import clubsRoutes from './clubs.js'
 import communityRoutes from './community.js'
 import examsRoutes from './exams.js'
@@ -50,6 +51,7 @@ router.use('/resources', resourcesRoutes)
 router.use('/schedule', scheduleRoutes)
 router.use('/settings', settingsRoutes)
 router.use('/users', usersRoutes)
+router.use('/submissions', submissionRoutes)
 
 // mount chat routes under /chat
 router.use('/chat', chatRoutes)

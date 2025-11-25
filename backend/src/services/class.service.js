@@ -6,7 +6,7 @@ export class ClassService {
   /**
    * Get all classes for a user based on their role
    * Teachers: classes they teach
-   * Students: classes they're enrolled in
+   * Students: all classes (with enrollment status marked), enrolled first
    */
   async getClassesForUser(userId, role) {
     if (role === 'TEACHER') {
@@ -26,15 +26,14 @@ export class ClassService {
       });
     }
 
-    // STUDENT role
-    return prisma.class.findMany({
-      where: {
-        students: {
-          some: { studentId: userId, status: 'active' },
-        },
-      },
+    // STUDENT role: get all classes with enrollment status
+    const allClasses = await prisma.class.findMany({
       include: {
         teacher: { select: { id: true, username: true, email: true } },
+        students: {
+          where: { studentId: userId },
+          select: { status: true }
+        },
         _count: {
           select: {
             students: true,
@@ -43,6 +42,17 @@ export class ClassService {
         },
       },
       orderBy: { createdAt: 'desc' },
+    });
+
+    // Mark enrollment status and sort enrolled first
+    return allClasses.map(cls => ({
+      ...cls,
+      enrollmentStatus: cls.students?.[0]?.status || 'not_enrolled',
+    })).sort((a, b) => {
+      // Enrolled classes first, then not enrolled
+      if (a.enrollmentStatus === 'active' && b.enrollmentStatus !== 'active') return -1;
+      if (a.enrollmentStatus !== 'active' && b.enrollmentStatus === 'active') return 1;
+      return 0;
     });
   }
 
@@ -205,6 +215,17 @@ export class ClassService {
   }
 
   async createAssignment(assignmentData) {
+    // Ensure dueDate is properly formatted as ISO-8601
+    let dueDate = assignmentData.dueDate;
+    if (dueDate && typeof dueDate === 'string') {
+      // If it's missing seconds, add them
+      if (dueDate.match(/T\d{2}:\d{2}$/)) {
+        dueDate = `${dueDate}:00`;
+      }
+      // Convert to Date object for Prisma
+      dueDate = new Date(dueDate);
+    }
+
     return prisma.assignment.create({
       data: {
         classId: assignmentData.classId,
@@ -212,7 +233,7 @@ export class ClassService {
         title: assignmentData.title,
         description: assignmentData.description,
         maxScore: assignmentData.maxScore || 100,
-        dueDate: assignmentData.dueDate,
+        dueDate: dueDate,
         assignmentType: assignmentData.assignmentType || 'homework',
       },
       include: {
@@ -222,6 +243,16 @@ export class ClassService {
   }
 
   async updateAssignment(assignmentId, data) {
+    // Ensure dueDate is properly formatted as ISO-8601
+    if (data.dueDate && typeof data.dueDate === 'string') {
+      // If it's missing seconds, add them
+      if (data.dueDate.match(/T\d{2}:\d{2}$/)) {
+        data.dueDate = `${data.dueDate}:00`;
+      }
+      // Convert to Date object for Prisma
+      data.dueDate = new Date(data.dueDate);
+    }
+
     return prisma.assignment.update({
       where: { id: assignmentId },
       data,
@@ -232,9 +263,41 @@ export class ClassService {
   }
 
   async deleteAssignment(assignmentId) {
-    return prisma.assignment.delete({
-      where: { id: assignmentId },
-    });
+    try {
+      // Check if assignment exists first
+      const assignment = await prisma.assignment.findUnique({
+        where: { id: assignmentId },
+      });
+
+      if (!assignment) {
+        throw new Error('Assignment not found');
+      }
+
+      // Use transaction to ensure both deletions happen atomically
+      const result = await prisma.$transaction(async (tx) => {
+        // Delete all submissions first (due to foreign key constraint)
+        const submissionsDeleted = await tx.assignmentSubmission.deleteMany({
+          where: { assignmentId },
+        });
+        console.log(`Deleted ${submissionsDeleted.count} submissions for assignment ${assignmentId}`);
+
+        // Then delete the assignment
+        const deleted = await tx.assignment.delete({
+          where: { id: assignmentId },
+        });
+        console.log(`Deleted assignment ${assignmentId}:`, deleted);
+        return deleted;
+      });
+
+      return result;
+    } catch (error) {
+      // Handle case where assignment doesn't exist
+      if (error.code === 'P2025' || error.message === 'Assignment not found') {
+        throw new Error('Assignment not found');
+      }
+      console.error('Delete assignment error:', error);
+      throw error;
+    }
   }
 
   async getAssignmentSubmissions(assignmentId) {
@@ -405,8 +468,6 @@ export class ClassService {
         startTime: data.startTime,
         endTime: data.endTime,
         room: data.room,
-        building: data.building,
-        scheduleType: data.scheduleType || 'lecture',
       },
     });
   }
@@ -419,8 +480,6 @@ export class ClassService {
         startTime: data.startTime,
         endTime: data.endTime,
         room: data.room,
-        building: data.building,
-        scheduleType: data.scheduleType,
       },
     });
   }
@@ -473,6 +532,125 @@ export class ClassService {
       where: { classId },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  // ==================== EXAMS ====================
+
+  async getClassExams(classId) {
+    return prisma.exam.findMany({
+      where: { classId },
+      orderBy: { date: 'asc' },
+    });
+  }
+
+  async createClassExam(classId, data) {
+    return prisma.exam.create({
+      data: {
+        classId,
+        title: data.name || data.title || 'Exam',
+        subject: data.subject || 'General',
+        date: new Date(data.examDate || data.date),
+        room: data.room,
+        duration: data.duration,
+      },
+    });
+  }
+
+  async updateClassExam(classId, examId, data) {
+    const updateData = {};
+    if (data.name || data.title) updateData.title = data.name || data.title;
+    if (data.subject) updateData.subject = data.subject;
+    if (data.examDate || data.date) updateData.date = new Date(data.examDate || data.date);
+    if (data.room !== undefined) updateData.room = data.room;
+    if (data.duration !== undefined) updateData.duration = data.duration;
+
+    return prisma.exam.update({
+      where: { id: examId },
+      data: updateData,
+    });
+  }
+
+  async deleteClassExam(classId, examId) {
+    return prisma.exam.delete({
+      where: { id: examId },
+    });
+  }
+
+  // ==================== ATTENDANCE SESSIONS ====================
+
+  async getAttendanceSessions(classId) {
+    return prisma.attendanceSession.findMany({
+      where: { classId },
+      include: {
+        _count: {
+          select: { attendances: true }
+        }
+      },
+      orderBy: { startDate: 'desc' },
+    });
+  }
+
+  async getAttendanceSession(sessionId) {
+    return prisma.attendanceSession.findUnique({
+      where: { id: sessionId },
+      include: {
+        _count: {
+          select: { attendances: true }
+        }
+      },
+    });
+  }
+
+  async createAttendanceSession(classId, data) {
+    return prisma.attendanceSession.create({
+      data: {
+        classId,
+        subject: data.subject,
+        type: data.type,
+        startDate: new Date(data.startDate),
+        endDate: data.endDate ? new Date(data.endDate) : null,
+        status: 'active',
+        description: data.description,
+      },
+      include: {
+        _count: {
+          select: { attendances: true }
+        }
+      },
+    });
+  }
+
+  async updateAttendanceSession(sessionId, data) {
+    const updateData = {};
+    if (data.subject) updateData.subject = data.subject;
+    if (data.type) updateData.type = data.type;
+    if (data.startDate) updateData.startDate = new Date(data.startDate);
+    if (data.endDate !== undefined) updateData.endDate = data.endDate ? new Date(data.endDate) : null;
+    if (data.status) updateData.status = data.status;
+    if (data.description !== undefined) updateData.description = data.description;
+
+    return prisma.attendanceSession.update({
+      where: { id: sessionId },
+      data: updateData,
+      include: {
+        _count: {
+          select: { attendances: true }
+        }
+      },
+    });
+  }
+
+  async deleteAttendanceSession(sessionId) {
+    return prisma.attendanceSession.delete({
+      where: { id: sessionId },
+    });
+  }
+
+  async getSessionAttendanceCount(sessionId) {
+    const count = await prisma.attendance.count({
+      where: { sessionId },
+    });
+    return count;
   }
 }
 

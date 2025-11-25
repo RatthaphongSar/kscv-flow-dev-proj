@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { body, param, query } from 'express-validator';
 import * as ctrl from '../controllers/class.controller.js';
 import { authRequired } from '../middleware/auth.js';
+import { uploadMiddleware, handleUploadError } from '../middleware/upload.js';
 
 const router = Router();
 
@@ -106,7 +107,8 @@ router.patch(
   body('title').optional().isString(),
   body('description').optional().isString(),
   body('maxScore').optional().isFloat({ min: 1 }),
-  body('dueDate').optional().isISO8601(),
+  body('dueDate').optional().isString(),
+  body('assignmentType').optional().isString(),
   ctrl.updateAssignment
 );
 
@@ -124,6 +126,16 @@ router.get(
   param('classId').isString().trim().notEmpty(),
   param('assignmentId').isString().trim().notEmpty(),
   ctrl.getAssignmentSubmissions
+);
+
+router.post(
+  '/:classId/assignments/:assignmentId/upload',
+  authRequired,
+  param('classId').isString().trim().notEmpty(),
+  param('assignmentId').isString().trim().notEmpty(),
+  uploadMiddleware.array('files', 10),
+  handleUploadError,
+  ctrl.uploadAssignmentFiles
 );
 
 // ==================== ATTENDANCE ====================
@@ -217,8 +229,6 @@ router.post(
   body('startTime').isString().trim().notEmpty().withMessage('Start time is required'),
   body('endTime').isString().trim().notEmpty().withMessage('End time is required'),
   body('room').optional().isString(),
-  body('building').optional().isString(),
-  body('scheduleType').optional().isString(),
   ctrl.createClassSchedule
 );
 
@@ -231,8 +241,6 @@ router.patch(
   body('startTime').optional().isString(),
   body('endTime').optional().isString(),
   body('room').optional().isString(),
-  body('building').optional().isString(),
-  body('scheduleType').optional().isString(),
   ctrl.updateClassSchedule
 );
 
@@ -242,6 +250,52 @@ router.delete(
   param('classId').isString().trim().notEmpty(),
   param('scheduleId').isString().trim().notEmpty(),
   ctrl.deleteClassSchedule
+);
+
+// ==================== EXAMS ====================
+
+router.get(
+  '/:classId/exams',
+  authRequired,
+  param('classId').isString().trim().notEmpty(),
+  ctrl.getClassExams
+);
+
+router.post(
+  '/:classId/exams',
+  authRequired,
+  param('classId').isString().trim().notEmpty(),
+  body('name').notEmpty().withMessage('Exam name is required'),
+  body('examDate').isISO8601().withMessage('Exam date must be ISO8601 format'),
+  body('startTime').isString().trim().notEmpty().withMessage('Start time is required'),
+  body('endTime').isString().trim().notEmpty().withMessage('End time is required'),
+  body('room').optional().isString(),
+  body('duration').optional().isInt({ min: 1 }),
+  body('maxScore').optional().isFloat({ min: 1 }),
+  ctrl.createClassExam
+);
+
+router.patch(
+  '/:classId/exams/:examId',
+  authRequired,
+  param('classId').isString().trim().notEmpty(),
+  param('examId').isString().trim().notEmpty(),
+  body('name').optional().isString(),
+  body('examDate').optional().isISO8601(),
+  body('startTime').optional().isString(),
+  body('endTime').optional().isString(),
+  body('room').optional().isString(),
+  body('duration').optional().isInt({ min: 1 }),
+  body('maxScore').optional().isFloat({ min: 1 }),
+  ctrl.updateClassExam
+);
+
+router.delete(
+  '/:classId/exams/:examId',
+  authRequired,
+  param('classId').isString().trim().notEmpty(),
+  param('examId').isString().trim().notEmpty(),
+  ctrl.deleteClassExam
 );
 
 // ==================== ASSIGNMENT PLANS ====================
@@ -288,10 +342,54 @@ router.get(
 
 router.post(
   '/:classId/announcements',
+  authRequired,
   param('classId').isString().trim().notEmpty(),
   body('title').notEmpty().withMessage('Title is required'),
   body('content').notEmpty().withMessage('Content is required'),
   ctrl.createAnnouncement
+);
+
+// ==================== ATTENDANCE SESSIONS ====================
+
+router.get(
+  '/:classId/attendance-sessions',
+  authRequired,
+  param('classId').isString().trim().notEmpty(),
+  ctrl.getAttendanceSessions
+);
+
+router.post(
+  '/:classId/attendance-sessions',
+  authRequired,
+  param('classId').isString().trim().notEmpty(),
+  body('subject').notEmpty().withMessage('Subject is required'),
+  body('type').isIn(['lesson', 'midterm', 'final', 'quiz', 'collection']).withMessage('Invalid type'),
+  body('startDate').isISO8601().withMessage('Start date must be ISO8601 format'),
+  body('endDate').optional().isISO8601().withMessage('End date must be ISO8601 format'),
+  body('description').optional().isString(),
+  ctrl.createAttendanceSession
+);
+
+router.patch(
+  '/:classId/attendance-sessions/:sessionId',
+  authRequired,
+  param('classId').isString().trim().notEmpty(),
+  param('sessionId').isString().trim().notEmpty(),
+  body('subject').optional().isString(),
+  body('type').optional().isIn(['lesson', 'midterm', 'final', 'quiz', 'collection']),
+  body('startDate').optional().isISO8601(),
+  body('endDate').optional().isISO8601(),
+  body('status').optional().isIn(['active', 'completed', 'cancelled']),
+  body('description').optional().isString(),
+  ctrl.updateAttendanceSession
+);
+
+router.delete(
+  '/:classId/attendance-sessions/:sessionId',
+  authRequired,
+  param('classId').isString().trim().notEmpty(),
+  param('sessionId').isString().trim().notEmpty(),
+  ctrl.deleteAttendanceSession
 );
 
 export default router;

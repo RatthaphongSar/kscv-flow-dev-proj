@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { BookOpen, Plus, Edit2, Trash2, AlertCircle } from 'lucide-react';
 import classApi from '../../api/classApi';
+import SimpleConfirmModal from '../SimpleConfirmModal';
 
 interface Assignment {
   id: string;
@@ -26,6 +27,10 @@ export default function ClassAssignmentCreator({
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -33,7 +38,6 @@ export default function ClassAssignmentCreator({
     dueDate: '',
     assignmentType: 'homework',
   });
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (classId) {
@@ -64,13 +68,29 @@ export default function ClassAssignmentCreator({
 
     try {
       setSubmitting(true);
+      // Format dueDate to full ISO-8601 DateTime with seconds
+      // dueDate from datetime-local input is in format: "2025-11-25T00:59"
+      // We need to ensure it has seconds: "2025-11-25T00:59:00"
+      let formattedDueDate = formData.dueDate;
+      
+      // Check if it's missing seconds
+      if (formattedDueDate && formattedDueDate.split('T').length === 2) {
+        const [date, time] = formattedDueDate.split('T');
+        // If time doesn't have seconds, add them
+        if (time.split(':').length === 2) {
+          formattedDueDate = `${date}T${time}:00`;
+        }
+      }
+      
+      console.log('Formatted due date:', formattedDueDate);
+
       if (editingId) {
         // Update existing assignment
         await classApi.updateAssignment(classId!, editingId, {
           title: formData.title,
           description: formData.description,
           maxScore: parseFloat(formData.maxScore),
-          dueDate: formData.dueDate,
+          dueDate: formattedDueDate,
           assignmentType: formData.assignmentType,
         } as any);
       } else {
@@ -79,7 +99,7 @@ export default function ClassAssignmentCreator({
           title: formData.title,
           description: formData.description,
           maxScore: parseFloat(formData.maxScore),
-          dueDate: formData.dueDate,
+          dueDate: formattedDueDate,
           assignmentType: formData.assignmentType,
         });
       }
@@ -102,11 +122,13 @@ export default function ClassAssignmentCreator({
   };
 
   const handleEdit = (assignment: Assignment) => {
+    // Convert ISO datetime to datetime-local format (yyyy-MM-ddThh:mm)
+    const dueDateStr = assignment.dueDate.substring(0, 16); // "2025-11-24T14:30"
     setFormData({
       title: assignment.title,
       description: assignment.description || '',
       maxScore: assignment.maxScore.toString(),
-      dueDate: assignment.dueDate.split('T')[0],
+      dueDate: dueDateStr,
       assignmentType: assignment.assignmentType,
     });
     setEditingId(assignment.id);
@@ -114,16 +136,43 @@ export default function ClassAssignmentCreator({
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this assignment?')) {
-      return;
-    }
+    // Prevent double-click
+    if (isDeleting) return;
+    
+    setDeleteTargetId(id);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId) return;
 
     try {
-      await classApi.deleteAssignment(classId!, id);
-      await loadAssignments();
+      setIsDeleting(true);
+      await classApi.deleteAssignment(classId!, deleteTargetId);
+      console.log('Assignment deleted successfully:', deleteTargetId);
+      
+      // Remove from state immediately
+      setAssignments(prev => {
+        const filtered = prev.filter(a => a.id !== deleteTargetId);
+        console.log('After delete, remaining assignments:', filtered);
+        return filtered;
+      });
+      
+      setShowDeleteConfirm(false);
+      setDeleteTargetId(null);
+      setError(null);
+      
+      // Also refresh from server to be sure
+      const updatedAssignments = (await classApi.getAssignments(classId!)) || [];
+      console.log('Refreshed from server:', updatedAssignments);
+      setAssignments(updatedAssignments);
     } catch (err: any) {
       console.error('Error deleting assignment:', err);
-      alert(err.response?.data?.error || 'Failed to delete assignment');
+      setError(err.response?.data?.error || 'Failed to delete assignment');
+      setShowDeleteConfirm(false);
+      setDeleteTargetId(null);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -410,7 +459,8 @@ export default function ClassAssignmentCreator({
                     </button>
                     <button
                       onClick={() => handleDelete(assignment.id)}
-                      className="p-2 text-gray-400 hover:text-red-400 transition"
+                      disabled={isDeleting}
+                      className="p-2 text-gray-400 hover:text-red-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Delete"
                     >
                       <Trash2 size={16} />
@@ -452,6 +502,22 @@ export default function ClassAssignmentCreator({
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <SimpleConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setDeleteTargetId(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Assignment"
+        message={`Are you sure you want to delete this assignment? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDanger={true}
+        isLoading={isDeleting}
+      />
     </div>
   );
 }

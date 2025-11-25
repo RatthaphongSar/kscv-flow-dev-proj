@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Assignment } from '../../types/class.types';
 import classApi from '../../api/classApi';
 import { FileText, Calendar, AlertCircle, Plus, Trash2, Edit2 } from 'lucide-react';
+import SimpleConfirmModal from '../SimpleConfirmModal';
 
 interface ClassAssignmentsProps {
   classId: string | null;
@@ -14,6 +15,9 @@ export default function ClassAssignments({ classId, userRole }: ClassAssignments
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -68,13 +72,43 @@ export default function ClassAssignments({ classId, userRole }: ClassAssignments
   };
 
   const handleDelete = async (assignmentId: string) => {
-    if (!confirm('Delete this assignment?')) return;
+    // Prevent double-click
+    if (isDeleting) return;
+    
+    setDeleteTargetId(assignmentId);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId) return;
+
     try {
-      await classApi.deleteAssignment(classId!, assignmentId);
-      await loadAssignments();
-    } catch (err) {
+      setIsDeleting(true);
+      await classApi.deleteAssignment(classId!, deleteTargetId);
+      console.log('Assignment deleted successfully:', deleteTargetId);
+      
+      // Remove from state immediately
+      setAssignments(prev => {
+        const filtered = prev.filter(a => a.id !== deleteTargetId);
+        console.log('After delete, remaining assignments:', filtered);
+        return filtered;
+      });
+      
+      setShowDeleteConfirm(false);
+      setDeleteTargetId(null);
+      setError(null);
+      
+      // Also refresh from server to be sure
+      const updatedAssignments = (await classApi.getAssignments(classId!)) || [];
+      console.log('Refreshed from server:', updatedAssignments);
+      setAssignments(updatedAssignments);
+    } catch (err: any) {
       console.error('Error deleting assignment:', err);
       setError('Failed to delete assignment');
+      setShowDeleteConfirm(false);
+      setDeleteTargetId(null);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -88,6 +122,33 @@ export default function ClassAssignments({ classId, userRole }: ClassAssignments
       });
     } catch {
       return dateStr;
+    }
+  };
+
+  const formatDateTime = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const getDaysRemaining = (dueDate: string) => {
+    try {
+      const due = new Date(dueDate);
+      const now = new Date();
+      const diffTime = due.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays;
+    } catch {
+      return 0;
     }
   };
 
@@ -257,13 +318,13 @@ export default function ClassAssignments({ classId, userRole }: ClassAssignments
                     )}
                   </div>
                 </div>
-
                 {/* Delete button for teachers */}
                 {userRole === 'TEACHER' && (
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleDelete(assignment.id)}
-                      className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                      disabled={isDeleting}
+                      className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Delete"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -273,15 +334,25 @@ export default function ClassAssignments({ classId, userRole }: ClassAssignments
               </div>
 
               <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-4 text-slate-600 dark:text-slate-400">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    {formatDate(assignment.dueDate)}
-                  </span>
-                  <span>Max Score: {assignment.maxScore}</span>
-                  <span className="capitalize text-xs bg-slate-100 dark:bg-slate-600 px-2 py-1 rounded">
-                    {assignment.assignmentType}
-                  </span>
+                <div className="flex flex-col gap-2 flex-1">
+                  {/* ครูสั่งงาน (Assigned At) */}
+                  <div className="flex items-center gap-4 text-slate-600 dark:text-slate-400">
+                    <span className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded">
+                      สั่งงาน: {formatDateTime(assignment.assignedAt)}
+                    </span>
+                  </div>
+
+                  {/* เดทไลน์ (Due Date) */}
+                  <div className="flex items-center gap-4 text-slate-600 dark:text-slate-400">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      เดทไลน์: {formatDate(assignment.dueDate)} ({getDaysRemaining(assignment.dueDate)} วัน)
+                    </span>
+                    <span>คะแนนเต็ม: {assignment.maxScore}</span>
+                    <span className="capitalize text-xs bg-slate-100 dark:bg-slate-600 px-2 py-1 rounded">
+                      {assignment.assignmentType}
+                    </span>
+                  </div>
                 </div>
                 {getStatusBadge(assignment)}
               </div>
@@ -289,6 +360,22 @@ export default function ClassAssignments({ classId, userRole }: ClassAssignments
           ))
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <SimpleConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setDeleteTargetId(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Assignment"
+        message="Are you sure you want to delete this assignment? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDanger={true}
+        isLoading={isDeleting}
+      />
     </div>
   );
 }

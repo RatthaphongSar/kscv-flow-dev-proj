@@ -45,8 +45,8 @@ export default function ClassSchedule({ classId }: ClassScheduleProps) {
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const thaiDaysOfWeek = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัส', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
 
-  const getScheduleForDay = (day: string) => {
-    return schedule.filter((item) => item.dayOfWeek?.toLowerCase() === day.toLowerCase());
+  const getScheduleForDay = (dayIndex: number) => {
+    return schedule.filter((item) => item.dayOfWeek === dayIndex);
   };
 
   const getTypeColor = (type?: string) => {
@@ -92,7 +92,7 @@ export default function ClassSchedule({ classId }: ClassScheduleProps) {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {daysOfWeek.map((day, index) => {
-            const daySchedules = getScheduleForDay(day);
+            const daySchedules = getScheduleForDay(index);
             return (
               <div
                 key={day}

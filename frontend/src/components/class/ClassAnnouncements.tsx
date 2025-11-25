@@ -5,6 +5,7 @@ import classApi from '../../api/classApi';
 import { useAuth } from '../../hooks/useAuth';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
+import SimpleConfirmModal from '../SimpleConfirmModal';
 
 interface Announcement {
   id: string;
@@ -37,6 +38,8 @@ export default function ClassAnnouncements({
     content: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   useEffect(() => {
     if (classId) {
@@ -85,18 +88,22 @@ export default function ClassAnnouncements({
     }
   };
 
-  const handleDelete = async (announcementId: string) => {
-    if (!confirm('Are you sure you want to delete this announcement?')) {
-      return;
-    }
+  const handleDelete = (announcementId: string) => {
+    setDeleteTargetId(announcementId);
+    setShowDeleteConfirm(true);
+  };
 
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId) return;
     try {
       // Note: Backend may not have delete endpoint for announcements
       // This is a placeholder
       await loadAnnouncements();
+      setShowDeleteConfirm(false);
+      setDeleteTargetId(null);
     } catch (err) {
       console.error('Error deleting announcement:', err);
-      alert('Failed to delete announcement');
+      throw err;
     }
   };
 
@@ -254,6 +261,21 @@ export default function ClassAnnouncements({
           ))
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <SimpleConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setDeleteTargetId(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Announcement"
+        message="Are you sure you want to delete this announcement?"
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDanger
+      />
     </div>
   );
 }

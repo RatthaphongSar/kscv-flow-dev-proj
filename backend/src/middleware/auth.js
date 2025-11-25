@@ -10,6 +10,11 @@ function getTokenFrom(req) {
 }
 
 export function authRequired(req, res, next) {
+  // If mockAuth middleware has already set req.user (for mock tokens), skip JWT verification
+  if (req.user) {
+    return next();
+  }
+
   try {
     const token = getTokenFrom(req)
     if (!token) {

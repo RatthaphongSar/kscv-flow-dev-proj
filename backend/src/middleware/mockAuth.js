@@ -14,12 +14,38 @@ export const mockAuthMiddleware = (req, res, next) => {
 
   const authHeader = req.headers.authorization || '';
 
-  // If Authorization header with Bearer token exists, let the actual auth middleware handle it
+  // Parse Bearer token format: "Bearer mock-teacher-token", "Bearer mock-student-token", etc.
   if (authHeader.startsWith('Bearer ')) {
-    return next();
+    const token = authHeader.slice(7).toLowerCase();
+    
+    if (token.includes('teacher')) {
+      req.user = {
+        id: 'teacher-001',
+        username: 'teacher',
+        email: 'teacher@university.edu',
+        role: 'TEACHER',
+      };
+      return next();
+    } else if (token.includes('student')) {
+      req.user = {
+        id: 'student-001',
+        username: 'student',
+        email: 'student@university.edu',
+        role: 'STUDENT',
+      };
+      return next();
+    } else if (token.includes('admin')) {
+      req.user = {
+        id: 'admin-001',
+        username: 'admin',
+        email: 'admin@university.edu',
+        role: 'ADMIN',
+      };
+      return next();
+    }
   }
 
-  // Parse Bearer-like token for mock auth (format: "bearer-token-XXX" or similar)
+  // Parse non-Bearer token format for backwards compatibility
   const token = authHeader.replace('bearer ', '').toLowerCase();
 
   if (token.includes('teacher')) {

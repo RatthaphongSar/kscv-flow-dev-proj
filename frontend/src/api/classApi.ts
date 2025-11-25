@@ -354,7 +354,7 @@ export const classApi = {
    * Approve a join request (teacher)
    */
   async approveJoinRequest(joinRequestId: string) {
-    const response: any = await api(`/enrollment/join-requests/${joinRequestId}/approve`, {
+    const response: any = await api(`/classes/join-requests/${joinRequestId}/approve`, {
       method: 'POST',
     });
     return response?.data;
@@ -364,7 +364,7 @@ export const classApi = {
    * Reject a join request (teacher)
    */
   async rejectJoinRequest(joinRequestId: string, reason?: string) {
-    const response: any = await api(`/enrollment/join-requests/${joinRequestId}/reject`, {
+    const response: any = await api(`/classes/join-requests/${joinRequestId}/reject`, {
       method: 'POST',
       body: { reason },
     });
@@ -555,6 +555,118 @@ export const classApi = {
    */
   async deleteAssignmentPlan(classId: string, planId: string) {
     const response: any = await api(`/classes/${classId}/assignment-plans/${planId}`, {
+      method: 'DELETE',
+    });
+    return response?.data;
+  },
+
+  // ==================== EXAMS ====================
+
+  /**
+   * Get exams for a class
+   */
+  async getExams(classId: string) {
+    const response: any = await api(`/classes/${classId}/exams`, { method: 'GET' });
+    return response?.data || [];
+  },
+
+  /**
+   * Create exam
+   */
+  async createExam(classId: string, examData: any) {
+    const response: any = await api(`/classes/${classId}/exams`, {
+      method: 'POST',
+      body: examData,
+    });
+    return response?.data;
+  },
+
+  /**
+   * Update exam
+   */
+  async updateExam(classId: string, examId: string, updateData: any) {
+    const response: any = await api(`/classes/${classId}/exams/${examId}`, {
+      method: 'PATCH',
+      body: updateData,
+    });
+    return response?.data;
+  },
+
+  /**
+   * Delete exam
+   */
+  async deleteExam(classId: string, examId: string) {
+    const response: any = await api(`/classes/${classId}/exams/${examId}`, {
+      method: 'DELETE',
+    });
+    return response?.data;
+  },
+
+  // ==================== SUBMISSION MANAGEMENT ====================
+
+  /**
+   * Get student's submission for an assignment
+   */
+  async getSubmission(assignmentId: string) {
+    const response: any = await api(`/submissions/assignments/${assignmentId}`, {
+      method: 'GET',
+    });
+    return response?.data;
+  },
+
+  /**
+   * Get all submissions for an assignment (teacher only)
+   */
+  async getAssignmentSubmissions(assignmentId: string) {
+    const response: any = await api(`/submissions/assignments/${assignmentId}/all`, {
+      method: 'GET',
+    });
+    return response?.data || [];
+  },
+
+  // ==================== ATTENDANCE SESSIONS ====================
+
+  /**
+   * Get attendance sessions for a class
+   */
+  async getAttendanceSessions(classId: string) {
+    const response: any = await api(`/classes/${classId}/attendance-sessions`, { method: 'GET' });
+    return response?.data || [];
+  },
+
+  /**
+   * Create attendance session
+   */
+  async createAttendanceSession(classId: string, sessionData: {
+    subject: string;
+    type: 'lesson' | 'midterm' | 'final' | 'quiz' | 'collection';
+    startDate: string;
+    endDate?: string;
+    description?: string;
+  }) {
+    const response: any = await api(`/classes/${classId}/attendance-sessions`, {
+      method: 'POST',
+      body: sessionData,
+    });
+    return response?.data;
+  },
+
+  /**
+   * Update attendance session
+   */
+  async updateAttendanceSession(classId: string, sessionId: string, sessionData: any) {
+    const response: any = await api(`/classes/${classId}/attendance-sessions/${sessionId}`, {
+      method: 'PATCH',
+      body: sessionData,
+    });
+    return response?.data;
+  },
+
+  /**
+   * Delete attendance session
+   */
+  async deleteAttendanceSession(classId: string, sessionId: string) {
+    const response: any = await api(`/classes/${classId}/attendance-sessions/${sessionId}`, {
       method: 'DELETE',
     });
     return response?.data;

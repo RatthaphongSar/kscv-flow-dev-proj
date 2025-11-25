@@ -133,10 +133,12 @@ export const createJoinRequest = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating join request:', error);
-    return res.status(400).json({
+    const errorResponse = {
       success: false,
       message: error.message || 'Failed to create join request',
-    });
+    };
+    console.log('Sending error response:', errorResponse);
+    return res.status(400).json(errorResponse);
   }
 };
 

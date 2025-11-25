@@ -157,9 +157,10 @@ model Assignment {
   description           String?
   assignmentType        String   @default("homework") // homework, quiz, project, exam
   maxScore              Float    @default(100)
-  dueDate               DateTime
-  requiredFilesCount    Int      @default(1) // จำนวนไฟล์ที่ต้องส่ง
-  maxSubmissionCount    Int      @default(1) // จำนวนครั้งที่อนุญาตให้ส่ง
+  assignedAt            DateTime @default(now())       // เวลาที่ครูสั่งงาน
+  dueDate               DateTime                        // เดทไลน์ส่งงาน
+  requiredFilesCount    Int      @default(1)           // จำนวนไฟล์ที่ต้องส่ง
+  maxSubmissionCount    Int      @default(1)           // จำนวนครั้งที่อนุญาตให้ส่ง
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
@@ -172,6 +173,7 @@ model Assignment {
   submissions           AssignmentSubmission[]
 
   @@index([classId, dueDate])
+  @@index([classId, assignedAt])
   @@index([teacherId])
 }
 
@@ -211,10 +213,33 @@ model Attendance {
   studentId String
   class     Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
   classId   String
+  session   AttendanceSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  sessionId String?
 
   @@unique([studentId, classId, date])
   @@index([classId, date])
   @@index([studentId])
+  @@index([sessionId])
+}
+
+model AttendanceSession {
+  id          String   @id @default(cuid())
+  subject     String   // เรียน/สอบ/เก็บคะแนน
+  type        String   // lesson, midterm, final, quiz, collection
+  startDate   DateTime
+  endDate     DateTime?
+  status      String   @default("active") // active, completed, cancelled
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classId     String
+  attendances Attendance[]
+
+  @@index([classId])
+  @@index([startDate])
 }
 
 model Exam {
@@ -326,7 +351,7 @@ model Schedule {
   updatedAt DateTime @updatedAt
 
   // Relations
-  class   Class   @relation(fields: [classId], references: [id])
+  class   Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
   classId String
 
   @@unique([classId, dayOfWeek, startTime])
@@ -353,6 +378,7 @@ model Class {
   joinRequests    JoinRequest[] @relation("ClassJoinRequests")
   assignments     Assignment[]
   attendances     Attendance[]
+  attendanceSessions AttendanceSession[]
   exams           Exam[]
   schedules       Schedule[]
   resources       Resource[]
@@ -486,7 +512,7 @@ model ClassOrganization {
 
   organization   Organization @relation(fields: [organizationId], references: [id])
   organizationId String
-  class          Class        @relation(fields: [classId], references: [id])
+  class          Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
   classId        String
 
   @@unique([organizationId, classId, userId])

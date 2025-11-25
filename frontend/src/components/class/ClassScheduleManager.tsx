@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Plus, Trash2, Edit2, Clock, AlertCircle } from 'lucide-react';
 import classApi from '../../api/classApi';
+import DeleteConfirmationModal from '../DeleteConfirmationModal';
 
 interface ScheduleItem {
   id: string;
@@ -13,8 +14,6 @@ interface ScheduleItem {
   startTime: string; // HH:mm
   endTime: string;
   room?: string;
-  building?: string;
-  type?: 'lecture' | 'lab' | 'tutorial';
 }
 
 interface AssignmentPlan {
@@ -45,6 +44,10 @@ export default function ClassScheduleManager({ classId }: ClassScheduleManagerPr
   const [editingSchedule, setEditingSchedule] = useState<ScheduleItem | null>(null);
   const [editingAssignment, setEditingAssignment] = useState<AssignmentPlan | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteType, setDeleteType] = useState<'schedule' | 'assignment' | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteTargetName, setDeleteTargetName] = useState<string>('');
 
   // Schedule form state
   const [scheduleForm, setScheduleForm] = useState({
@@ -52,8 +55,6 @@ export default function ClassScheduleManager({ classId }: ClassScheduleManagerPr
     startTime: '09:00',
     endTime: '10:30',
     room: '',
-    building: '',
-    type: 'lecture' as const,
   });
 
   // Assignment form state
@@ -116,8 +117,6 @@ export default function ClassScheduleManager({ classId }: ClassScheduleManagerPr
         startTime: '09:00',
         endTime: '10:30',
         room: '',
-        building: '',
-        type: 'lecture',
       });
       setShowScheduleForm(false);
     } catch (err) {
@@ -159,24 +158,38 @@ export default function ClassScheduleManager({ classId }: ClassScheduleManagerPr
   };
 
   const handleDeleteSchedule = (id: string) => {
-    if (confirm('Delete this schedule?')) {
-      classApi.deleteSchedule(classId, id).then(() => {
-        setSchedule(schedule.filter(s => s.id !== id));
-      }).catch(err => {
-        console.error('Error deleting schedule:', err);
-        alert('Failed to delete schedule');
-      });
-    }
+    const item = schedule.find(s => s.id === id);
+    setDeleteType('schedule');
+    setDeleteTargetId(id);
+    setDeleteTargetName(`${THAI_DAYS[item?.dayOfWeek || 0]} ${item?.startTime}-${item?.endTime}`);
+    setShowDeleteConfirm(true);
   };
 
   const handleDeleteAssignment = (id: string) => {
-    if (confirm('Delete this assignment?')) {
-      classApi.deleteAssignmentPlan(classId, id).then(() => {
-        setAssignments(assignments.filter(a => a.id !== id));
-      }).catch(err => {
-        console.error('Error deleting assignment:', err);
-        alert('Failed to delete assignment');
-      });
+    const item = assignments.find(a => a.id === id);
+    setDeleteType('assignment');
+    setDeleteTargetId(id);
+    setDeleteTargetName(item?.title || 'Assignment');
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId || !deleteType) return;
+    try {
+      if (deleteType === 'schedule') {
+        await classApi.deleteSchedule(classId, deleteTargetId);
+        setSchedule(schedule.filter(s => s.id !== deleteTargetId));
+      } else {
+        await classApi.deleteAssignmentPlan(classId, deleteTargetId);
+        setAssignments(assignments.filter(a => a.id !== deleteTargetId));
+      }
+      setShowDeleteConfirm(false);
+      setDeleteTargetId(null);
+      setDeleteTargetName('');
+      setDeleteType(null);
+    } catch (err: any) {
+      console.error('Error deleting item:', err);
+      throw err.response?.data?.error || 'Failed to delete item';
     }
   };
 
@@ -294,19 +307,7 @@ export default function ClassScheduleManager({ classId }: ClassScheduleManagerPr
                   </select>
                 </div>
 
-                {/* Type */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">ประเภท</label>
-                  <select
-                    value={scheduleForm.type}
-                    onChange={(e) => setScheduleForm({ ...scheduleForm, type: e.target.value as any })}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-violet-500 transition-colors"
-                  >
-                    <option value="lecture">บรรยาย (Lecture)</option>
-                    <option value="lab">ห้องปฏิบัติการ (Lab)</option>
-                    <option value="tutorial">ทำเนียบ (Tutorial)</option>
-                  </select>
-                </div>
+
 
                 {/* Start Time */}
                 <div>
@@ -330,17 +331,7 @@ export default function ClassScheduleManager({ classId }: ClassScheduleManagerPr
                   />
                 </div>
 
-                {/* Building */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">อาคาร</label>
-                  <input
-                    type="text"
-                    value={scheduleForm.building}
-                    onChange={(e) => setScheduleForm({ ...scheduleForm, building: e.target.value })}
-                    placeholder="เช่น อาคาร A"
-                    className="w-full px-3 py-2 rounded-lg bg-slate-700 border border-slate-600 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
-                  />
-                </div>
+
 
                 {/* Room */}
                 <div>
@@ -400,7 +391,6 @@ export default function ClassScheduleManager({ classId }: ClassScheduleManagerPr
                       <Clock className="w-4 h-4" />
                       <span>{item.startTime} - {item.endTime}</span>
                     </div>
-                    {item.building && <p className="text-sm text-slate-400">อาคาร: {item.building}</p>}
                     {item.room && <p className="text-sm text-slate-400">ห้อง: {item.room}</p>}
                   </div>
 
@@ -413,8 +403,6 @@ export default function ClassScheduleManager({ classId }: ClassScheduleManagerPr
                           startTime: item.startTime,
                           endTime: item.endTime,
                           room: item.room || '',
-                          building: item.building || '',
-                          type: (item.type || 'lecture') as any,
                         });
                         setShowScheduleForm(true);
                       }}
@@ -678,6 +666,22 @@ export default function ClassScheduleManager({ classId }: ClassScheduleManagerPr
           )}
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setDeleteTargetId(null);
+          setDeleteTargetName('');
+          setDeleteType(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title={deleteType === 'schedule' ? 'Delete Schedule' : 'Delete Assignment'}
+        message={`Are you sure you want to delete this ${deleteType}?`}
+        itemName={deleteTargetName}
+        resourceType={deleteType === 'schedule' ? 'schedule' : 'assignment'}
+      />
     </div>
   );
 }

@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Download, ExternalLink, Trash2, FileText, Link } from 'lucide-react';
 import classApi from '../../api/classApi';
 import { useAuth } from '../../hooks/useAuth';
+import DeleteConfirmationModal from '../DeleteConfirmationModal';
 
 interface Material {
   id: string;
@@ -29,6 +30,9 @@ export default function ClassMaterials({ classId }: ClassMaterialsProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteTargetName, setDeleteTargetName] = useState<string>('');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -80,13 +84,23 @@ export default function ClassMaterials({ classId }: ClassMaterialsProps) {
   };
 
   const handleDelete = async (materialId: string) => {
-    if (!confirm('ลบเอกสารนี้ใช่หรือไม่?')) return;
+    const material = materials.find(m => m.id === materialId);
+    setDeleteTargetId(materialId);
+    setDeleteTargetName(material?.title || 'Material');
+    setShowDeleteConfirm(true);
+  };
 
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId) return;
     try {
-      await classApi.deleteMaterial(materialId);
-      setMaterials(materials.filter((m) => m.id !== materialId));
+      await classApi.deleteMaterial(deleteTargetId);
+      setMaterials(materials.filter((m) => m.id !== deleteTargetId));
+      setShowDeleteConfirm(false);
+      setDeleteTargetId(null);
+      setDeleteTargetName('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete material');
+      throw err;
     }
   };
 
@@ -282,6 +296,21 @@ export default function ClassMaterials({ classId }: ClassMaterialsProps) {
           ))}
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          setDeleteTargetId(null);
+          setDeleteTargetName('');
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Material"
+        message={`Are you sure you want to delete this material?`}
+        itemName={deleteTargetName}
+        resourceType="material"
+      />
     </div>
   );
 }

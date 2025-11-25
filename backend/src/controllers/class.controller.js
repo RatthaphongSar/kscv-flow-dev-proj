@@ -261,6 +261,12 @@ export const createAssignment = async (req, res) => {
 
 export const updateAssignment = async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.error('Validation errors:', errors.array());
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
     const { assignmentId } = req.params;
     const { id: userId, role } = req.user || {};
 
@@ -282,14 +288,16 @@ export const updateAssignment = async (req, res) => {
 
 export const deleteAssignment = async (req, res) => {
   try {
-    const { assignmentId } = req.params;
+    const { assignmentId, classId } = req.params;
     const { id: userId, role } = req.user || {};
 
     if (role !== 'TEACHER') {
       return res.status(403).json({ error: 'Only teachers can delete assignments' });
     }
 
-    await ClassService.deleteAssignment(assignmentId);
+    console.log(`[DELETE] Starting deletion of assignment ${assignmentId} from class ${classId}`);
+    const deleted = await ClassService.deleteAssignment(assignmentId);
+    console.log(`[DELETE] Successfully deleted assignment:`, deleted.title);
 
     return res.json({
       success: true,
@@ -297,6 +305,12 @@ export const deleteAssignment = async (req, res) => {
     });
   } catch (error) {
     console.error('Error deleting assignment:', error);
+    
+    // Handle specific error cases
+    if (error.message === 'Assignment not found') {
+      return res.status(404).json({ error: 'Assignment not found' });
+    }
+    
     return res.status(500).json({ error: 'Failed to delete assignment' });
   }
 };
@@ -519,7 +533,7 @@ export const createClassSchedule = async (req, res) => {
       return res.status(403).json({ error: 'Only teachers can manage schedules' });
     }
 
-    const { dayOfWeek, startTime, endTime, room, building, scheduleType } = req.body;
+    const { dayOfWeek, startTime, endTime, room } = req.body;
 
     const schedule = await ClassService.createSchedule({
       classId,
@@ -527,8 +541,6 @@ export const createClassSchedule = async (req, res) => {
       startTime,
       endTime,
       room,
-      building,
-      scheduleType,
     });
 
     return res.status(201).json({
@@ -555,15 +567,13 @@ export const updateClassSchedule = async (req, res) => {
       return res.status(403).json({ error: 'Only teachers can manage schedules' });
     }
 
-    const { dayOfWeek, startTime, endTime, room, building, scheduleType } = req.body;
+    const { dayOfWeek, startTime, endTime, room } = req.body;
 
     const schedule = await ClassService.updateSchedule(scheduleId, {
       dayOfWeek,
       startTime,
       endTime,
       room,
-      building,
-      scheduleType,
     });
 
     return res.json({
@@ -746,5 +756,248 @@ export const createAnnouncement = async (req, res) => {
   } catch (error) {
     console.error('Error creating announcement:', error);
     return res.status(500).json({ error: 'Failed to create announcement' });
+  }
+};
+
+// ==================== EXAMS ====================
+
+export const getClassExams = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const exams = await ClassService.getClassExams(classId);
+
+    return res.json({
+      success: true,
+      data: exams,
+    });
+  } catch (error) {
+    console.error('Error getting class exams:', error);
+    return res.status(500).json({ error: 'Failed to get class exams' });
+  }
+};
+
+export const createClassExam = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { classId } = req.params;
+    const { role } = req.user || {};
+
+    if (role !== 'TEACHER') {
+      return res.status(403).json({ error: 'Only teachers can create exams' });
+    }
+
+    const { name, examDate, startTime, endTime, room, duration, maxScore } = req.body;
+
+    const exam = await ClassService.createClassExam(classId, {
+      name,
+      examDate,
+      startTime,
+      endTime,
+      room,
+      duration,
+      maxScore,
+    });
+
+    return res.status(201).json({
+      success: true,
+      data: exam,
+    });
+  } catch (error) {
+    console.error('Error creating exam:', error);
+    return res.status(500).json({ error: 'Failed to create exam' });
+  }
+};
+
+export const updateClassExam = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { classId, examId } = req.params;
+    const { role } = req.user || {};
+
+    if (role !== 'TEACHER') {
+      return res.status(403).json({ error: 'Only teachers can update exams' });
+    }
+
+    const updateData = {};
+    if (req.body.name !== undefined) updateData.name = req.body.name;
+    if (req.body.examDate !== undefined) updateData.examDate = req.body.examDate;
+    if (req.body.startTime !== undefined) updateData.startTime = req.body.startTime;
+    if (req.body.endTime !== undefined) updateData.endTime = req.body.endTime;
+    if (req.body.room !== undefined) updateData.room = req.body.room;
+    if (req.body.duration !== undefined) updateData.duration = req.body.duration;
+    if (req.body.maxScore !== undefined) updateData.maxScore = req.body.maxScore;
+
+    const exam = await ClassService.updateClassExam(classId, examId, updateData);
+
+    return res.json({
+      success: true,
+      data: exam,
+    });
+  } catch (error) {
+    console.error('Error updating exam:', error);
+    return res.status(500).json({ error: 'Failed to update exam' });
+  }
+};
+
+export const deleteClassExam = async (req, res) => {
+  try {
+    const { classId, examId } = req.params;
+    const { role } = req.user || {};
+
+    if (role !== 'TEACHER') {
+      return res.status(403).json({ error: 'Only teachers can delete exams' });
+    }
+
+    await ClassService.deleteClassExam(classId, examId);
+
+    return res.json({
+      success: true,
+      message: 'Exam deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting exam:', error);
+    return res.status(500).json({ error: 'Failed to delete exam' });
+  }
+};
+
+// ==================== ASSIGNMENT FILE UPLOAD ====================
+
+export const uploadAssignmentFiles = async (req, res) => {
+  try {
+    const { classId, assignmentId } = req.params;
+    const { id: userId } = req.user || {};
+
+    // Check if files were uploaded
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'No files provided' });
+    }
+
+    // Build file URLs - files are saved to /uploads directory
+    const fileUrls = req.files.map(file => ({
+      filename: file.filename,
+      originalName: file.originalname,
+      size: file.size,
+      url: `/uploads/${file.filename}`,
+      mimeType: file.mimetype,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        files: fileUrls,
+        message: 'Files uploaded successfully',
+      },
+    });
+  } catch (error) {
+    console.error('Error uploading files:', error);
+    return res.status(500).json({ error: 'Failed to upload files' });
+  }
+};
+
+// ==================== ATTENDANCE SESSIONS ====================
+
+export const getAttendanceSessions = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const { role } = req.user || {};
+
+    if (role !== 'TEACHER') {
+      return res.status(403).json({ error: 'Only teachers can view attendance sessions' });
+    }
+
+    const sessions = await ClassService.getAttendanceSessions(classId);
+    return res.status(200).json(sessions);
+  } catch (error) {
+    console.error('Error fetching attendance sessions:', error);
+    return res.status(500).json({ error: 'Failed to fetch attendance sessions' });
+  }
+};
+
+export const createAttendanceSession = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { classId } = req.params;
+    const { role } = req.user || {};
+
+    if (role !== 'TEACHER') {
+      return res.status(403).json({ error: 'Only teachers can create attendance sessions' });
+    }
+
+    const { subject, type, startDate, endDate, description } = req.body;
+
+    const session = await ClassService.createAttendanceSession(classId, {
+      subject,
+      type,
+      startDate,
+      endDate,
+      description,
+    });
+
+    return res.status(201).json({
+      success: true,
+      data: session,
+    });
+  } catch (error) {
+    console.error('Error creating attendance session:', error);
+    return res.status(500).json({ error: 'Failed to create attendance session' });
+  }
+};
+
+export const updateAttendanceSession = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { classId, sessionId } = req.params;
+    const { role } = req.user || {};
+
+    if (role !== 'TEACHER') {
+      return res.status(403).json({ error: 'Only teachers can update attendance sessions' });
+    }
+
+    const session = await ClassService.updateAttendanceSession(sessionId, req.body);
+
+    return res.status(200).json({
+      success: true,
+      data: session,
+    });
+  } catch (error) {
+    console.error('Error updating attendance session:', error);
+    return res.status(500).json({ error: 'Failed to update attendance session' });
+  }
+};
+
+export const deleteAttendanceSession = async (req, res) => {
+  try {
+    const { classId, sessionId } = req.params;
+    const { role } = req.user || {};
+
+    if (role !== 'TEACHER') {
+      return res.status(403).json({ error: 'Only teachers can delete attendance sessions' });
+    }
+
+    await ClassService.deleteAttendanceSession(sessionId);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Attendance session deleted',
+    });
+  } catch (error) {
+    console.error('Error deleting attendance session:', error);
+    return res.status(500).json({ error: 'Failed to delete attendance session' });
   }
 };
