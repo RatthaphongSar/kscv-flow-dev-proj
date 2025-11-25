@@ -774,6 +774,103 @@ export const classApi = {
     const response: any = await api(`/meetings/${meetingId}/participants`);
     return response?.data || [];
   },
+
+  // ==================== VIDEO CONFERENCING ====================
+
+  /**
+   * Start recording
+   */
+  async startRecording(meetingId: string) {
+    const response: any = await api(`/meetings/${meetingId}/recording/start`, {
+      method: 'POST',
+    });
+    return response?.data;
+  },
+
+  /**
+   * Stop recording
+   */
+  async stopRecording(meetingId: string) {
+    const response: any = await api(`/meetings/${meetingId}/recording/stop`, {
+      method: 'POST',
+    });
+    return response?.data;
+  },
+
+  /**
+   * Get recording status
+   */
+  async getRecordingStatus(meetingId: string) {
+    const response: any = await api(`/meetings/${meetingId}/recording/status`);
+    return response?.data;
+  },
+
+  /**
+   * Get video call participants
+   */
+  async getVideoParticipants(meetingId: string) {
+    const response: any = await api(`/meetings/${meetingId}/video/participants`);
+    return response?.data || [];
+  },
+
+  /**
+   * Log call statistics
+   */
+  async logCallStats(meetingId: string, stats: any) {
+    const response: any = await api(`/meetings/${meetingId}/stats/log`, {
+      method: 'POST',
+      body: stats,
+    });
+    return response?.data;
+  },
+
+  /**
+   * Get quality statistics
+   */
+  async getQualityStats(meetingId: string) {
+    const response: any = await api(`/meetings/${meetingId}/stats/quality`);
+    return response?.data || {};
+  },
+
+  /**
+   * Send chat message
+   */
+  async sendChatMessage(meetingId: string, content: string) {
+    const response: any = await api(`/meetings/${meetingId}/chat/message`, {
+      method: 'POST',
+      body: { content },
+    });
+    return response?.data;
+  },
+
+  /**
+   * Get chat history
+   */
+  async getChatHistory(meetingId: string) {
+    const response: any = await api(`/meetings/${meetingId}/chat/history`);
+    return response?.data || [];
+  },
+
+  /**
+   * Start video session
+   */
+  async startVideoSession(meetingId: string) {
+    const response: any = await api(`/meetings/${meetingId}/start`, {
+      method: 'POST',
+    });
+    return response?.data;
+  },
+
+  /**
+   * End video session
+   */
+  async endVideoSession(meetingId: string, sessionId: string) {
+    const response: any = await api(`/meetings/${meetingId}/end`, {
+      method: 'POST',
+      body: { sessionId },
+    });
+    return response?.data;
+  },
 };
 
 export default classApi;
