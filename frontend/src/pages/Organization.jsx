@@ -40,16 +40,6 @@ export default function Organization() {
   }
 
   const [roleFilter, setRoleFilter] = useState("all") // all | director | deputy
-  const [search, setSearch] = useState("")
-  const [chain, setChain] = useState([])
-  const [leaders, setLeaders] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
-
-  useEffect(() => {
-    fetchOrganization()
-  }, [])
-
   const searchLower = search.trim().toLowerCase()
 
   const filteredLeaders = leaders
