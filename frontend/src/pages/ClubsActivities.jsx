@@ -14,69 +14,50 @@ import {
   Info,
   X,
   Send,
+  Loader,
 } from "lucide-react"
+import { apiClient } from "../utils/api"
 
-// ==========================
-// MOCK DATABASE
-// ==========================
-const myClubs = [
-  {
-    id: "c-it",
-    name: "IT Club",
-    role: "Member",
-    meet: "Fri 15:30–17:00",
-    room: "Lab-201",
-    focus: "Hackathon, Web Dev, Network Lab",
-    advisor: "Aj. Kritsada",
-    nextEvent: "Workshop – Basic Git & GitHub",
-    nextEventTime: "2025-04-05 · 15:30",
-  },
-  {
-    id: "c-music",
-    name: "Music Club",
-    role: "Member",
-    meet: "Wed 16:00–18:00",
-    room: "Music Room",
-    focus: "Band, Cover, Event Stage",
-    advisor: "Aj. Suchawadee",
-    nextEvent: "ซ้อมดนตรีงานเปิดโลกวิชาการ",
-    nextEventTime: "2025-04-10 · 17:00",
-  },
-]
-
-const availableClubs = [
-  {
-    id: "c-volunteer",
-    name: "Volunteer Club",
-    role: "Available",
-    meet: "Tue 16:00–17:30",
-    room: "KVC-105",
-    focus: "กิจกรรมจิตอาสา, ช่วยงานวิทยาลัย",
-    advisor: "Aj. Ratchanee",
-    nextEvent: "ออกค่ายอาสา – ช่วยสอนคอมฯ เบื้องต้น",
-    nextEventTime: "2025-04-20 · 08:00",
-  },
-  {
-    id: "c-sport",
-    name: "Sport & Fitness Club",
-    role: "Available",
-    meet: "Thu 17:00–19:00",
-    room: "สนามกีฬา",
-    focus: "ฟุตบอล, บาสเก็ตบอล, ฟิตเนส",
-    advisor: "Aj. Somchai",
-    nextEvent: "ซ้อมแข่งขันกีฬาสีวิทยาลัย",
-    nextEventTime: "2025-04-18 · 17:00",
-  },
-]
-
-// ==========================
-// MAIN PAGE COMPONENT
-// ==========================
 export default function ClubsActivities() {
-  const [selectedType, setSelectedType] = useState("my")
-  const [selectedClubId, setSelectedClubId] = useState(myClubs[0]?.id || null)
   const [search, setSearch] = useState("")
-  const [interests, setInterests] = useState(["Hackathon", "Music", "Volunteer"])
+  const [myClubs, setMyClubs] = useState([])
+  const [availableClubs, setAvailableClubs] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [selectedClub, setSelectedClub] = useState(null)
+  const [modalMsg, setModalMsg] = useState("")
+
+  useEffect(() => {
+    fetchClubsData()
+  }, [])
+
+  const fetchClubsData = async () => {
+    try {
+      setLoading(true)
+      setError("")
+
+      // Call backend API to get clubs data
+      const response = await apiClient.get("/api/clubs")
+
+      if (response && response.data) {
+        setMyClubs(response.data.myClubs || [])
+        setAvailableClubs(response.data.availableClubs || [])
+      } else {
+        throw new Error("No clubs data received")
+      }
+    } catch (err) {
+      console.error("Error fetching clubs:", err)
+      setError("ไม่สามารถโหลดข้อมูลชมรมได้")
+      setMyClubs([])
+      setAvailableClubs([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const [selectedType, setSelectedType] = useState("my")
+  const [selectedClubId, setSelectedClubId] = useState(null)
+  const [interests, setInterests] = useState([])
 
   // Popup state
   const [openChat, setOpenChat] = useState(false)
@@ -140,7 +121,18 @@ export default function ClubsActivities() {
     >
       <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4 text-xs space-y-4">
 
-        {/* ---------------- Header ---------------- */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12 gap-2">
+            <Loader size={20} className="animate-spin text-sky-400" />
+            <span className="text-gray-400">โหลดข้อมูลชมรม...</span>
+          </div>
+        ) : error ? (
+          <div className="rounded-lg border border-red-500/30 bg-red-900/20 p-4 text-center text-red-300">
+            {error}
+          </div>
+        ) : (
+          <>
+            {/* ---------------- Header ---------------- */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div className="flex items-center gap-2">
             <CalendarDays size={16} className="text-sky-400" />
@@ -461,7 +453,14 @@ export default function ClubsActivities() {
             </ul>
           </div>
         </PopupWrapper>
-      )}
+        )}
+
+        <p className="text-[11px] text-gray-500">
+          * ข้อมูลอัดฉากจากระบบ Backend
+        </p>
+          </>
+        )}
+      </div>
     </PageShell>
   )
 }

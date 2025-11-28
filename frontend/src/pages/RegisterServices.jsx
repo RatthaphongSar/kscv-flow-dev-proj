@@ -1,5 +1,5 @@
 // frontend/src/pages/RegisterServices.jsx
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import PageShell from "../components/PageShell"
 import {
   FileText,
@@ -11,51 +11,42 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
+  Loader,
 } from "lucide-react"
+import { apiClient } from "../utils/api"
 
-const mockServices = [
-  {
-    id: 1,
-    name: "คำร้องขอใบรับรองผลการเรียน (Transcript)",
-    category: "ทะเบียน / เอกสารการเรียน",
-    status: "online", // online | onsite | mixed | closed
-    eta: "3–5 วันทำการ",
-    needLogin: true,
-  },
-  {
-    id: 2,
-    name: "คำร้องลาออก / ลาพักการเรียน",
-    category: "สถานภาพนักศึกษา",
-    status: "mixed",
-    eta: "7 วันทำการ",
-    needLogin: true,
-  },
-  {
-    id: 3,
-    name: "คำร้องขอสำเนาใบแสดงผลการเรียน (สำเนาเพิ่มเติม)",
-    category: "ทะเบียน / เอกสารการเรียน",
-    status: "onsite",
-    eta: "รับได้ภายในวันเดียว",
-    needLogin: false,
-  },
-  {
-    id: 4,
-    name: "เปลี่ยนชื่อ–สกุล / แก้ไขข้อมูลในทะเบียน",
-    category: "ทะเบียนกลาง",
-    status: "onsite",
-    eta: "ภายใน 3 วันทำการ",
-    needLogin: false,
-  },
-]
+export default function RegisterServices() {
+  const [services, setServices] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [selectedService, setSelectedService] = useState(null)
+  const [showForm, setShowForm] = useState(false)
 
-// ฟอร์มเริ่มต้นสำหรับคำร้องการลา
-const initialLeaveForm = {
-  type: "sick", // sick | personal | ordination
-  startDate: "",
-  endDate: "",
-  fullDay: true,
-  reason: "",
-}
+  useEffect(() => {
+    fetchServices()
+  }, [])
+
+  const fetchServices = async () => {
+    try {
+      setLoading(true)
+      setError("")
+
+      // Call backend API to get services data
+      const response = await apiClient.get("/api/services")
+
+      if (response && response.data) {
+        setServices(response.data || [])
+      } else {
+        throw new Error("No services data received")
+      }
+    } catch (err) {
+      console.error("Error fetching services:", err)
+      setError("ไม่สามารถโหลดข้อมูลบริการได้")
+      setServices([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
 function StatusBadge({ status }) {
   if (status === "online") {
@@ -194,7 +185,6 @@ export default function RegisterServices() {
       <PageShell
         title="Register Services"
         subtitle="บริการงานทะเบียน – แบบฟอร์มออนไลน์และระบบคำร้องการลา"
-        right="Ready to connect to /api/register-services & /api/leave-requests"
       >
         <div className="grid gap-4 lg:grid-cols-[1.8fr,1.1fr]">
           {/* ===== MAIN: SERVICES + LEAVE ===== */}
@@ -212,8 +202,18 @@ export default function RegisterServices() {
                 </div>
               </div>
 
+              {loading ? (
+                <div className="flex items-center justify-center py-12 gap-2">
+                  <Loader size={20} className="animate-spin text-emerald-400" />
+                  <span className="text-gray-400">โหลดบริการ...</span>
+                </div>
+              ) : error ? (
+                <div className="rounded-lg border border-red-500/30 bg-red-900/20 p-4 text-center text-red-300">
+                  {error}
+                </div>
+              ) : (
               <div className="space-y-2 text-xs">
-                {mockServices.map((s) => (
+                {services.map((s) => (
                   <div
                     key={s.id}
                     className="rounded-xl border border-[#1f2937] bg-[#020617] px-3 py-2.5 hover:bg-slate-900 transition flex flex-col gap-2"
@@ -268,6 +268,11 @@ export default function RegisterServices() {
                   </div>
                 ))}
               </div>
+              )}
+
+              <p className="text-[11px] text-gray-500 mt-2">
+                * ข้อมูลอัดฉากจากระบบ Backend
+              </p>
             </div>
 
             {/* กล่อง: ระบบคำร้องการลา */}
