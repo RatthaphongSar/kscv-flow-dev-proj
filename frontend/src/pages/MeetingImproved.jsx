@@ -13,6 +13,7 @@ import {
   Search,
   ChevronRight,
   Loader,
+  Lock,
 } from 'lucide-react'
 import classApi from '../api/classApi'
 
@@ -132,14 +133,22 @@ export function MeetingImproved() {
               <h1 className="text-3xl font-bold text-gray-900">Meetings</h1>
               <p className="text-gray-600 mt-1">Manage your classes and video conferences</p>
             </div>
-            {user?.role === 'teacher' && (
+            {user?.role === 'teacher' ? (
               <button
                 onClick={handleCreateMeeting}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow-md hover:shadow-lg"
               >
                 <Plus size={20} />
                 New Meeting
               </button>
+            ) : (
+              <div
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-500 rounded-lg cursor-not-allowed"
+                title="Only teachers can create meetings"
+              >
+                <Lock size={20} />
+                Create Meeting
+              </div>
             )}
           </div>
         </div>

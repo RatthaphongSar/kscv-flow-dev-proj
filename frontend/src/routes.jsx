@@ -15,6 +15,7 @@ import Organization from './pages/Organization.jsx'
 import ChatPage from './pages/Chat'            // use TypeScript Chat page (Chat.tsx)
 import Class from './pages/Class.jsx'
 import { MeetingImproved } from './pages/MeetingImproved.jsx'
+import CreateMeeting from './pages/CreateMeeting.jsx'
 import VideoCall from './pages/VideoCall.tsx'
 import Checkline from './pages/Checkline.jsx'
 import Profile from './pages/Profile.jsx'
@@ -45,6 +46,7 @@ export default function AppRoutes() {
       <Route path="/chat" element={<Protected><ChatPage /></Protected>} />
       <Route path="/class" element={<Protected><Class /></Protected>} />
       <Route path="/meeting" element={<Protected><MeetingImproved /></Protected>} />
+      <Route path="/create-meeting" element={<Protected><CreateMeeting /></Protected>} />
       <Route path="/video-call/:meetingId" element={<Protected><VideoCall /></Protected>} />
       <Route path="/checkline" element={<Protected><Checkline /></Protected>} />
       <Route path="/profile" element={<Protected><Profile /></Protected>} />
