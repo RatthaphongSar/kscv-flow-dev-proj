@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import PageShell from '../components/PageShell'
+import CustomSelect from '../components/CustomSelect'
 import { Calendar, Clock, Users, AlertCircle, Loader } from 'lucide-react'
 import classApi from '../api/classApi'
 
@@ -125,25 +126,18 @@ export default function CreateMeeting() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Select Class */}
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Class <span className="text-destructive">*</span>
-              </label>
-              <select
-                name="classId"
-                value={formData.classId}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-input bg-background text-foreground rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
-              >
-                <option value="">Select a class</option>
-                {classes.map(cls => (
-                  <option key={cls.id} value={cls.id}>
-                    {cls.name} ({cls.code})
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CustomSelect
+              name="classId"
+              value={formData.classId}
+              onChange={handleChange}
+              label="Class"
+              required
+              placeholder="Select a class"
+              options={classes.map(cls => ({
+                value: cls.id,
+                label: `${cls.name} (${cls.code})`
+              }))}
+            />
 
             {/* Title */}
             <div>
@@ -178,38 +172,30 @@ export default function CreateMeeting() {
 
             {/* Type and Platform */}
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Meeting Type
-                </label>
-                <select
-                  name="type"
-                  value={formData.type}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-input bg-background text-foreground rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
-                >
-                  <option value="video">Video Conference</option>
-                  <option value="hybrid">Hybrid</option>
-                  <option value="chat">Chat Only</option>
-                </select>
-              </div>
+              <CustomSelect
+                name="type"
+                value={formData.type}
+                onChange={handleChange}
+                label="Meeting Type"
+                options={[
+                  { value: 'video', label: 'Video Conference' },
+                  { value: 'hybrid', label: 'Hybrid' },
+                  { value: 'chat', label: 'Chat Only' }
+                ]}
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Platform
-                </label>
-                <select
-                  name="platform"
-                  value={formData.platform}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-input bg-background text-foreground rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
-                >
-                  <option value="zoom">Zoom</option>
-                  <option value="teams">Microsoft Teams</option>
-                  <option value="meet">Google Meet</option>
-                  <option value="internal">Internal</option>
-                </select>
-              </div>
+              <CustomSelect
+                name="platform"
+                value={formData.platform}
+                onChange={handleChange}
+                label="Platform"
+                options={[
+                  { value: 'zoom', label: 'Zoom' },
+                  { value: 'teams', label: 'Microsoft Teams' },
+                  { value: 'meet', label: 'Google Meet' },
+                  { value: 'internal', label: 'Internal' }
+                ]}
+              />
             </div>
 
             {/* Location */}
