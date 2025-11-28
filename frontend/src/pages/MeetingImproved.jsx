@@ -46,7 +46,7 @@ function getStatusColor(status) {
 }
 
 export function MeetingImproved() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
 
   const [meetings, setMeetings] = useState([])
@@ -56,8 +56,11 @@ export function MeetingImproved() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
 
-  // Load meetings
+  // Load meetings (only after auth is ready)
   useEffect(() => {
+    // Don't load until auth is ready and user is available
+    if (authLoading) return
+    
     const loadMeetings = async () => {
       try {
         setLoading(true)
@@ -72,7 +75,7 @@ export function MeetingImproved() {
     }
 
     loadMeetings()
-  }, [])
+  }, [authLoading])
 
   // Filter meetings
   useEffect(() => {
@@ -112,12 +115,12 @@ export function MeetingImproved() {
     navigate('/create-meeting')
   }
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Loader className="animate-spin mx-auto mb-4" size={40} />
-          <p className="text-gray-600">Loading meetings...</p>
+          <p className="text-gray-600">{authLoading ? 'Authenticating...' : 'Loading meetings...'}</p>
         </div>
       </div>
     )
