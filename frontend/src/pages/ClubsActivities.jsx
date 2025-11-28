@@ -24,7 +24,6 @@ export default function ClubsActivities() {
   const [availableClubs, setAvailableClubs] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [selectedClub, setSelectedClub] = useState(null)
   const [modalMsg, setModalMsg] = useState("")
 
   useEffect(() => {
@@ -98,8 +97,6 @@ export default function ClubsActivities() {
     filteredClubs[0] ||
     currentList[0] ||
     null
-
-  const handleToggleInterest = (tag) => {
     setInterests((prev) =>
       prev.includes(tag)
         ? prev.filter((t) => t !== tag)
