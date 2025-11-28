@@ -311,7 +311,7 @@ export default function ChatPageWithAdvancedScroll() {
       onSelectRoom={setActiveRoom}
       roomsLoading={roomsLoading}
       roomsError={roomsError}
-      canCreateRoom={user?.role === 'teacher' || user?.isTeacher}
+      canCreateRoom={user?.role === 'teacher' || user?.role === 'TEACHER' || user?.isTeacher}
       conversation={
         <ChatConversationWithInfiniteScroll
           roomId={activeRoom?.id || null}
