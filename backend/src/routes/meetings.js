@@ -16,7 +16,7 @@ router.get('/', authRequired, [
 router.post('/', authRequired, [
   body('title').isString().trim().notEmpty(),
   body('classId').isString().trim().notEmpty(),
-  body('type').isIn(['online', 'onsite']).optional(),
+  body('type').isIn(['online', 'onsite']).notEmpty().withMessage('type must be online or onsite'),
   body('platform').optional().isString().trim(),
   body('location').optional().isString().trim(),
   body('startTime').isISO8601(),

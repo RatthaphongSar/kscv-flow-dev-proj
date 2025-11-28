@@ -680,7 +680,7 @@ export const classApi = {
   async createMeeting(meetingData: any) {
     const response: any = await api('/meetings', {
       method: 'POST',
-      body: JSON.stringify(meetingData),
+      body: meetingData,
     });
     return response?.data;
   },
@@ -712,7 +712,7 @@ export const classApi = {
   async updateMeeting(meetingId: string, updateData: any) {
     const response: any = await api(`/meetings/${meetingId}`, {
       method: 'PATCH',
-      body: JSON.stringify(updateData),
+      body: updateData,
     });
     return response?.data;
   },
