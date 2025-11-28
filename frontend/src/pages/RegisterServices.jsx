@@ -15,38 +15,14 @@ import {
 } from "lucide-react"
 import { apiClient } from "../utils/api"
 
-export default function RegisterServices() {
-  const [services, setServices] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
-  const [selectedService, setSelectedService] = useState(null)
-  const [showForm, setShowForm] = useState(false)
-
-  useEffect(() => {
-    fetchServices()
-  }, [])
-
-  const fetchServices = async () => {
-    try {
-      setLoading(true)
-      setError("")
-
-      // Call backend API to get services data
-      const response = await apiClient.get("/api/services")
-
-      if (response && response.data) {
-        setServices(response.data || [])
-      } else {
-        throw new Error("No services data received")
-      }
-    } catch (err) {
-      console.error("Error fetching services:", err)
-      setError("ไม่สามารถโหลดข้อมูลบริการได้")
-      setServices([])
-    } finally {
-      setLoading(false)
-    }
-  }
+// ฟอร์มเริ่มต้นสำหรับคำร้องการลา
+const initialLeaveForm = {
+  type: "sick", // sick | personal | ordination
+  startDate: "",
+  endDate: "",
+  fullDay: true,
+  reason: "",
+}
 
 function StatusBadge({ status }) {
   if (status === "online") {
@@ -112,6 +88,36 @@ function formatLeaveType(type) {
 }
 
 export default function RegisterServices() {
+  const [services, setServices] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    fetchServices()
+  }, [])
+
+  const fetchServices = async () => {
+    try {
+      setLoading(true)
+      setError("")
+
+      // Call backend API to get services data
+      const response = await apiClient.get("/api/services")
+
+      if (response && response.data) {
+        setServices(response.data || [])
+      } else {
+        throw new Error("No services data received")
+      }
+    } catch (err) {
+      console.error("Error fetching services:", err)
+      setError("ไม่สามารถโหลดข้อมูลบริการได้")
+      setServices([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const [leaveForm, setLeaveForm] = useState(initialLeaveForm)
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
   const [leaveRequests, setLeaveRequests] = useState([
