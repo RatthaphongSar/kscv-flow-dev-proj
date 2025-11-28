@@ -45,23 +45,23 @@ export default function CustomSelect({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-2 border border-input bg-background text-foreground rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent flex items-center justify-between hover:bg-muted/30 transition text-left"
+        className="w-full px-4 py-3 border border-input bg-card text-foreground rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent flex items-center justify-between hover:bg-card/80 transition text-left shadow-sm"
       >
-        <span className={selectedOption ? 'text-foreground' : 'text-muted-foreground'}>
+        <span className={selectedOption ? 'text-foreground font-medium' : 'text-muted-foreground'}>
           {selectedLabel}
         </span>
         <ChevronDown 
           size={18} 
-          className={`text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`text-muted-foreground transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-50">
-          <div className="max-h-64 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-lg shadow-xl z-50 overflow-hidden">
+          <div className="max-h-72 overflow-y-auto">
             {options.length === 0 ? (
-              <div className="px-4 py-3 text-sm text-muted-foreground text-center">
+              <div className="px-4 py-4 text-sm text-muted-foreground text-center">
                 No options available
               </div>
             ) : (
@@ -70,18 +70,16 @@ export default function CustomSelect({
                   key={`${option.value}-${index}`}
                   type="button"
                   onClick={() => handleSelect(option.value)}
-                  className={`w-full text-left px-4 py-3 border-b border-border/50 last:border-b-0 transition ${
+                  className={`w-full text-left px-4 py-3 transition flex items-center justify-between ${
                     value === option.value
-                      ? 'bg-primary text-primary-foreground font-medium'
+                      ? 'bg-primary text-primary-foreground font-semibold'
                       : 'bg-card text-foreground hover:bg-muted'
                   }`}
                 >
-                  <div className="flex items-center gap-2">
-                    {value === option.value && (
-                      <div className="w-2 h-2 bg-primary-foreground rounded-full" />
-                    )}
-                    {option.label}
-                  </div>
+                  <span>{option.label}</span>
+                  {value === option.value && (
+                    <div className="w-2 h-2 bg-primary-foreground rounded-full flex-shrink-0" />
+                  )}
                 </button>
               ))
             )}
