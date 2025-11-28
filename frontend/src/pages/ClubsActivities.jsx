@@ -454,11 +454,7 @@ export default function ClubsActivities() {
         </PopupWrapper>
         )}
 
-        <p className="text-[11px] text-gray-500">
-          * ข้อมูลอัดฉากจากระบบ Backend
-        </p>
-          </>
-        )}
+        </>
       </div>
     </PageShell>
   )
