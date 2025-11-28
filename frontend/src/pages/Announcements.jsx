@@ -1,37 +1,7 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import PageShell from "../components/PageShell"
-import { Bell, Bookmark, BookmarkCheck, Info, Share2, X } from "lucide-react"
-
-// === MOCK ===
-const mockAnnouncements = [
-  {
-    id: "a1",
-    title: "เลื่อนสอบกลางภาค CS-201",
-    tag: "Course",
-    time: "5 mins ago",
-    desc: "เลื่อนสอบกลางภาคจาก 10:00 เป็น 13:00 ในวันเดิม ห้อง Lab-105",
-    detail:
-      "สาเหตุการเลื่อนสอบ: ห้อง Lab ใช้ซ่อมบำรุงเครื่องคอมพิวเตอร์\nนักศึกษาต้องเตรียมอุปกรณ์ให้พร้อมก่อนเข้าห้องสอบ",
-  },
-  {
-    id: "a2",
-    title: "ปิดปรับปรุงระบบทะเบียน",
-    tag: "System",
-    time: "30 mins ago",
-    desc: "ระบบลงทะเบียนรายวิชาจะปิดปรับปรุงวันอาทิตย์ 21:00–23:00",
-    detail:
-      "ระบบจะไม่สามารถลงทะเบียน เพิ่ม–ถอนรายวิชา หรือเข้าดูผลการเรียนได้ในช่วงเวลาดังกล่าว",
-  },
-  {
-    id: "a3",
-    title: "กิจกรรมจิตอาสาปลูกต้นไม้",
-    tag: "Activity",
-    time: "2 hours ago",
-    desc: "ชมรมสิ่งแวดล้อมเชิญร่วมกิจกรรมจิตอาสา ณ สวนสาธารณะกาฬสินธุ์",
-    detail:
-      "เตรียมหมวก แว่นตา และน้ำดื่ม\nกิจกรรมจะเริ่มเวลา 08:30 น. เป็นต้นไป",
-  },
-]
+import { Bell, Bookmark, BookmarkCheck, Info, Share2, X, Loader } from "lucide-react"
+import { apiClient } from "../utils/api"
 
 const FILTERS = ["All", "Course", "System", "Activity"]
 
@@ -39,6 +9,35 @@ export default function Announcements() {
   const [filter, setFilter] = useState("All")
   const [bookmark, setBookmark] = useState({})
   const [modal, setModal] = useState({ open: false, data: null })
+  const [announcements, setAnnouncements] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    fetchAnnouncements()
+  }, [])
+
+  const fetchAnnouncements = async () => {
+    try {
+      setLoading(true)
+      setError("")
+
+      // Call backend API to get announcements
+      const response = await apiClient.get("/api/announcements")
+
+      if (response && response.data) {
+        setAnnouncements(response.data || [])
+      } else {
+        throw new Error("No announcements data received")
+      }
+    } catch (err) {
+      console.error("Error fetching announcements:", err)
+      setError("ไม่สามารถโหลดประกาศได้")
+      setAnnouncements([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const toggleBookmark = (id) => {
     setBookmark((prev) => ({ ...prev, [id]: !prev[id] }))
@@ -50,8 +49,8 @@ export default function Announcements() {
 
   const filtered =
     filter === "All"
-      ? mockAnnouncements
-      : mockAnnouncements.filter((a) => a.tag === filter)
+      ? announcements
+      : announcements.filter((a) => a.tag === filter)
 
   return (
     <PageShell
@@ -85,21 +84,39 @@ export default function Announcements() {
           </div>
         </div>
 
-        {/* ==== Cards Grid ==== */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-          {filtered.map((a) => (
-            <AnnouncementCard
-              key={a.id}
-              data={a}
-              bookmarked={bookmark[a.id]}
-              onBookmark={() => toggleBookmark(a.id)}
-              onDetail={() => openDetail(a)}
-            />
-          ))}
-        </div>
+        {/* ==== Loading / Error / Empty ==== */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12 gap-2">
+            <Loader size={20} className="animate-spin text-amber-400" />
+            <span className="text-gray-400">โหลดประกาศ...</span>
+          </div>
+        ) : error ? (
+          <div className="rounded-lg border border-red-500/30 bg-red-900/20 p-4 text-center text-red-300">
+            {error}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="rounded-lg border border-yellow-500/30 bg-yellow-900/20 p-4 text-center text-yellow-300">
+            ไม่มีประกาศ
+          </div>
+        ) : (
+          <>
+            {/* ==== Cards Grid ==== */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              {filtered.map((a) => (
+                <AnnouncementCard
+                  key={a.id}
+                  data={a}
+                  bookmarked={bookmark[a.id]}
+                  onBookmark={() => toggleBookmark(a.id)}
+                  onDetail={() => openDetail(a)}
+                />
+              ))}
+            </div>
+          </>
+        )}
 
         <p className="text-[11px] text-gray-500">
-          * ข้อมูลเป็น mock data — สามารถ map จาก API จริงได้ทันที
+          * ข้อมูลอัดฉากจากระบบ Backend
         </p>
       </div>
 

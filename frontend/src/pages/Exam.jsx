@@ -1,47 +1,52 @@
 // frontend/src/pages/Exam.jsx
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import PageShell from "../components/PageShell"
-import { CalendarDays, Filter, Info, AlarmClock, ArrowRight } from "lucide-react"
-
-const mockExams = [
-  {
-    id: "cs201-mid",
-    course: "CS-201",
-    courseName: "Computer Programming II",
-    type: "Midterm", // Midterm | Final | Quiz
-    date: "2025-04-10",
-    time: "09:00–11:00",
-    room: "Lab-105",
-    scope: "บทที่ 1–5: Function, Array, Object, Basic Algorithm",
-    note: "เตรียมเครื่องคิดเลขพื้นฐานได้ แต่ห้ามใช้มือถือ",
-  },
-  {
-    id: "eng101-final",
-    course: "ENG-101",
-    courseName: "English for Communication",
-    type: "Final",
-    date: "2025-04-18",
-    time: "13:00–15:00",
-    room: "KVC-302",
-    scope: "Unit 4–8: Conversation, Email Writing, Presentation",
-    note: "อนุญาตให้นำ Dictionary เล่มกระดาษเข้าได้ 1 เล่ม",
-  },
-]
+import { CalendarDays, Filter, Info, AlarmClock, ArrowRight, Loader } from "lucide-react"
+import { apiClient } from "../utils/api"
 
 export default function Exam() {
   const [filterType, setFilterType] = useState("all") // "all" | "Midterm" | "Final"
   const [expandedId, setExpandedId] = useState(null)
+  const [exams, setExams] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    fetchExams()
+  }, [])
+
+  const fetchExams = async () => {
+    try {
+      setLoading(true)
+      setError("")
+
+      // Call backend API to get exams
+      const response = await apiClient.get("/api/exams")
+
+      if (response && response.data) {
+        setExams(response.data || [])
+      } else {
+        throw new Error("No exams data received")
+      }
+    } catch (err) {
+      console.error("Error fetching exams:", err)
+      setError("ไม่สามารถโหลดข้อมูลสอบได้")
+      setExams([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const filteredExams = useMemo(() => {
-    if (filterType === "all") return mockExams
-    return mockExams.filter((e) => e.type === filterType)
-  }, [filterType])
+    if (filterType === "all") return exams
+    return exams.filter((e) => e.type === filterType)
+  }, [filterType, exams])
 
   const nextExam = useMemo(() => {
-    if (mockExams.length === 0) return null
-    // สมมติว่า mockExams เรียงตามวันที่แล้ว
-    return mockExams[0]
-  }, [])
+    if (exams.length === 0) return null
+    // สมมติว่า exams เรียงตามวันที่แล้ว
+    return exams[0]
+  }, [exams])
 
   const handleOpenExamSystem = (exam) => {
     // ตรงนี้ต่อกับระบบทำข้อสอบจริงทีหลัง เช่น navigate('/exam-system?code=...')
@@ -61,7 +66,7 @@ export default function Exam() {
   return (
     <PageShell
       title="Exam Schedule"
-      subtitle="ตารางสอบรายวิชาที่ลงทะเบียน (mock data) – สามารถต่อกับระบบสอบ/ปฏิทินได้ภายหลัง"
+      subtitle="ตารางสอบรายวิชาที่ลงทะเบียน"
     >
       <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4 space-y-4 text-xs">
         {/* ===== Top Summary / Filter ===== */}
@@ -75,7 +80,7 @@ export default function Exam() {
               <div className="text-[11px] text-gray-400">
                 จำนวนวิชาที่มีสอบ:{" "}
                 <span className="text-violet-300 font-medium">
-                  {mockExams.length} วิชา (ตัวอย่าง)
+                  {exams.length} วิชา
                 </span>
                 {nextExam && (
                   <>
@@ -120,7 +125,16 @@ export default function Exam() {
 
         {/* ===== List ===== */}
         <div className="space-y-2">
-          {filteredExams.length === 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-12 gap-2">
+              <Loader size={20} className="animate-spin text-violet-400" />
+              <span className="text-gray-400">โหลดตารางสอบ...</span>
+            </div>
+          ) : error ? (
+            <div className="rounded-lg border border-red-500/30 bg-red-900/20 p-4 text-center text-red-300">
+              {error}
+            </div>
+          ) : filteredExams.length === 0 ? (
             <div className="text-[11px] text-gray-500 py-6 text-center border border-[#1f2937] rounded-xl">
               ยังไม่มีข้อมูลตารางสอบที่ตรงกับเงื่อนไข
             </div>
@@ -197,8 +211,7 @@ export default function Exam() {
                         {e.note}
                       </div>
                       <p className="text-[10px] text-gray-500 mt-1">
-                        * ข้อมูลนี้เป็น mock – ในระบบจริงสามารถดึงจากระบบวัดผล /
-                        ระบบจัดสอบของวิทยาลัยได้
+                        * ข้อมูลอัดฉากจากระบบ Backend
                       </p>
                     </div>
                   )}
@@ -207,7 +220,12 @@ export default function Exam() {
             })
           )}
         </div>
+
+        <p className="text-[11px] text-gray-500">
+          * ข้อมูลอัดฉากจากระบบ Backend
+        </p>
       </div>
     </PageShell>
   )
+}
 }
