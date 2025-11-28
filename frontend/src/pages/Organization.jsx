@@ -38,16 +38,7 @@ export default function Organization() {
       setLoading(false)
     }
   }
-  {
-    id: 5,
-    name: "นายจิติศักดิ์ เรืองเวช์ปัญญา",
-    role: "รองผู้อำนวยการฝ่ายแผนและความร่วมมือ",
-    photo: "/images/org/dep4.png",
-    type: "deputy",
-  },
-]
 
-export default function Organization() {
   const [roleFilter, setRoleFilter] = useState("all") // all | director | deputy
   const [search, setSearch] = useState("")
   const [chain, setChain] = useState([])
@@ -58,30 +49,6 @@ export default function Organization() {
   useEffect(() => {
     fetchOrganization()
   }, [])
-
-  const fetchOrganization = async () => {
-    try {
-      setLoading(true)
-      setError("")
-
-      // Call backend API to get organization data
-      const response = await apiClient.get("/api/organization")
-
-      if (response && response.data) {
-        setChain(response.data.chain || [])
-        setLeaders(response.data.leaders || [])
-      } else {
-        throw new Error("No organization data received")
-      }
-    } catch (err) {
-      console.error("Error fetching organization:", err)
-      setError("ไม่สามารถโหลดโครงสร้างองค์กรได้")
-      setChain([])
-      setLeaders([])
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const searchLower = search.trim().toLowerCase()
 
