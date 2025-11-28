@@ -58,7 +58,7 @@ export default function CustomSelect({
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-lg shadow-xl z-50 overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-gradient-to-b from-card via-card to-card/95 border border-border/50 rounded-lg shadow-2xl z-50 overflow-hidden backdrop-blur-sm">
           <div className="max-h-72 overflow-y-auto">
             {options.length === 0 ? (
               <div className="px-4 py-4 text-sm text-muted-foreground text-center">
