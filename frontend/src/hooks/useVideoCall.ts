@@ -133,7 +133,7 @@ export function useVideoCall(meetingId: string): UseVideoCallReturn {
   // Join video call
   const joinVideoCall = async (meetingId: string, sessionId: string) => {
     try {
-      const stream = await getLocalStream()
+      await getLocalStream()
 
       if (socketRef.current) {
         socketRef.current.emit('video:join', { meetingId, sessionId })
@@ -233,7 +233,7 @@ export function useVideoCall(meetingId: string): UseVideoCallReturn {
   const startScreenShare = async () => {
     try {
       const screenStream = await navigator.mediaDevices.getDisplayMedia({
-        video: { cursor: 'always' },
+        video: true,
         audio: false,
       })
 

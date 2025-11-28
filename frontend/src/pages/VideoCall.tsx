@@ -1,7 +1,7 @@
 // frontend/src/pages/VideoCall.tsx
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/AuthContext.jsx'
 import { VideoConferenceRoom } from '../components/VideoConferenceRoom'
 import classApi from '../api/classApi'
 import { Loader } from 'lucide-react'

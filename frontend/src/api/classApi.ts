@@ -1,6 +1,6 @@
 // frontend/src/api/classApi.ts
 
-import { api } from '../utils/api';
+import { api } from '../utils/api.js';
 import {
   ClassInfo,
   Assignment,

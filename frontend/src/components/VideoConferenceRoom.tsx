@@ -1,5 +1,5 @@
 // frontend/src/components/VideoConferenceRoom.tsx
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Mic,
   MicOff,
@@ -13,10 +13,8 @@ import {
   X,
   Send,
   Phone,
-  Maximize2,
 } from 'lucide-react'
 import { useVideoCall } from '../hooks/useVideoCall'
-import classApi from '../api/classApi'
 
 interface VideoConferenceRoomProps {
   meetingId: string
