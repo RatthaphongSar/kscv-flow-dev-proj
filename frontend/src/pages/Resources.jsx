@@ -1,47 +1,50 @@
 // frontend/src/pages/Resources.jsx
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import PageShell from "../components/PageShell"
-import { FileText, Download, User, Tag, Search, Filter } from "lucide-react"
-
-const mockFiles = [
-  {
-    name: "Lecture 01 – Introduction to Web Development.pdf",
-    course: "CS-201",
-    topic: "Introduction to Web",
-    size: "1.2 MB",
-    uploader: "Aj. Kritsada",
-    type: "PDF",
-  },
-  {
-    name: "Vocabulary – Unit 3.docx",
-    course: "ENG-101",
-    topic: "Unit 3 – Daily Conversation",
-    size: "450 KB",
-    uploader: "Aj. Ratchanee",
-    type: "DOCX",
-  },
-  {
-    name: "Lab Exercise – Network Basic.pptx",
-    course: "CS-105",
-    topic: "Network Lab: Week 2",
-    size: "2.8 MB",
-    uploader: "Aj. Suchawadee",
-    type: "PPTX",
-  },
-]
+import { FileText, Download, User, Tag, Search, Filter, Loader } from "lucide-react"
+import { apiClient } from "../utils/api"
 
 export default function Resources() {
   const [search, setSearch] = useState("")
   const [courseFilter, setCourseFilter] = useState("ALL")
   const [typeFilter, setTypeFilter] = useState("ALL")
+  const [files, setFiles] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    fetchResources()
+  }, [])
+
+  const fetchResources = async () => {
+    try {
+      setLoading(true)
+      setError("")
+
+      // Call backend API to get resources
+      const response = await apiClient.get("/api/resources")
+
+      if (response && response.data) {
+        setFiles(response.data || [])
+      } else {
+        throw new Error("No resources data received")
+      }
+    } catch (err) {
+      console.error("Error fetching resources:", err)
+      setError("ไม่สามารถโหลดไฟล์ได้")
+      setFiles([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // --- Course & Type options ---
-  const courses = ["ALL", ...new Set(mockFiles.map((f) => f.course))]
-  const types = ["ALL", ...new Set(mockFiles.map((f) => f.type))]
+  const courses = ["ALL", ...new Set(files.map((f) => f.course))]
+  const types = ["ALL", ...new Set(files.map((f) => f.type))]
 
   // =============== FILTER SYSTEM (PRO) ===============
   const filteredFiles = useMemo(() => {
-    return mockFiles.filter((f) => {
+    return files.filter((f) => {
       const matchSearch =
         f.name.toLowerCase().includes(search.toLowerCase()) ||
         f.topic.toLowerCase().includes(search.toLowerCase()) ||
@@ -52,7 +55,7 @@ export default function Resources() {
 
       return matchSearch && matchCourse && matchType
     })
-  }, [search, courseFilter, typeFilter])
+  }, [search, courseFilter, typeFilter, files])
 
   return (
     <PageShell
@@ -116,11 +119,20 @@ export default function Resources() {
         </div>
 
         <div className="text-[11px] text-gray-500">
-          * ข้อมูลตัวอย่าง — สามารถเชื่อม API เพื่อดึงไฟล์จริงได้ทันที
+          * ข้อมูลอัดฉากจากระบบ Backend
         </div>
 
         {/* =============== RESULT LIST =============== */}
-        {filteredFiles.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-12 gap-2">
+            <Loader size={20} className="animate-spin text-violet-400" />
+            <span className="text-gray-400">โหลดไฟล์...</span>
+          </div>
+        ) : error ? (
+          <div className="rounded-lg border border-red-500/30 bg-red-900/20 p-4 text-center text-red-300">
+            {error}
+          </div>
+        ) : filteredFiles.length === 0 ? (
           <p className="text-center text-gray-400 py-6">ไม่พบไฟล์ที่ตรงกับการค้นหา</p>
         ) : (
           filteredFiles.map((f, idx) => (

@@ -1,5 +1,5 @@
 // frontend/src/pages/AdvisorContact.jsx
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import PageShell from "../components/PageShell"
 import {
   User,
@@ -12,31 +12,15 @@ import {
   MapPin,
   AlertCircle,
   ChevronRight,
+  Loader,
 } from "lucide-react"
-
-const advisor = {
-  name: "Aj. Ratchanee",
-  email: "ratchanee@kvc.ac.th",
-  phone: "081-234-5678",
-  room: "อาคาร 3 ชั้น 2 ห้องอาจารย์ที่ปรึกษา",
-  officeHour: "Mon–Wed 13:00–15:00",
-  department: "Business Department",
-}
-
-const mockFaq = [
-  {
-    id: "f1",
-    q: "อยากปรึกษาเรื่องการลงทะเบียนเรียน/เพิ่ม-ถอนวิชา ต้องทำอย่างไร?",
-    a: "ขั้นแรกสามารถส่งข้อความผ่านระบบแชท หรืออีเมลแจ้งรายละเอียดเบื้องต้นให้อาจารย์ จากนั้นนัดเวลาปรึกษาในช่วง Office Hour เพื่อตรวจสอบแผนการเรียนร่วมกัน และจึงดำเนินการในระบบทะเบียนของวิทยาลัย",
-  },
-  {
-    id: "f2",
-    q: "หากมีปัญหาด้านเกรด หรือเสี่ยงไม่ผ่านรายวิชา ควรทำอย่างไร?",
-    a: "แนะนำให้ติดต่ออาจารย์โดยเร็วที่สุดเพื่อนัดพูดคุย อาจารย์จะช่วยวิเคราะห์สาเหตุ แนะนำการปรับแผนการอ่านหนังสือ เสริมแบบฝึกหัด หรือปรับตารางเรียน/กิจกรรมให้เหมาะสมขึ้น",
-  },
-]
+import { apiClient } from "../utils/api"
 
 export default function AdvisorContact() {
+  const [advisor, setAdvisor] = useState(null)
+  const [faq, setFaq] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
   const [request, setRequest] = useState({
     topic: "",
     preferredDate: "",
@@ -44,6 +28,34 @@ export default function AdvisorContact() {
     channel: "in-person",
   })
   const [selectedFaq, setSelectedFaq] = useState(null)
+
+  useEffect(() => {
+    fetchAdvisorData()
+  }, [])
+
+  const fetchAdvisorData = async () => {
+    try {
+      setLoading(true)
+      setError("")
+
+      // Call backend API to get advisor info
+      const response = await apiClient.get("/api/advisor")
+
+      if (response && response.data) {
+        setAdvisor(response.data.advisor || {})
+        setFaq(response.data.faq || [])
+      } else {
+        throw new Error("No advisor data received")
+      }
+    } catch (err) {
+      console.error("Error fetching advisor:", err)
+      setError("ไม่สามารถโหลดข้อมูลที่ปรึกษาได้")
+      setAdvisor(null)
+      setFaq([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleChange = (field, value) => {
     setRequest((prev) => ({ ...prev, [field]: value }))
@@ -106,36 +118,48 @@ export default function AdvisorContact() {
     >
       <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-5 text-xs space-y-4">
 
-        {/* ===== Advisor Profile + Quick Actions ===== */}
-        <div className="grid grid-cols-1 md:grid-cols-[1.5fr,1.3fr] gap-4">
-          {/* Profile */}
-          <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4 space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-violet-600 flex items-center justify-center text-white">
-                <User size={24} />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-gray-100">
-                  {advisor.name}
+        {/* ===== Loading / Error ===== */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12 gap-2">
+            <Loader size={20} className="animate-spin text-violet-400" />
+            <span className="text-gray-400">โหลดข้อมูลที่ปรึกษา...</span>
+          </div>
+        ) : error ? (
+          <div className="rounded-lg border border-red-500/30 bg-red-900/20 p-4 text-center text-red-300">
+            {error}
+          </div>
+        ) : (
+          <>
+            {/* ===== Advisor Profile + Quick Actions ===== */}
+            <div className="grid grid-cols-1 md:grid-cols-[1.5fr,1.3fr] gap-4">
+              {/* Profile */}
+              <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-violet-600 flex items-center justify-center text-white">
+                    <User size={24} />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-gray-100">
+                      {advisor?.name}
+                    </div>
+                    <div className="text-[11px] text-gray-400">
+                      Advisor · {advisor?.department}
+                    </div>
+                    <div className="mt-1 text-[11px] text-gray-400 flex items-center gap-1">
+                      <Clock size={11} className="text-emerald-300" />
+                      Office Hour:{" "}
+                      <span className="text-gray-200">{advisor?.officeHour}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-[11px] text-gray-400">
-                  Advisor · {advisor.department}
-                </div>
-                <div className="mt-1 text-[11px] text-gray-400 flex items-center gap-1">
-                  <Clock size={11} className="text-emerald-300" />
-                  Office Hour:{" "}
-                  <span className="text-gray-200">{advisor.officeHour}</span>
-                </div>
-              </div>
-            </div>
 
-            <div className="space-y-1 text-gray-300 mt-2">
-              <div className="flex items-center gap-2">
-                <Mail size={14} className="text-gray-400" />
-                <span>{advisor.email}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone size={14} className="text-gray-400" />
+                <div className="space-y-1 text-gray-300 mt-2">
+                  <div className="flex items-center gap-2">
+                    <Mail size={14} className="text-gray-400" />
+                    <span>{advisor?.email}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Phone size={14} className="text-gray-400" />
                 <span>{advisor.phone}</span>
               </div>
               <div className="flex items-center gap-2 text-[11px] text-gray-400 mt-1">
@@ -321,7 +345,7 @@ export default function AdvisorContact() {
             คำถามที่พบบ่อยเกี่ยวกับการปรึกษาอาจารย์ที่ปรึกษา
           </div>
           <div className="space-y-1">
-            {mockFaq.map((item) => {
+            {faq.map((item) => {
               const open = selectedFaq === item.id
               return (
                 <button
@@ -350,7 +374,13 @@ export default function AdvisorContact() {
               )
             })}
           </div>
+
+          <p className="text-[11px] text-gray-500 mt-2">
+            * ข้อมูลอัดฉากจากระบบ Backend
+          </p>
         </div>
+          </>
+        )}
       </div>
     </PageShell>
   )

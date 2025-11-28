@@ -1,54 +1,43 @@
 // frontend/src/pages/Organization.jsx
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import PageShell from "../components/PageShell"
-import { Users, ChevronRight, Search } from "lucide-react"
+import { Users, ChevronRight, Search, Loader } from "lucide-react"
+import { apiClient } from "../utils/api"
 
-const mockChain = [
-  { level: "คุณ", role: "Student", name: "คุณ", unit: "KVC – IT Program" },
-  {
-    level: "ที่ปรึกษา",
-    role: "Advisor",
-    name: "Aj. Ratchanee",
-    unit: "Business Department",
-  },
-  {
-    level: "หัวหน้างาน / หัวหน้าแผนก",
-    role: "Dean",
-    name: "Dr. Somchai",
-    unit: "Faculty of Technology",
-  },
-]
+export default function Organization() {
+  const [search, setSearch] = useState("")
+  const [chain, setChain] = useState([])
+  const [leaders, setLeaders] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
 
-const mockLeaders = [
-  {
-    id: 1,
-    name: "ดร.กรณพงศ์ ดอกบัว",
-    role: "ผู้อำนวยการวิทยาลัยอาชีวศึกษากาฬสินธุ์",
-    photo: "/images/org/director.png", // ใส่ path รูปจริงตามที่มี
-    highlight: true,
-    type: "director",
-  },
-  {
-    id: 2,
-    name: "นางสาวณีอี จันทร์เพ็ญ",
-    role: "รองผู้อำนวยการฝ่ายพัฒนากิจการนักเรียน นักศึกษา",
-    photo: "/images/org/dep1.png",
-    type: "deputy",
-  },
-  {
-    id: 3,
-    name: "นายรณนันท์ แจ่มใส",
-    role: "รองผู้อำนวยการฝ่ายวิชาการ",
-    photo: "/images/org/dep2.png",
-    type: "deputy",
-  },
-  {
-    id: 4,
-    name: "นางศรีญา ปันวิศ",
-    role: "รองผู้อำนวยการฝ่ายบริหารทรัพยากร",
-    photo: "/images/org/dep3.png",
-    type: "deputy",
-  },
+  useEffect(() => {
+    fetchOrganization()
+  }, [])
+
+  const fetchOrganization = async () => {
+    try {
+      setLoading(true)
+      setError("")
+
+      // Call backend API to get organization data
+      const response = await apiClient.get("/api/organization")
+
+      if (response && response.data) {
+        setChain(response.data.chain || [])
+        setLeaders(response.data.leaders || [])
+      } else {
+        throw new Error("No organization data received")
+      }
+    } catch (err) {
+      console.error("Error fetching organization:", err)
+      setError("ไม่สามารถโหลดโครงสร้างองค์กรได้")
+      setChain([])
+      setLeaders([])
+    } finally {
+      setLoading(false)
+    }
+  }
   {
     id: 5,
     name: "นายจิติศักดิ์ เรืองเวช์ปัญญา",
@@ -61,10 +50,42 @@ const mockLeaders = [
 export default function Organization() {
   const [roleFilter, setRoleFilter] = useState("all") // all | director | deputy
   const [search, setSearch] = useState("")
+  const [chain, setChain] = useState([])
+  const [leaders, setLeaders] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    fetchOrganization()
+  }, [])
+
+  const fetchOrganization = async () => {
+    try {
+      setLoading(true)
+      setError("")
+
+      // Call backend API to get organization data
+      const response = await apiClient.get("/api/organization")
+
+      if (response && response.data) {
+        setChain(response.data.chain || [])
+        setLeaders(response.data.leaders || [])
+      } else {
+        throw new Error("No organization data received")
+      }
+    } catch (err) {
+      console.error("Error fetching organization:", err)
+      setError("ไม่สามารถโหลดโครงสร้างองค์กรได้")
+      setChain([])
+      setLeaders([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const searchLower = search.trim().toLowerCase()
 
-  const filteredLeaders = mockLeaders
+  const filteredLeaders = leaders
     .filter((l) => !l.highlight)
     .filter((l) => (roleFilter === "all" ? true : l.type === roleFilter))
     .filter((l) => {
@@ -80,6 +101,16 @@ export default function Organization() {
       title="Organization"
       subtitle="โครงสร้างการดูแลในสายการเรียนของคุณ และผู้บริหารที่เกี่ยวข้อง"
     >
+      {loading ? (
+        <div className="flex items-center justify-center py-12 gap-2 rounded-2xl border border-[#1f2937] bg-[#020617] p-5">
+          <Loader size={20} className="animate-spin text-violet-400" />
+          <span className="text-gray-400">โหลดโครงสร้างองค์กร...</span>
+        </div>
+      ) : error ? (
+        <div className="rounded-lg border border-red-500/30 bg-red-900/20 p-4 text-center text-red-300 rounded-2xl">
+          {error}
+        </div>
+      ) : (
       <div className="space-y-6">
         {/* ===== SECTION 1: สายการดูแลของคุณ ===== */}
         <section className="rounded-2xl border border-[#1f2937] bg-[#020617] p-5">
@@ -99,7 +130,7 @@ export default function Organization() {
             <div className="relative">
               <div className="absolute left-3 top-2 bottom-2 w-px bg-[#1f2937]" />
               <div className="space-y-4">
-                {mockChain.map((item, idx) => (
+                {chain.map((item, idx) => (
                   <div key={idx} className="relative pl-7">
                     <div className="absolute left-0 top-1.5 w-3 h-3 rounded-full bg-violet-500 border border-[#020617]" />
                     <div className="flex items-center gap-2 text-[11px] text-violet-300 mb-0.5">
@@ -165,7 +196,7 @@ export default function Organization() {
 
           {/* Director การ์ดใหญ่ด้านบน */}
           <div className="flex justify-center mb-6">
-            {mockLeaders
+            {leaders
               .filter((l) => l.highlight)
               .map((leader) => (
                 <div
@@ -274,6 +305,7 @@ export default function Organization() {
           </div>
         </section>
       </div>
+      )}
     </PageShell>
   )
 }
