@@ -97,6 +97,8 @@ export default function ClubsActivities() {
     filteredClubs[0] ||
     currentList[0] ||
     null
+
+  const handleToggleInterest = (tag) => {
     setInterests((prev) =>
       prev.includes(tag)
         ? prev.filter((t) => t !== tag)
