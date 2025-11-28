@@ -33,10 +33,16 @@ export default function CreateMeeting() {
       return
     }
 
+    // Set authentication token if user is logged in
+    if (user) {
+      const token = `Bearer mock-${user.role.toLowerCase()}-token`
+      localStorage.setItem('access_token', token)
+    }
+
     const loadClasses = async () => {
       try {
         setLoading(true)
-        const data = await classApi.listClasses()
+        const data = await classApi.getClasses()
         setClasses(data || [])
       } catch (err) {
         console.error('Error loading classes:', err)
@@ -74,8 +80,16 @@ export default function CreateMeeting() {
       setSubmitting(true)
       setError(null)
 
+      // Convert datetime-local to ISO8601 format
+      const startTime = new Date(formData.startTime).toISOString()
+      const endTime = new Date(formData.endTime).toISOString()
+
       // Call API to create meeting
-      const response = await classApi.createMeeting(formData)
+      const response = await classApi.createMeeting({
+        ...formData,
+        startTime,
+        endTime,
+      })
 
       if (response?.id) {
         navigate(`/meeting?success=created&id=${response.id}`)
