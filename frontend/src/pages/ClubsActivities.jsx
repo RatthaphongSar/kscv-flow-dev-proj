@@ -453,8 +453,6 @@ export default function ClubsActivities() {
           </div>
         </PopupWrapper>
         )}
-
-        </>
       </div>
     </PageShell>
   )
