@@ -19,8 +19,8 @@ export default function CreateMeeting() {
     classId: '',
     title: '',
     description: '',
-    type: 'video', // video | hybrid | chat
-    platform: 'zoom', // zoom | teams | meet
+    type: 'online', // online | onsite
+    platform: 'zoom', // zoom | teams | meet | internal
     location: '',
     startTime: '',
     endTime: '',
@@ -178,9 +178,8 @@ export default function CreateMeeting() {
                 onChange={handleChange}
                 label="Meeting Type"
                 options={[
-                  { value: 'video', label: 'Video Conference' },
-                  { value: 'hybrid', label: 'Hybrid' },
-                  { value: 'chat', label: 'Chat Only' }
+                  { value: 'online', label: 'Online' },
+                  { value: 'onsite', label: 'On-site' }
                 ]}
               />
 
