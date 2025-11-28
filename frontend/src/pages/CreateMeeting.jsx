@@ -102,8 +102,8 @@ export default function CreateMeeting() {
     return (
       <PageShell title="Create Meeting" subtitle="สร้างการประชุมใหม่">
         <div className="flex items-center justify-center py-20">
-          <Loader className="animate-spin mr-2" size={24} />
-          <span>Loading...</span>
+          <Loader className="animate-spin mr-2 text-primary" size={24} />
+          <span className="text-foreground">Loading...</span>
         </div>
       </PageShell>
     )
@@ -115,26 +115,26 @@ export default function CreateMeeting() {
       subtitle="สร้างการประชุมออนไลน์ใหม่"
     >
       <div className="max-w-3xl mx-auto">
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-card rounded-lg shadow-md p-6 border border-border">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-              <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
-              <div className="text-red-800">{error}</div>
+            <div className="mb-6 p-4 bg-destructive/10 border border-destructive rounded-lg flex items-start gap-3">
+              <AlertCircle className="text-destructive flex-shrink-0 mt-0.5" size={20} />
+              <div className="text-destructive">{error}</div>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Select Class */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Class <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Class <span className="text-destructive">*</span>
               </label>
               <select
                 name="classId"
                 value={formData.classId}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-input bg-background text-foreground rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
               >
                 <option value="">Select a class</option>
                 {classes.map(cls => (
@@ -147,8 +147,8 @@ export default function CreateMeeting() {
 
             {/* Title */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Meeting Title <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Meeting Title <span className="text-destructive">*</span>
               </label>
               <input
                 type="text"
@@ -157,13 +157,13 @@ export default function CreateMeeting() {
                 onChange={handleChange}
                 placeholder="e.g., Lecture 5 - Advanced Topics"
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-input bg-background text-foreground placeholder-muted-foreground rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
               />
             </div>
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Description
               </label>
               <textarea
@@ -172,21 +172,21 @@ export default function CreateMeeting() {
                 onChange={handleChange}
                 placeholder="Add any additional details..."
                 rows="4"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-input bg-background text-foreground placeholder-muted-foreground rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
               />
             </div>
 
             {/* Type and Platform */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Meeting Type
                 </label>
                 <select
                   name="type"
                   value={formData.type}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-input bg-background text-foreground rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 >
                   <option value="video">Video Conference</option>
                   <option value="hybrid">Hybrid</option>
@@ -195,14 +195,14 @@ export default function CreateMeeting() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Platform
                 </label>
                 <select
                   name="platform"
                   value={formData.platform}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-input bg-background text-foreground rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 >
                   <option value="zoom">Zoom</option>
                   <option value="teams">Microsoft Teams</option>
@@ -214,7 +214,7 @@ export default function CreateMeeting() {
 
             {/* Location */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Location (for hybrid meetings)
               </label>
               <input
@@ -223,15 +223,15 @@ export default function CreateMeeting() {
                 value={formData.location}
                 onChange={handleChange}
                 placeholder="e.g., Room 101, Building A"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-input bg-background text-foreground placeholder-muted-foreground rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
               />
             </div>
 
             {/* Start and End Time */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Start Time <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Start Time <span className="text-destructive">*</span>
                 </label>
                 <input
                   type="datetime-local"
@@ -239,13 +239,13 @@ export default function CreateMeeting() {
                   value={formData.startTime}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-input bg-background text-foreground rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  End Time <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  End Time <span className="text-destructive">*</span>
                 </label>
                 <input
                   type="datetime-local"
@@ -253,14 +253,14 @@ export default function CreateMeeting() {
                   value={formData.endTime}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-input bg-background text-foreground rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
               </div>
             </div>
 
             {/* Capacity */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Max Participants
               </label>
               <input
@@ -270,7 +270,7 @@ export default function CreateMeeting() {
                 onChange={handleChange}
                 min="1"
                 max="1000"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-input bg-background text-foreground rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
               />
             </div>
 
@@ -279,14 +279,14 @@ export default function CreateMeeting() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-2 rounded-lg font-medium transition"
+                className="flex-1 bg-primary hover:bg-primary/90 disabled:bg-muted text-primary-foreground py-2 rounded-lg font-medium transition"
               >
                 {submitting ? 'Creating...' : 'Create Meeting'}
               </button>
               <button
                 type="button"
                 onClick={() => navigate('/meeting')}
-                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg font-medium transition"
+                className="flex-1 bg-muted hover:bg-muted/80 text-foreground py-2 rounded-lg font-medium transition"
               >
                 Cancel
               </button>

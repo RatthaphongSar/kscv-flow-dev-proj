@@ -127,26 +127,26 @@ export function MeetingImproved() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
+      <div className="bg-card border-b border-border shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex justify-between items-start gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Meetings</h1>
-              <p className="text-gray-600 mt-1">Manage your classes and video conferences</p>
+              <h1 className="text-4xl font-bold text-foreground">Meetings</h1>
+              <p className="text-muted-foreground mt-2">Manage your classes and video conferences</p>
             </div>
             {user?.role === 'teacher' || user?.role === 'TEACHER' ? (
               <button
                 onClick={handleCreateMeeting}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow-md hover:shadow-lg"
+                className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition shadow-md hover:shadow-lg font-semibold flex-shrink-0"
               >
                 <Plus size={20} />
                 Create Meeting
               </button>
             ) : (
               <div
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-500 rounded-lg cursor-not-allowed"
+                className="flex items-center gap-2 px-6 py-3 bg-muted text-muted-foreground rounded-lg cursor-not-allowed flex-shrink-0"
                 title="Only teachers can create meetings"
               >
                 <Lock size={20} />
@@ -158,31 +158,31 @@ export function MeetingImproved() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row gap-4">
+      <div className="bg-card border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
             {/* Search */}
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-3 text-gray-400" size={20} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
               <input
                 type="text"
                 placeholder="Search meetings..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2.5 border border-input bg-background text-foreground rounded-lg outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition"
               />
             </div>
 
             {/* Status Filter */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {['all', 'scheduled', 'active', 'completed', 'cancelled'].map(status => (
                 <button
                   key={status}
                   onClick={() => setStatusFilter(status)}
-                  className={`px-4 py-2 rounded-lg transition ${
+                  className={`px-4 py-2 rounded-lg transition font-medium text-sm ${
                     statusFilter === status
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
                   }`}
                 >
                   {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -196,7 +196,7 @@ export function MeetingImproved() {
       {/* Error message */}
       {error && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="bg-destructive/10 border border-destructive/30 text-destructive px-4 py-3 rounded-lg">
             {error}
           </div>
         </div>
@@ -205,10 +205,10 @@ export function MeetingImproved() {
       {/* Meetings List */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {filteredMeetings.length === 0 ? (
-          <div className="text-center py-12">
-            <Video className="mx-auto text-gray-400 mb-4" size={48} />
-            <p className="text-gray-600 text-lg">No meetings found</p>
-            <p className="text-gray-500 text-sm mt-1">
+          <div className="text-center py-16 bg-card border border-border rounded-lg">
+            <Video className="mx-auto text-muted-foreground/40 mb-4" size={48} />
+            <p className="text-foreground text-lg font-semibold">No meetings found</p>
+            <p className="text-muted-foreground text-sm mt-1">
               {searchQuery ? 'Try adjusting your search' : 'Create a new meeting to get started'}
             </p>
           </div>
@@ -217,16 +217,16 @@ export function MeetingImproved() {
             {filteredMeetings.map(meeting => (
               <div
                 key={meeting.id}
-                className="bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden border border-gray-200"
+                className="bg-card rounded-lg shadow hover:shadow-lg transition overflow-hidden border border-border group"
               >
                 <div className="p-6">
-                  <div className="flex justify-between items-start gap-4">
+                  <div className="flex justify-between items-start gap-4 flex-col sm:flex-row">
                     {/* Left: Meeting Info */}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <h3 className="text-xl font-bold text-gray-900">{meeting.title}</h3>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-3 flex-wrap">
+                        <h3 className="text-xl font-bold text-foreground">{meeting.title}</h3>
                         <span
-                          className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(
+                          className={`px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${getStatusColor(
                             meeting.status
                           )}`}
                         >
@@ -235,19 +235,19 @@ export function MeetingImproved() {
                       </div>
 
                       {meeting.description && (
-                        <p className="text-gray-600 text-sm mb-3">{meeting.description}</p>
+                        <p className="text-muted-foreground text-sm mb-4">{meeting.description}</p>
                       )}
 
                       {/* Meeting Details */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Calendar size={18} className="text-blue-600" />
-                          <span>{formatDateTime(meeting.startTime)}</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Calendar size={18} className="text-primary flex-shrink-0" />
+                          <span className="text-sm">{formatDateTime(meeting.startTime)}</span>
                         </div>
 
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Clock size={18} className="text-green-600" />
-                          <span>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Clock size={18} className="text-primary flex-shrink-0" />
+                          <span className="text-sm">
                             {new Date(meeting.startTime).toLocaleTimeString('en-US', {
                               hour: '2-digit',
                               minute: '2-digit',
@@ -260,27 +260,27 @@ export function MeetingImproved() {
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Video size={18} className="text-purple-600" />
-                          <span>{meeting.type === 'online' ? meeting.platform || 'Online' : 'On-site'}</span>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Video size={18} className="text-primary flex-shrink-0" />
+                          <span className="text-sm">{meeting.type === 'online' ? meeting.platform || 'Online' : 'On-site'}</span>
                         </div>
 
                         {meeting.type === 'onsite' && meeting.location && (
-                          <div className="flex items-center gap-2 text-gray-600">
-                            <MapPin size={18} className="text-red-600" />
-                            <span>{meeting.location}</span>
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <MapPin size={18} className="text-primary flex-shrink-0" />
+                            <span className="text-sm">{meeting.location}</span>
                           </div>
                         )}
 
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Users size={18} className="text-blue-600" />
-                          <span>Teacher: {meeting.teacher?.username || 'Unknown'}</span>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Users size={18} className="text-primary flex-shrink-0" />
+                          <span className="text-sm">Teacher: {meeting.teacher?.username || 'Unknown'}</span>
                         </div>
 
                         {meeting.capacity && (
-                          <div className="flex items-center gap-2 text-gray-600">
-                            <Users size={18} className="text-gray-600" />
-                            <span>Capacity: {meeting.capacity}</span>
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Users size={18} className="text-primary flex-shrink-0" />
+                            <span className="text-sm">Capacity: {meeting.capacity}</span>
                           </div>
                         )}
                       </div>
@@ -291,7 +291,7 @@ export function MeetingImproved() {
                       {meeting.status === 'active' && (
                         <button
                           onClick={() => handleJoinMeeting(meeting.id)}
-                          className="flex items-center justify-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition whitespace-nowrap"
+                          className="flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold transition whitespace-nowrap"
                         >
                           <Phone size={18} />
                           Join Now
@@ -300,7 +300,7 @@ export function MeetingImproved() {
                       {meeting.status === 'scheduled' && (user?.role === 'teacher' || user?.role === 'TEACHER') && (
                         <button
                           onClick={() => handleJoinMeeting(meeting.id)}
-                          className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition whitespace-nowrap"
+                          className="flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-semibold transition whitespace-nowrap"
                         >
                           <Video size={18} />
                           Start Meeting
@@ -308,7 +308,7 @@ export function MeetingImproved() {
                       )}
                       <button
                         onClick={() => navigate(`/meetings/${meeting.id}`)}
-                        className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-semibold transition whitespace-nowrap"
+                        className="flex items-center justify-center gap-2 px-6 py-3 bg-muted hover:bg-muted/80 text-foreground rounded-lg font-semibold transition whitespace-nowrap"
                       >
                         Details
                         <ChevronRight size={18} />
