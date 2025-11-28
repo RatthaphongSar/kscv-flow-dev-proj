@@ -33,12 +33,6 @@ export default function CreateMeeting() {
       return
     }
 
-    // Set authentication token if user is logged in
-    if (user) {
-      const token = `Bearer mock-${user.role.toLowerCase()}-token`
-      localStorage.setItem('access_token', token)
-    }
-
     const loadClasses = async () => {
       try {
         setLoading(true)
