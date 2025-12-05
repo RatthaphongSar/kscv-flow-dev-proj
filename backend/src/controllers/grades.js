@@ -6,11 +6,16 @@ import { prisma } from "../db.js"
  */
 export const getTranscript = async (req, res, next) => {
   try {
+    const userId = req.user?.id || req.user?.userId
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' })
+    }
+
     const grades = await prisma.grade.findMany({
-      where: { studentId: req.user?.sub },
+      where: { studentId: userId },
       include: {
         exam: {
-          include: { class: { select: { name: true, level: true, major: true } } }
+          include: { class: { select: { name: true, code: true, major: true } } }
         }
       },
       orderBy: { createdAt: 'desc' }

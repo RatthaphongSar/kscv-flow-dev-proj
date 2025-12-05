@@ -21,7 +21,7 @@ export default function Organization() {
       setError("")
 
       // Call backend API to get organization data
-      const response = await apiClient.get("/api/organization")
+      const response = await apiClient.get("/organization")
 
       if (response && response.data) {
         setChain(response.data.chain || [])

@@ -19,7 +19,7 @@ export default function Schedule() {
       setError("")
       
       // Call backend API to get schedule
-      const response = await apiClient.get("/api/schedule")
+      const response = await apiClient.get("/schedule")
       
       if (response && response.data) {
         setSchedule(response.data)

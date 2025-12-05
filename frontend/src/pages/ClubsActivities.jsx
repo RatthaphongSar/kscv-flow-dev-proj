@@ -36,7 +36,7 @@ export default function ClubsActivities() {
       setError("")
 
       // Call backend API to get clubs data
-      const response = await apiClient.get("/api/clubs")
+      const response = await apiClient.get("/clubs")
 
       if (response && response.data) {
         setMyClubs(response.data.myClubs || [])

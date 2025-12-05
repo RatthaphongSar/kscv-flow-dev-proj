@@ -39,7 +39,7 @@ export default function AdvisorContact() {
       setError("")
 
       // Call backend API to get advisor info
-      const response = await apiClient.get("/api/advisor")
+      const response = await apiClient.get("/advisor")
 
       if (response && response.data) {
         setAdvisor(response.data.advisor || {})

@@ -102,7 +102,7 @@ export default function RegisterServices() {
       setError("")
 
       // Call backend API to get services data
-      const response = await apiClient.get("/api/services")
+      const response = await apiClient.get("/services")
 
       if (response && response.data) {
         setServices(response.data || [])

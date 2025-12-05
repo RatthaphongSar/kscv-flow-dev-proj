@@ -22,7 +22,7 @@ export default function Resources() {
       setError("")
 
       // Call backend API to get resources
-      const response = await apiClient.get("/api/resources")
+      const response = await apiClient.get("/resources")
 
       if (response && response.data) {
         setFiles(response.data || [])

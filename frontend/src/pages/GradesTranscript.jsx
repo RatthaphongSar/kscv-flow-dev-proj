@@ -19,7 +19,7 @@ export default function GradesTranscript() {
       setError("")
 
       // Call backend API to get grades
-      const response = await apiClient.get("/api/grades")
+      const response = await apiClient.get("/grades")
 
       if (response && response.data) {
         setGrades(response.data.grades || [])

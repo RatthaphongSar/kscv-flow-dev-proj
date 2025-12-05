@@ -21,7 +21,7 @@ export default function Exam() {
       setError("")
 
       // Call backend API to get exams
-      const response = await apiClient.get("/api/exams")
+      const response = await apiClient.get("/exams")
 
       if (response && response.data) {
         setExams(response.data || [])

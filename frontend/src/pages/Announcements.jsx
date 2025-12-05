@@ -23,7 +23,7 @@ export default function Announcements() {
       setError("")
 
       // Call backend API to get announcements
-      const response = await apiClient.get("/api/announcements")
+      const response = await apiClient.get("/announcements")
 
       if (response && response.data) {
         setAnnouncements(response.data || [])
