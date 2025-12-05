@@ -733,9 +733,9 @@ export const createAnnouncement = async (req, res) => {
     }
 
     const { classId } = req.params;
-    const { role } = req.user || {};
+    const { role, id: userId } = req.user || {};
 
-    if (role !== 'TEACHER') {
+    if (role?.toLowerCase() !== 'teacher') {
       return res
         .status(403)
         .json({ error: 'Only teachers can create announcements' });
@@ -747,6 +747,7 @@ export const createAnnouncement = async (req, res) => {
       classId,
       title,
       content,
+      authorId: userId,
     });
 
     return res.status(201).json({
