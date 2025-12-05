@@ -1,6 +1,7 @@
 // frontend/src/pages/Meeting.jsx
 import { useState, useMemo } from 'react'
 import { useAuth } from '../context/AuthContext'
+import VideoCallControls from '../components/VideoCallControls'
 import {
   Calendar,
   Clock,
@@ -294,8 +295,18 @@ export default function MeetingPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-112px)] w-full bg-[#020617] text-gray-100 px-4 py-4">
-      <div className="h-full rounded-2xl border border-[#1f2937] bg-[#020617] overflow-hidden flex">
+    <div className="h-[calc(100vh-112px)] w-full bg-[#020617] text-gray-100 flex flex-col">
+      {/* Top navbar - Show when user is in a meeting */}
+      {isJoined && joinedMeetingId && (
+        <div className="bg-gradient-to-r from-slate-900 to-slate-800 border-b border-[#1f2937] px-4 py-2 flex items-center justify-between sticky top-0 z-40">
+          <div className="text-sm font-semibold">
+            ห้องประชุม: {selectedMeeting?.title}
+          </div>
+          <VideoCallControls onEndCall={handleJoinLeave} isNavbar={true} />
+        </div>
+      )}
+
+      <div className="flex-1 px-4 py-4 rounded-2xl border border-[#1f2937] bg-[#020617] overflow-hidden flex">
         {/* Sidebar: Filter + Upcoming list สั้น ๆ */}
         <aside className="w-72 border-r border-[#1f2937] bg-[#020617] flex flex-col">
           <div className="px-4 py-3 border-b border-[#1f2937]">
@@ -827,6 +838,7 @@ export default function MeetingPage() {
           </div>
         </div>
       )}
+    </div>
     </div>
   )
 }
