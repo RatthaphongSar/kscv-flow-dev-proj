@@ -208,10 +208,10 @@ export default function ChecklinePage() {
   }
 
   return (
-    <div className="w-full h-[calc(100vh-64px)] bg-[#020617] flex">
+    <div className="w-full h-[calc(100vh-64px)] bg-[#020617] flex flex-col lg:flex-row">
       
-      {/* ================= LEFT SIDEBAR ================= */}
-      <aside className="w-72 h-full border-r border-[#1f2937] bg-[#020617] flex flex-col">
+      {/* ================= LEFT SIDEBAR (MOBILE: HAMBURGER) ================= */}
+      <aside className="hidden lg:flex lg:w-72 h-auto lg:h-full border-r border-[#1f2937] bg-[#020617] flex-col">
         <div className="px-4 py-4 border-b border-[#1f2937]">
           <h1 className="text-sm font-semibold">ระบบเช็คชื่อ</h1>
           <p className="text-[11px] text-gray-400">ข้อมูลเช็คชื่อเรียน + การเข้าแถว</p>
@@ -248,28 +248,28 @@ export default function ChecklinePage() {
       </aside>
 
       {/* ================= MAIN CALENDAR ================= */}
-      <section className="flex-1 border-r border-[#1f2937] overflow-y-auto p-6">
+      <section className="flex-1 border-r border-[#1f2937] overflow-y-auto p-3 lg:p-6 min-w-0">
 
         <h2 className="text-lg font-semibold mb-2">บันทึกเช็คชื่อประจำสัปดาห์</h2>
 
         {/* ปุ่มควบคุมสัปดาห์ย้อนหลัง */}
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex flex-wrap gap-2 mb-4">
           <button
-            className="px-3 py-1.5 border border-[#1f2937] rounded-lg hover:bg-slate-800 text-xs"
+            className="px-3 py-1.5 border border-[#1f2937] rounded-lg hover:bg-slate-800 text-xs whitespace-nowrap"
             onClick={() => setWeekOffset(weekOffset - 1)}
           >
             ← สัปดาห์ก่อน
           </button>
 
           <button
-            className="px-3 py-1.5 border border-[#1f2937] rounded-lg hover:bg-slate-800 text-xs"
+            className="px-3 py-1.5 border border-[#1f2937] rounded-lg hover:bg-slate-800 text-xs whitespace-nowrap"
             onClick={() => setWeekOffset(0)}
           >
             สัปดาห์นี้
           </button>
 
           <button
-            className="px-3 py-1.5 border border-[#1f2937] rounded-lg hover:bg-slate-800 text-xs"
+            className="px-3 py-1.5 border border-[#1f2937] rounded-lg hover:bg-slate-800 text-xs whitespace-nowrap"
             onClick={() => setWeekOffset(weekOffset + 1)}
           >
             สัปดาห์ถัดไป →
@@ -298,7 +298,7 @@ export default function ChecklinePage() {
         )}
 
         {/* CALENDAR GRID */}
-        <div className="grid grid-cols-7 gap-3 mb-6">
+        <div className="grid grid-cols-5 sm:grid-cols-7 gap-2 sm:gap-3 mb-6">
           {weekDays.map((d, idx) => {
             const dateStr = d.toISOString().slice(0, 10);
             const rec = classRecords.find(r => r.date === dateStr);
@@ -309,21 +309,21 @@ export default function ChecklinePage() {
               <button
                 key={idx}
                 onClick={() => setSelectedDate(dateStr)}
-                className={`rounded-xl px-3 py-3 border text-xs flex flex-col items-center ${
+                className={`rounded-xl px-2 sm:px-3 py-2 sm:py-3 border text-xs flex flex-col items-center ${
                   isSelected
                     ? "border-violet-500 bg-violet-600/30"
                     : "border-[#1f2937] bg-[#020617] hover:bg-slate-800"
                 } ${isToday ? "ring-1 ring-violet-500/60" : ""}`}
               >
-                <span className="text-gray-400 text-[10px]">{d.toLocaleDateString("th-TH", { weekday: "short" })}</span>
-                <span className="text-xl">{d.getDate()}</span>
+                <span className="text-gray-400 text-[9px] sm:text-[10px]">{d.toLocaleDateString("th-TH", { weekday: "short" })}</span>
+                <span className="text-lg sm:text-xl">{d.getDate()}</span>
 
-                {rec?.status === "present" && <CheckCircle2 className="text-emerald-400 mt-1" size={16} />}
-                {rec?.status === "late" && <AlertTriangle className="text-yellow-400 mt-1" size={16} />}
-                {rec?.status === "absent" && <XCircle className="text-red-400 mt-1" size={16} />}
+                {rec?.status === "present" && <CheckCircle2 className="text-emerald-400 mt-1" size={14} />}
+                {rec?.status === "late" && <AlertTriangle className="text-yellow-400 mt-1" size={14} />}
+                {rec?.status === "absent" && <XCircle className="text-red-400 mt-1" size={14} />}
 
                 {isToday && (
-                  <span className="mt-1 text-[9px] px-2 py-0.5 rounded-full bg-violet-600/30 text-violet-200 border border-violet-500/60">
+                  <span className="mt-1 text-[8px] sm:text-[9px] px-1.5 py-0.5 rounded-full bg-violet-600/30 text-violet-200 border border-violet-500/60">
                     วันนี้
                   </span>
                 )}
@@ -348,8 +348,8 @@ export default function ChecklinePage() {
         </div>
       </section>
 
-      {/* ================= RIGHT DETAIL PANEL ================= */}
-      <aside className="w-80 bg-[#020617] p-4 text-xs overflow-y-auto">
+      {/* ================= RIGHT DETAIL PANEL (MOBILE: BOTTOM SECTION) ================= */}
+      <aside className="w-full lg:w-80 bg-[#020617] p-3 sm:p-4 text-xs overflow-y-auto border-t lg:border-t-0 lg:border-l border-[#1f2937]">
         <h3 className="text-sm font-semibold mb-3">รายละเอียดเช็คชื่อ</h3>
 
         {/* STUDENT CHECK-IN BUTTON */}
@@ -392,6 +392,26 @@ export default function ChecklinePage() {
           </div>
         )}
 
+        {/* CLASS SELECTOR FOR MOBILE */}
+        {!selectedClass && (
+          <div className="lg:hidden mb-4 p-3 border border-[#1f2937] rounded-lg bg-[#020617]">
+            <p className="text-xs text-gray-400 mb-2">เลือกรายวิชา:</p>
+            <select
+              value={selectedClass || ''}
+              onChange={(e) => {
+                setSelectedClass(e.target.value);
+                setSelectedDate(null);
+              }}
+              className="w-full rounded-md bg-[#020617] border border-[#374151] px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:ring-1 focus:ring-violet-500"
+            >
+              <option value="">-- เลือกรายวิชา --</option>
+              {classes.map(cls => (
+                <option key={cls.id} value={cls.id}>{cls.code} - {cls.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {!selectedDate ? (
           <p className="text-gray-400">เลือกวันที่จากปฏิทิน</p>
         ) : (
@@ -416,15 +436,15 @@ export default function ChecklinePage() {
                       .map(rec => (
                         <div
                           key={rec.id}
-                          className="p-2 rounded bg-[#1f2937] border border-[#374151]"
+                          className="p-2 rounded bg-[#1f2937] border border-[#374151] text-xs"
                         >
                           <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1">
-                              <div className="font-semibold text-gray-200">{rec.student?.username}</div>
-                              <div className="text-[11px] text-gray-400">{rec.student?.year || '-'} / {rec.student?.major || '-'}</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-gray-200 truncate">{rec.student?.username}</div>
+                              <div className="text-[10px] text-gray-400">{rec.student?.year || '-'} / {rec.student?.major || '-'}</div>
                             </div>
-                            <div className="flex flex-col items-end gap-1">
-                              <span className={`text-[11px] px-2 py-0.5 rounded font-medium ${
+                            <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                              <span className={`text-[10px] px-2 py-0.5 rounded font-medium whitespace-nowrap ${
                                 rec.status === 'present'
                                   ? 'bg-emerald-500/20 text-emerald-300'
                                   : rec.status === 'late'
@@ -436,7 +456,7 @@ export default function ChecklinePage() {
                                 {rec.status === 'absent' && 'ขาดเรียน'}
                               </span>
                               {rec.remark && (
-                                <span className="text-[10px] text-gray-400">{rec.remark}</span>
+                                <span className="text-[9px] text-gray-400">{rec.remark}</span>
                               )}
                             </div>
                           </div>
