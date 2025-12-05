@@ -641,7 +641,7 @@ export default function MeetingPage() {
 
             {/* Body popup */}
             <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-              {/* Slide area – ทำให้ใหญ่ขึ้น */}
+              {/* Left: Slide area */}
               <div className="flex-1 p-4 md:p-5 flex flex-col gap-3 overflow-y-auto">
                 <div className="flex items-center justify-between text-xs mb-1 flex-shrink-0">
                   <div className="flex items-center gap-1 text-gray-200">
