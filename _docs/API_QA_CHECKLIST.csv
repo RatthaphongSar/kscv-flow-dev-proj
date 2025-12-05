@@ -1,0 +1,67 @@
+Phase,Test#,Endpoint,HTTP Method,Test Case Description,Expected Result,Priority,Test Type,Status,Tester Name,Test Date,Notes/Evidence
+Phase 1,1.1,/api/auth/login,POST,Login with valid teacher credentials (teacher-demo/Teacher123!),200 - Returns access_token and refresh_token,CRITICAL,Functional,Pending,,, Check token expiry times
+Phase 1,1.2,/api/auth/login,POST,Login with invalid username,401 Unauthorized,CRITICAL,Negative,Pending,,, Proper error message displayed
+Phase 1,1.3,/api/auth/login,POST,Login with invalid password,401 Unauthorized,CRITICAL,Negative,Pending,,, Proper error message displayed
+Phase 1,1.4,/api/auth/login,POST,Login with empty body,400 Bad Request,HIGH,Validation,Pending,,, Validation errors listed
+Phase 1,1.5,/api/auth/refresh,POST,Refresh token with valid refresh_token,200 - New access_token returned,CRITICAL,Functional,Pending,,, Old token valid for 15 minutes
+Phase 1,1.6,/api/auth/refresh,POST,Refresh with expired refresh_token,401 Unauthorized,HIGH,Negative,Pending,,, User must re-login
+Phase 1,1.7,/api/auth/logout,POST,Logout with valid authentication,200 - Tokens cleared,HIGH,Functional,Pending,,, Check cookies deleted
+Phase 1,1.8,/api/auth/verify,GET,Verify valid JWT token and user data,200 - Returns user info with role,CRITICAL,Functional,Pending,,, Includes sub/role/username/year/major
+Phase 2,2.1,/api/classes,GET,List all classes as student user,200 - Array of classes with pagination,CRITICAL,Functional,Pending,,, Check limit & offset params
+Phase 2,2.2,/api/classes,GET,List classes with filters (semester/major),200 - Filtered results,HIGH,Functional,Pending,,, Multiple filters can be combined
+Phase 2,2.3,/api/classes/:classId,GET,Get detailed class info (members/schedule),200 - Complete class info,CRITICAL,Functional,Pending,,, Includes students & meeting schedule
+Phase 2,2.4,/api/classes/:classId/summary,GET,Get class summary (student view),200 - Attendance/grades/materials,HIGH,Functional,Pending,,, Stats calculated correctly
+Phase 2,2.5,/api/classes,POST,Create new class as teacher,201 - New class created,CRITICAL,Functional,Pending,,, Auto-generated unique class code
+Phase 2,2.6,/api/classes,POST,Create class as student (unauthorized),403 Forbidden,HIGH,Security,Pending,,, Only TEACHER/ADMIN allowed
+Phase 2,2.7,/api/classes/:classId,PATCH,Update class details (name/room/credits),200 - Updated successfully,CRITICAL,Functional,Pending,,, Verify all updateable fields
+Phase 2,2.8,/api/classes/:classId,DELETE,Delete class (cascade delete),200 - Deleted successfully,HIGH,Functional,Pending,,, Check related records deleted
+Phase 2,2.9,/api/classes/:classId/enroll,POST,Enroll student in available class,200 - Enrolled successfully,CRITICAL,Functional,Pending,,, Check duplicate enrollment rejected
+Phase 2,2.10,/api/classes/:classId/enroll,POST,Enroll when class is full,400 Bad Request,HIGH,Validation,Pending,,, Capacity check enforced
+Phase 2,2.11,/api/classes/:classId/join-requests,GET,View join requests as teacher,200 - Array of pending requests,CRITICAL,Functional,Pending,,, Student role returns 403
+Phase 2,2.12,/api/classes/:classId/join-requests/:requestId/approve,PATCH,Approve join request,200 - Student enrolled,HIGH,Functional,Pending,,, Student receives notification
+Phase 3,3.1,/api/chat/rooms,GET,List chat rooms for authenticated user,200 - Array of rooms with pinned status,CRITICAL,Functional,Pending,,, Shows room codes and descriptions
+Phase 3,3.2,/api/chat/rooms,GET,List rooms without authentication,401 Unauthorized,CRITICAL,Security,Pending,,, Auth required for all chat routes
+Phase 3,3.3,/api/chat/rooms,POST,Create new chat room as teacher,201 - Room created,HIGH,Functional,Pending,,, Auto-generated room code
+Phase 3,3.4,/api/chat/rooms/:roomId/messages,GET,List messages in room (paginated),200 - Messages with pagination,CRITICAL,Functional,Pending,,, Newest messages first
+Phase 3,3.5,/api/chat/rooms/:roomId/messages,POST,Send text message,200 - Message saved and broadcast,CRITICAL,Functional,Pending,,, Real-time delivery via WebSocket
+Phase 3,3.6,/api/chat/rooms/:roomId/messages,POST,Send message with file attachment,200 - Message + file uploaded,HIGH,Functional,Pending,,, Max 10 files/50MB per file
+Phase 3,3.7,/api/chat/rooms/:roomId/messages/:msgId,DELETE,Delete own message,200 - Deleted successfully,HIGH,Functional,Pending,,, Others cannot delete
+Phase 3,3.8,/api/chat/rooms/:roomId/pin,POST,Pin a chat room,200 - Room pinned (flag set true),HIGH,Functional,Pending,,, 📌 icon displays in UI
+Phase 3,3.9,/api/chat/rooms/:roomId/pin,DELETE,Unpin chat room,200 - Room unpinned (flag false),HIGH,Functional,Pending,,, Removed from pinned filter
+Phase 3,3.10,/api/chat/rooms/pinned,GET,Get list of pinned rooms,200 - Only pinned rooms returned,CRITICAL,Functional,Pending,,, Filter tab shows pinned count
+Phase 3,3.11,WebSocket,WS,Real-time message delivery via Socket.io,Message appears in room immediately,CRITICAL,Functional,Pending,,, No polling delay
+Phase 4,4.1,/api/leaves,POST,Request sick leave for 1 day,201 - Leave request created,CRITICAL,Functional,Pending,,, status = 'pending'
+Phase 4,4.2,/api/leaves,POST,Request sick leave for 3 days,201 - Leave created with cert flag,HIGH,Functional,Pending,,, Doctor certificate required flag set
+Phase 4,4.3,/api/leaves,POST,Request with invalid date range,400 Bad Request,HIGH,Validation,Pending,,, endDate must be > startDate
+Phase 4,4.4,/api/leaves/my,GET,View my leave requests,200 - User's leave requests only,CRITICAL,Functional,Pending,,, Only authenticated user's requests
+Phase 4,4.5,/api/leaves/:id/status,PATCH,Approve leave request as advisor,200 - Status changed to approved,HIGH,Functional,Pending,,, Student receives notification
+Phase 4,4.6,/api/leaves/:id/status,PATCH,Reject leave with reason,200 - Status changed to rejected,HIGH,Functional,Pending,,, Rejection reason stored
+Phase 4,4.7,/api/attendance/checkin,POST,Check-in as present,200 - Attendance recorded,CRITICAL,Functional,Pending,,, Timestamp and location recorded
+Phase 4,4.8,/api/attendance/my,GET,View my attendance records,200 - Monthly attendance list,CRITICAL,Functional,Pending,,, Present/absent/late statistics
+Phase 4,4.9,/api/attendance/class/:classId,GET,View class attendance as teacher,200 - All students' records,CRITICAL,Functional,Pending,,, Student role returns 403
+Phase 5,5.1,/api/clubs,GET,List all available clubs,200 - Paginated club list,HIGH,Functional,Pending,,, Check pagination defaults
+Phase 5,5.2,/api/clubs?page=2&limit=10,GET,Test pagination parameters,200 - Correct offset/limit applied,HIGH,Functional,Pending,,, page & limit work correctly
+Phase 5,5.3,/api/clubs/enroll,POST,Enroll in available club,200 - Enrolled successfully,HIGH,Functional,Pending,,, Duplicate enrollment rejected
+Phase 5,5.4,/api/clubs/my,GET,View my clubs with membership,200 - User's clubs array,HIGH,Functional,Pending,,, Includes officer status
+Phase 5,5.5,/api/exams,GET,List exam schedule,200 - Exams array sorted by date,HIGH,Functional,Pending,,, Check date sorting
+Phase 5,5.6,/api/resources,GET,List educational resources,200 - Resources with filter,HIGH,Functional,Pending,,, Check type filtering
+Phase 5,5.7,/api/resources/:resourceId/download,GET,Download resource file,200 - File stream with correct MIME,HIGH,Functional,Pending,,, Content-type header correct
+Phase 5,5.8,/api/resources/:resourceId/download,GET,Download non-existent resource,404 Not Found,HIGH,Error Handling,Pending,,, Friendly error message
+Phase 6,6.1,/api/export/transcript/pdf,GET,Export academic transcript as PDF,200 - PDF file returned,CRITICAL,Functional,Pending,,, Verify PDF opens in reader
+Phase 6,6.2,/api/export/transcript/pdf,GET,PDF contains correct student data,Valid - Data accuracy check,HIGH,Data Quality,Pending,,, Student name/ID/grades included
+Phase 6,6.3,/api/export/activities/csv,GET,Export activities as CSV,200 - CSV file returned,HIGH,Functional,Pending,,, Opens correctly in Excel
+Phase 6,6.4,/api/export/attendance/csv,GET,Export attendance as CSV,200 - CSV file returned,HIGH,Functional,Pending,,, Month/present/absent/late columns
+Phase 6,6.5,/api/grades,GET,List student grades,200 - Grades array with GPA,HIGH,Functional,Pending,,, GPA calculated correctly
+Phase 6,6.6,/api/grades/class/:classId,GET,View class grades as teacher,200 - All students' grades,CRITICAL,Functional,Pending,,, Student role returns 403
+Phase 7,7.1,ANY Endpoint,ANY,Request without authorization token,401 Unauthorized,CRITICAL,Security,Pending,,, Clear error message
+Phase 7,7.2,ANY Endpoint,ANY,Request with expired token,401 Unauthorized,CRITICAL,Security,Pending,,, Refresh token option offered
+Phase 7,7.3,ANY Endpoint,ANY,Request with malformed JWT,401 Unauthorized,CRITICAL,Security,Pending,,, Invalid signature rejected
+Phase 7,7.4,/api/classes,POST,Create class with insufficient permissions,403 Forbidden,CRITICAL,Security,Pending,,, Only TEACHER/ADMIN allowed
+Phase 7,7.5,/api/leaves,POST,Submit leave with invalid body,400 Bad Request,HIGH,Validation,Pending,,, Validation errors described clearly
+Phase 7,7.6,/api/classes/fake-id,GET,Request non-existent resource,404 Not Found,HIGH,Error Handling,Pending,,, Friendly message/no SQL errors
+Phase 7,7.7,/api/classes/:classId/enroll,POST,Attempt duplicate enrollment,400 Bad Request,HIGH,Validation,Pending,,, "Already enrolled" message
+Phase 7,7.8,/api/classes/:classId/enroll,POST,Enroll when class at capacity,400 Bad Request,HIGH,Validation,Pending,,, "Class is full" message
+Phase 7,7.9,/api/chat/rooms/:id/messages,POST,Upload file > 50MB,400 Bad Request,HIGH,Validation,Pending,,, File size limit enforced
+Phase 7,7.10,/api/classes,GET,Make 150 rapid requests (>120/min),429 Too Many Requests,HIGH,Security,Pending,,, Retry-After header present
+Phase 7,7.11,/api/chat/rooms,OPTIONS,CORS preflight from localhost:5173,200 with CORS headers,HIGH,Security,Pending,,, Access-Control-Allow-Origin set
+Phase 7,7.12,/api/auth/login,POST,SQL injection attempt in username,400/401 - No error leak,CRITICAL,Security,Pending,,, No SQL syntax errors exposed
