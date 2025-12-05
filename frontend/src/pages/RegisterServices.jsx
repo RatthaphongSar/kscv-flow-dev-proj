@@ -123,12 +123,18 @@ export default function RegisterServices() {
 
   const fetchLeaveRequests = async () => {
     try {
-      // TODO: Implement API call to fetch leave requests
-      console.log('Fetching leave requests...')
-      // const response = await api("/leaves", { method: "GET" })
-      // setLeaveRequests(response?.data || [])
+      const response = await api("/leaves/my-requests", { method: "GET" })
+      if (response && Array.isArray(response)) {
+        setLeaveRequests(response)
+      } else if (response?.data && Array.isArray(response.data)) {
+        setLeaveRequests(response.data)
+      } else {
+        setLeaveRequests([])
+      }
+      console.log('Leave requests fetched:', response)
     } catch (err) {
       console.error("Error fetching leave requests:", err)
+      setLeaveRequests([])
     }
   }
 
@@ -152,31 +158,38 @@ export default function RegisterServices() {
     }))
   }
 
-  const handleSubmitLeave = (e) => {
+  const handleSubmitLeave = async (e) => {
     e.preventDefault()
     if (!leaveForm.startDate) {
       alert("กรุณาเลือกวันที่เริ่มลา")
       return
     }
-    const endDate = leaveForm.endDate || leaveForm.startDate
 
-    const newReq = {
-      id: Date.now(),
-      type: leaveForm.type,
-      startDate: leaveForm.startDate,
-      endDate,
-      fullDay: leaveForm.fullDay,
-      reason: leaveForm.reason || "-",
-      status: "pending",
-      createdAt: new Date().toLocaleString("th-TH", {
-        dateStyle: "short",
-        timeStyle: "short",
-      }),
+    try {
+      const endDate = leaveForm.endDate || leaveForm.startDate
+      const response = await api("/leaves/request", {
+        method: "POST",
+        body: {
+          type: leaveForm.type,
+          startDate: leaveForm.startDate,
+          endDate: endDate,
+          fullDay: leaveForm.fullDay,
+          reason: leaveForm.reason || "",
+        },
+      })
+
+      if (response) {
+        console.log("Leave request submitted:", response)
+        alert("ส่งคำร้องการลาเรียบร้อย กรุณารอการอนุมัติจากอาจารย์ที่ปรึกษา")
+        setIsLeaveModalOpen(false)
+        setLeaveForm(initialLeaveForm)
+        // Refresh leave requests
+        await fetchLeaveRequests()
+      }
+    } catch (err) {
+      console.error("Error submitting leave request:", err)
+      alert("ไม่สามารถส่งคำร้องการลาได้ กรุณาลองใหม่")
     }
-
-    setLeaveRequests((prev) => [newReq, ...prev])
-    setIsLeaveModalOpen(false)
-    setLeaveForm(initialLeaveForm)
   }
 
   return (

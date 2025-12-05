@@ -16,7 +16,7 @@ import {
   Send,
   Loader,
 } from "lucide-react"
-import { apiClient } from "../utils/api"
+import { api } from "../utils/api"
 
 export default function ClubsActivities() {
   const [search, setSearch] = useState("")
@@ -36,12 +36,15 @@ export default function ClubsActivities() {
       setError("")
 
       // Call backend API to get clubs data
-      const response = await apiClient.get("/clubs")
+      const response = await api("/clubs", { method: "GET" })
 
       // API returns object with myClubs and availableClubs directly
       if (response && typeof response === 'object') {
-        setMyClubs(response.myClubs || [])
-        setAvailableClubs(response.availableClubs || [])
+        setMyClubs(response.myClubs || response.my || [])
+        setAvailableClubs(response.availableClubs || response.available || [])
+      } else if (response?.data && typeof response.data === 'object') {
+        setMyClubs(response.data.myClubs || response.data.my || [])
+        setAvailableClubs(response.data.availableClubs || response.data.available || [])
       } else {
         throw new Error("Invalid clubs data received")
       }
@@ -109,9 +112,20 @@ export default function ClubsActivities() {
 
   const handleJoinClub = async (club) => {
     try {
-      // TODO: Implement real club join request API
-      console.log('Joining club:', club.name)
-      // await api(`/clubs/${club.id}/join-request`, { method: 'POST' })
+      const response = await api(`/clubs/${club.id}/join-request`, {
+        method: 'POST',
+        body: { interests: interests.length > 0 ? interests : [club.focus] }
+      })
+      console.log('Joined club:', response)
+      alert('ส่งคำร้องสมัครเข้าชมรมเรียบร้อย รอการอนุมัติจากประธานชมรม')
+      setModalMsg('')
+      setOpenChat(false)
+      // Refresh clubs data
+      await fetchClubsData()
+    } catch (err) {
+      console.error('Error joining club:', err)
+      alert('ไม่สามารถส่งคำร้องสมัครได้ กรุณาลองใหม่')
+    }
   }
 
   // ==========================

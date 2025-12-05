@@ -2,7 +2,7 @@
 import { useMemo, useState, useEffect } from "react"
 import PageShell from "../components/PageShell"
 import { CalendarDays, Filter, Info, AlarmClock, ArrowRight, Loader } from "lucide-react"
-import { apiClient } from "../utils/api"
+import { api } from "../utils/api"
 
 export default function Exam() {
   const [filterType, setFilterType] = useState("all") // "all" | "Midterm" | "Final"
@@ -21,11 +21,13 @@ export default function Exam() {
       setError("")
 
       // Call backend API to get exams
-      const response = await apiClient.get("/exams")
+      const response = await api("/exams", { method: "GET" })
 
       // API returns array directly
       if (Array.isArray(response)) {
         setExams(response)
+      } else if (response?.data && Array.isArray(response.data)) {
+        setExams(response.data)
       } else {
         throw new Error("Invalid exams data received")
       }

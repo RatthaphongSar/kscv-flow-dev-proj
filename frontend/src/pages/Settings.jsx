@@ -1,6 +1,7 @@
 // frontend/src/pages/Settings.jsx
 import { useState } from "react"
 import PageShell from "../components/PageShell"
+import { api } from "../utils/api"
 import {
   Settings as SettingsIcon,
   Bell,
@@ -21,23 +22,35 @@ export default function Settings() {
   const [autoReminder, setAutoReminder] = useState(true)
   const [studyFocusMode, setStudyFocusMode] = useState(false)
   const [shareActivity, setShareActivity] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   const handleSaveSettings = async () => {
     try {
-      // TODO: Implement API call to save settings
-      console.log('Settings saved:', {
-        language,
-        theme,
-        notifyAnnouncement,
-        notifyAssignment,
-        notifyActivity,
-        autoReminder,
-        studyFocusMode,
-        shareActivity,
+      setIsSaving(true)
+      const response = await api('/settings/preferences', {
+        method: 'PATCH',
+        body: {
+          language,
+          theme,
+          notifications: {
+            announcement: notifyAnnouncement,
+            assignment: notifyAssignment,
+            activity: notifyActivity,
+            reminder: autoReminder
+          },
+          studyFocusMode,
+          shareActivity
+        }
       })
-      // await api('/settings', { method: 'POST', body: {...} })
+      alert('Settings saved successfully!')
+      console.log('Settings response:', response)
     } catch (err) {
       console.error('Error saving settings:', err)
+      alert('Failed to save settings. Please try again.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
     }
   }
 
@@ -217,11 +230,21 @@ export default function Settings() {
                 className="px-3 py-1.5 rounded-lg border border-[#374151] hover:bg-slate-800 text-[11px]"
                 onClick={async () => {
                   try {
-                    // TODO: Implement PDF export API
-                    console.log('Exporting PDF...')
-                    // const response = await api('/export/transcript/pdf', { method: 'GET' })
+                    const response = await fetch('/api/export/transcript/pdf', {
+                      method: 'GET',
+                      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    })
+                    if (!response.ok) throw new Error('Export failed')
+                    const blob = await response.blob()
+                    const url = window.URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = 'transcript.pdf'
+                    a.click()
+                    console.log('PDF exported successfully')
                   } catch (err) {
                     console.error('Error exporting PDF:', err)
+                    alert('Failed to export PDF. Please try again.')
                   }
                 }}
               >
@@ -234,11 +257,21 @@ export default function Settings() {
                 className="px-3 py-1.5 rounded-lg border border-[#374151] hover:bg-slate-800 text-[11px]"
                 onClick={async () => {
                   try {
-                    // TODO: Implement CSV export API
-                    console.log('Exporting CSV...')
-                    // const response = await api('/export/activities/csv', { method: 'GET' })
+                    const response = await fetch('/api/export/activities/csv', {
+                      method: 'GET',
+                      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    })
+                    if (!response.ok) throw new Error('Export failed')
+                    const blob = await response.blob()
+                    const url = window.URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = 'activities.csv'
+                    a.click()
+                    console.log('Activities CSV exported successfully')
                   } catch (err) {
                     console.error('Error exporting CSV:', err)
+                    alert('Failed to export CSV. Please try again.')
                   }
                 }}
               >

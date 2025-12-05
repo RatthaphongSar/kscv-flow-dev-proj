@@ -2,7 +2,7 @@
 import { useState, useMemo, useEffect } from "react"
 import PageShell from "../components/PageShell"
 import { FileText, Download, User, Tag, Search, Filter, Loader } from "lucide-react"
-import { apiClient } from "../utils/api"
+import { api } from "../utils/api"
 
 export default function Resources() {
   const [search, setSearch] = useState("")
@@ -22,11 +22,13 @@ export default function Resources() {
       setError("")
 
       // Call backend API to get resources
-      const response = await apiClient.get("/resources")
+      const response = await api("/resources", { method: "GET" })
 
       // API returns array directly
       if (Array.isArray(response)) {
         setFiles(response)
+      } else if (response?.data && Array.isArray(response.data)) {
+        setFiles(response.data)
       } else {
         throw new Error("Invalid resources data received")
       }
@@ -180,11 +182,21 @@ export default function Resources() {
                   className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-[11px]"
                   onClick={async () => {
                     try {
-                      // TODO: Implement real file download API
-                      console.log('Downloading file:', f.name)
-                      // const response = await api(`/resources/${f.id}/download`, { method: 'GET' })
+                      const response = await fetch(`/api/resources/${f.id}/download`, {
+                        method: 'GET',
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                      })
+                      if (!response.ok) throw new Error('Download failed')
+                      const blob = await response.blob()
+                      const url = window.URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = f.name
+                      a.click()
+                      console.log('File downloaded:', f.name)
                     } catch (err) {
                       console.error('Error downloading file:', err)
+                      alert('ไม่สามารถดาวน์โหลดไฟล์ได้ กรุณาลองใหม่')
                     }
                   }}
                 >

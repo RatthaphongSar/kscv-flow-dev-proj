@@ -27,6 +27,7 @@ import scheduleRoutes from './schedule.js'
 import servicesRoutes from './services.js'
 import settingsRoutes from './settings.js'
 import usersRoutes from './users.js'
+import exportRoutes from './export.js'
 
 // 🔵 สำคัญ: มี endpoint /rooms, /rooms/auto, /rooms/:id/messages
 import chatRoutes from './chat.js'   // <-- เพิ่มอันนี้
@@ -58,6 +59,7 @@ router.use('/services', servicesRoutes)
 router.use('/settings', settingsRoutes)
 router.use('/users', usersRoutes)
 router.use('/submissions', submissionRoutes)
+router.use('/export', exportRoutes)
 
 // mount chat routes under /chat
 router.use('/chat', chatRoutes)
