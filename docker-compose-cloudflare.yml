@@ -1,0 +1,220 @@
+# Docker Compose Configuration - Cloudflare Edition
+# File: docker-compose-cloudflare.yml
+# Use this when deploying with Cloudflare Proxy
+
+version: '3.9'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: kvc_postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-kvcdb}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-kvc2025!}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/prisma/migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kvc_network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: kvc_redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis2025!}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kvc_network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Backend API Server
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: kvc_backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-4001}
+      
+      # Database
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-kvc2025!}@postgres:5432/${DB_NAME:-kvcdb}
+      
+      # Redis
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis2025!}@redis:6379/0
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis2025!}
+      
+      # JWT
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ACCESS_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 30d
+      
+      # Cookies
+      COOKIE_SECRET: ${COOKIE_SECRET}
+      
+      # CORS - Allow Cloudflare domain only
+      CORS_ORIGIN: https://kvc.cf
+      CORS_CREDENTIALS: true
+      
+      # Session
+      SESSION_SECRET: ${SESSION_SECRET:-session2025!}
+      SESSION_COOKIE_SECURE: true
+      SESSION_COOKIE_HTTPONLY: true
+      SESSION_COOKIE_SAMESITE: strict
+      
+      # OpenAI (optional)
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      
+      # SSL
+      SSL_CERT_PATH: /certs/server.crt
+      SSL_KEY_PATH: /certs/server.key
+      
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      
+      # API Host
+      API_HOST: https://kvc.cf
+      
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - /certs:/certs:ro
+      - backend_logs:/app/logs
+    ports:
+      - "4001:4001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - kvc_network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+
+  # Frontend Web Server
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: kvc_frontend
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      VITE_API_BASE: ${VITE_API_BASE:-https://kvc.cf/api}
+      VITE_BACKEND_URL: ${VITE_BACKEND_URL:-https://kvc.cf}
+      VITE_WS_URL: ${VITE_WS_URL:-https://kvc.cf/socket.io}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - frontend_logs:/app/logs
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - kvc_network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+
+  # Nginx Reverse Proxy (Cloudflare-optimized)
+  nginx:
+    image: nginx:alpine
+    container_name: kvc_nginx
+    depends_on:
+      - backend
+      - frontend
+    volumes:
+      - ./nginx-cloudflare.conf:/etc/nginx/nginx.conf:ro
+      - /certs:/certs:ro
+      - nginx_cache:/var/cache/nginx
+      - nginx_logs:/var/log/nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - kvc_network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  nginx_cache:
+    driver: local
+  backend_logs:
+    driver: local
+  frontend_logs:
+    driver: local
+
+networks:
+  kvc_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+# Usage:
+# docker-compose -f docker-compose-cloudflare.yml up -d
+# docker-compose -f docker-compose-cloudflare.yml logs -f
+# docker-compose -f docker-compose-cloudflare.yml down

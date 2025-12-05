@@ -1,0 +1,138 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: kvc-postgres
+    environment:
+      POSTGRES_DB: kvcdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: kvc2025!
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d kvcdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - kvc-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: kvc-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4001
+      DATABASE_URL: postgresql://postgres:kvc2025!@postgres:5432/kvcdb
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-sk_access_super_secret_key_2025_kvc_auth_token_access_v1}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-sk_refresh_super_secret_key_2025_kvc_auth_token_refresh_v1}
+      COOKIE_SECRET: ${COOKIE_SECRET:-sk_cookie_super_secret_key_2025_kvc_cookie_signer_v1}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://frontend:3000,http://localhost:3000,https://kvc.ac.th}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-}
+      RATE_LIMIT_WINDOW_MS: 60000
+      RATE_LIMIT_MAX: 120
+      HTTPS: 0
+    ports:
+      - "4001:4001"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    restart: unless-stopped
+    networks:
+      - kvc-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: kvc-frontend
+    depends_on:
+      - backend
+    environment:
+      VITE_API_BASE: ${VITE_API_BASE:-http://backend:4001/api}
+      VITE_BACKEND_URL: ${VITE_BACKEND_URL:-http://backend:4001/api}
+      PORT: 3000
+    ports:
+      - "3000:3000"
+      - "443:3000"  # HTTPS forward
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    restart: unless-stopped
+    networks:
+      - kvc-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Redis (Optional - for caching/sessions)
+  redis:
+    image: redis:7-alpine
+    container_name: kvc-redis
+    command: redis-server --appendonly yes --requirepass redis2025!
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - kvc-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: kvc-nginx
+    depends_on:
+      - backend
+      - frontend
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    ports:
+      - "80:80"
+      - "8443:443"
+    restart: unless-stopped
+    networks:
+      - kvc-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  kvc-network:
+    driver: bridge
