@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "seed:user": "node scripts/seed-user.js",
+    "seed:test-users": "node scripts/seed-test-users.js",
     "seed:class": "node prisma/seed.js",
     "backfill:pwd": "node scripts/backfill-password-hash.js",
     "db:migrate": "prisma migrate deploy",
