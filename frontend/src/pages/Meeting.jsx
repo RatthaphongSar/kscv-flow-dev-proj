@@ -295,10 +295,10 @@ export default function MeetingPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-112px)] w-full bg-[#020617] text-gray-100 flex flex-col">
-      {/* Top navbar - Show when user is in a meeting */}
+    <div className={`h-[calc(100vh-112px)] w-full bg-[#020617] text-gray-100 flex flex-col ${isJoined && joinedMeetingId ? 'pt-[60px]' : ''}`}>
+      {/* Top navbar - Fixed position when user is in a meeting */}
       {isJoined && joinedMeetingId ? (
-        <div className="bg-gradient-to-r from-slate-900 to-slate-800 border-b border-[#1f2937] px-4 py-3 flex items-center justify-between flex-shrink-0 shadow-lg">
+        <div className="fixed top-[56px] left-0 right-0 z-50 bg-gradient-to-r from-slate-900 to-slate-800 border-b border-[#1f2937] px-4 py-3 flex items-center justify-between shadow-lg">
           <div className="text-sm font-semibold text-white">
             ห้องประชุม: {selectedMeeting?.title}
           </div>
