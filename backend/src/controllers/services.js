@@ -16,10 +16,10 @@ export const getServices = async (req, res) => {
     // Get all service requests for the current user
     const services = await prisma.serviceRequest.findMany({
       where: {
-        userId
+        studentId: userId
       },
       include: {
-        user: { select: { username: true } }
+        service: { select: { name: true, description: true } }
       },
       orderBy: { createdAt: 'desc' },
       take: 50
@@ -38,21 +38,20 @@ export const getServices = async (req, res) => {
  */
 export const createService = async (req, res) => {
   try {
-    const { title, description, serviceType } = req.body
+    const { serviceId } = req.body
     const userId = req.user?.id
 
-    if (!userId || !title || !serviceType) {
-      return res.status(400).json({ error: 'Missing required fields' })
+    if (!userId || !serviceId) {
+      return res.status(400).json({ error: 'Missing required fields: serviceId' })
     }
 
     const service = await prisma.serviceRequest.create({
       data: {
-        userId,
-        title,
-        description: description || '',
+        studentId: userId,
+        serviceId,
         status: 'pending'
       },
-      include: { user: { select: { username: true } } }
+      include: { service: { select: { name: true } } }
     })
 
     return res.status(201).json(service)
