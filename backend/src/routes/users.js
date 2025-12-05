@@ -38,7 +38,13 @@ router.get(
 // Get current user profile
 router.get('/me', authRequired, ctrl.getMe)
 
+// Get full profile with advisor info
+router.get('/profile', authRequired, ctrl.getProfile)
+
 // Update own profile
 router.patch('/me', authRequired, ctrl.updateMe)
+
+// Update full profile
+router.patch('/profile', authRequired, ctrl.updateProfile)
 
 export default router

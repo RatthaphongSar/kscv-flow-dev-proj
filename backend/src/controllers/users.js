@@ -84,6 +84,118 @@ export const getMe = async (req, res, next) => {
 }
 
 /**
+ * GET /profile
+ * Get full profile with advisor info (for students)
+ */
+export const getProfile = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' })
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.sub },
+      select: {
+        id: true,
+        username: true,
+        fullname: true,
+        email: true,
+        phone: true,
+        role: true,
+        year: true,
+        major: true,
+        studentId: true,
+        address: true,
+        avatar: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    // If student, get advisor info
+    let advisor = null
+    if (user.role === 'STUDENT') {
+      const advisorData = await prisma.advisor.findFirst({
+        where: {
+          // Get advisor for this student
+          // Assuming there's a relationship or we fetch by year/major
+        },
+        select: {
+          id: true,
+          email: true,
+          phone: true,
+          office: true,
+          bio: true,
+          user: {
+            select: {
+              username: true,
+              fullname: true,
+            },
+          },
+        },
+      })
+      if (advisorData) {
+        advisor = {
+          ...advisorData,
+          fullname: advisorData.user?.fullname,
+        }
+      }
+    }
+
+    return res.json({ user, advisor })
+  } catch (err) {
+    console.error('getProfile error:', err)
+    return next(err)
+  }
+}
+
+/**
+ * PATCH /profile
+ * Update user profile
+ */
+export const updateProfile = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' })
+    }
+
+    const { fullname, phone, address } = req.body
+    const data = {}
+
+    if (typeof fullname === 'string') data.fullname = fullname
+    if (typeof phone === 'string') data.phone = phone
+    if (typeof address === 'string') data.address = address
+
+    const updated = await prisma.user.update({
+      where: { id: req.user.sub },
+      data,
+      select: {
+        id: true,
+        username: true,
+        fullname: true,
+        email: true,
+        phone: true,
+        role: true,
+        year: true,
+        major: true,
+        studentId: true,
+        address: true,
+        avatar: true,
+      },
+    })
+
+    return res.json(updated)
+  } catch (err) {
+    console.error('updateProfile error:', err)
+    return next(err)
+  }
+}
+
+/**
  * PATCH /me
  * อัปเดต profile ตัวเอง (เช่น displayName / year / major)
  */

@@ -16,6 +16,10 @@ model User {
   role         String   @default("STUDENT") // STUDENT, TEACHER, ADMIN
   year         Int      @default(1)
   major        String   @default("General")
+  fullname     String?  // Full name or display name
+  studentId    String?  // Student ID number
+  address      String?  // Home address
+  avatar       String?  // Avatar URL
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

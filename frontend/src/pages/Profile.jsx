@@ -1,13 +1,15 @@
 import { useAuth } from "../context/AuthContext"
+import { userApi } from "../api/userApi"
 import {
   User, Mail, Phone, BookOpen, Lock, LogOut, Camera,
-  Share2, Copy, QrCode, FileDown, Activity
+  Share2, Copy, QrCode, FileDown, Activity, MapPin, Briefcase, Calendar
 } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 export default function ProfilePage() {
   const { user, logout } = useAuth()
   const [editing, setEditing] = useState(false)
+  const [advisor, setAdvisor] = useState(null)
 
   const [avatar, setAvatar] = useState(user?.avatar || null)
   const [preview, setPreview] = useState(user?.avatar || null)
@@ -22,7 +24,27 @@ export default function ProfilePage() {
     phone: user?.phone || "",
     major: user?.major || "N/A",
     year: user?.year || "N/A",
+    studentId: user?.studentId || "N/A",
+    address: user?.address || "",
+    role: user?.role || "Student",
   })
+
+  // Load advisor information
+  useEffect(() => {
+    const loadAdvisor = async () => {
+      if (user?.role === 'student') {
+        try {
+          const response = await userApi.getProfile();
+          if (response.advisor) {
+            setAdvisor(response.advisor);
+          }
+        } catch (err) {
+          console.error("Error loading advisor:", err);
+        }
+      }
+    }
+    loadAdvisor()
+  }, [user?.role])
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0]
@@ -35,10 +57,19 @@ export default function ProfilePage() {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  const saveProfile = () => {
-    console.log("Saving profile…", form)
-    console.log("Avatar File:", avatar)
-    setEditing(false)
+  const saveProfile = async () => {
+    try {
+      await userApi.updateProfile({
+        fullname: form.fullname,
+        phone: form.phone,
+        address: form.address,
+      });
+      console.log("Profile saved successfully");
+      setEditing(false);
+    } catch (err) {
+      console.error("Error saving profile:", err);
+      alert("Failed to save profile. Please try again.");
+    }
   }
 
   const cancelEdit = () => {
@@ -112,12 +143,32 @@ export default function ProfilePage() {
                 {editing ? <InputField name="phone" value={form.phone} onChange={handleChange} /> : (form.phone || "—")}
               </ProfileField>
 
+              <ProfileField icon={Calendar} label="Year">
+                {editing ? <InputField name="year" value={form.year} onChange={handleChange} /> : form.year}
+              </ProfileField>
+
               <ProfileField icon={BookOpen} label="Major">
                 {editing ? <InputField name="major" value={form.major} onChange={handleChange} /> : form.major}
               </ProfileField>
 
-              <ProfileField icon={BookOpen} label="Year">
-                {editing ? <InputField name="year" value={form.year} onChange={handleChange} /> : form.year}
+              <ProfileField icon={User} label="Student ID">
+                {form.studentId}
+              </ProfileField>
+
+              <ProfileField icon={MapPin} label="Address">
+                {editing ? <InputField name="address" value={form.address} onChange={handleChange} /> : (form.address || "—")}
+              </ProfileField>
+
+              <ProfileField icon={Briefcase} label="Role">
+                <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                  form.role === 'student'
+                    ? 'bg-blue-500/20 text-blue-300'
+                    : form.role === 'teacher'
+                    ? 'bg-violet-500/20 text-violet-300'
+                    : 'bg-orange-500/20 text-orange-300'
+                }`}>
+                  {form.role === 'student' ? 'นักเรียน' : form.role === 'teacher' ? 'อาจารย์' : 'ผู้ดูแลระบบ'}
+                </span>
               </ProfileField>
             </div>
 
@@ -140,6 +191,35 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* ADVISOR INFORMATION (for students) */}
+        {user?.role === 'student' && (
+          <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-6">
+            <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
+              <Briefcase size={16} className="text-violet-400" />
+              ครูที่ปรึกษา (Advisor)
+            </h2>
+            
+            {advisor ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <ProfileField icon={User} label="ชื่อครูที่ปรึกษา">
+                  {advisor.fullname || advisor.name || "—"}
+                </ProfileField>
+                <ProfileField icon={Mail} label="Email">
+                  {advisor.email || "—"}
+                </ProfileField>
+                <ProfileField icon={Phone} label="Phone">
+                  {advisor.phone || "—"}
+                </ProfileField>
+                <ProfileField icon={MapPin} label="สำนัก/ที่ทำงาน">
+                  {advisor.office || "—"}
+                </ProfileField>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400">ไม่มีข้อมูลครูที่ปรึกษาในระบบ</p>
+            )}
+          </div>
+        )}
 
         {/* SECURITY SETTINGS */}
         <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-6 space-y-4">
