@@ -105,8 +105,7 @@ export default function Settings() {
               </div>
             </SettingRow>
 
-            </SettingRow>
-          </div>
+            </div>
         </SectionCard>
 
         {/* ========== NOTIFICATION ========== */}
