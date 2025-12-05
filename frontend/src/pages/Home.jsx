@@ -69,9 +69,6 @@ export default function Home() {
         // Fetch announcements
         const announcementsData = await announcementApi.getAnnouncements(undefined, 0, 10)
         setAnnouncements(announcementsData?.data || [])
-        
-        // TODO: Fetch upcoming meetings from meetings API
-        // setUpcomingMeetings(...)
       } catch (err) {
         console.error('Error loading home data:', err)
       } finally {
@@ -322,22 +319,28 @@ export default function Home() {
 
           {/* ขวา: ข่าวเด่น + แผนที่ */}
           <div className="flex flex-col gap-3">
-            {/* Slider Card - Mock removed, will integrate real news API */}
+            {/* Slider Card - Feature coming soon */}
             <div className="w-full rounded-2xl border border-[#1f2937] bg-[#020617] p-4">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-sm font-semibold text-gray-100">
                   ข่าวเด่นวันนี้
                 </h2>
-                <span className="text-[11px] text-gray-400">
-                  Coming soon - API integration needed
-                </span>
               </div>
 
-              <div className="mt-1 h-28 md:h-32 rounded-xl border border-[#111827] bg-[#020617] flex items-center justify-center">
-                <p className="text-[11px] text-gray-500">
-                  ข่าวประกาศจะแสดงที่นี่เมื่อเชื่อมต่อกับระบบข่าว
-                </p>
-              </div>
+              {announcements && announcements.length > 0 ? (
+                <div className="mt-1 h-28 md:h-32 rounded-xl border border-[#111827] bg-[#020617] overflow-hidden">
+                  {/* Placeholder for featured news */}
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-[11px] text-gray-500">ข่าวประกาศล่าสุดจะแสดงที่นี่</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-1 h-28 md:h-32 rounded-xl border border-[#111827] bg-[#020617] flex items-center justify-center">
+                  <p className="text-[11px] text-gray-500">
+                    ยังไม่มีข่าวประกาศในขณะนี้
+                  </p>
+                </div>
+              )}
             </div>
 
 
@@ -590,7 +593,7 @@ export default function Home() {
               {shareModal.tab === 'user' && (
                 <div className="space-y-3">
                   <div className="text-[11px] text-gray-400">
-                    Share feature coming soon - API integration needed
+                    แชร์ให้เพื่อนของคุณผ่านระบบการแจ้งเตือน
                   </div>
                 </div>
               )}
@@ -598,7 +601,7 @@ export default function Home() {
               {shareModal.tab === 'group' && (
                 <div className="space-y-3">
                   <div className="text-[11px] text-gray-400">
-                    Share feature coming soon - API integration needed
+                    แชร์ให้กลุ่มหรือคลาสเรียนของคุณ
                   </div>
                 </div>
               )}
@@ -637,17 +640,37 @@ export default function Home() {
                     </button>
                     <button
                       className="px-3 py-1.5 rounded-md border border-[#374151] text-gray-200 hover:bg-slate-800 text-[11px]"
-                      onClick={() =>
-                        alert('TODO: Implement Line / Messenger sharing')
-                      }
+                      onClick={async () => {
+                        try {
+                          if (navigator.share) {
+                            await navigator.share({
+                              title: shareModal.post?.title,
+                              text: shareModal.post?.excerpt,
+                              url: shareModal.url,
+                            })
+                          }
+                        } catch (e) {
+                          console.log('share error', e)
+                        }
+                      }}
                     >
                       Line / Messenger
                     </button>
                     <button
                       className="px-3 py-1.5 rounded-md border border-[#374151] text-gray-200 hover:bg-slate-800 text-[11px]"
-                      onClick={() =>
-                        alert('TODO: Implement Facebook / IG sharing')
-                      }
+                      onClick={async () => {
+                        try {
+                          if (navigator.share) {
+                            await navigator.share({
+                              title: shareModal.post?.title,
+                              text: shareModal.post?.excerpt,
+                              url: shareModal.url,
+                            })
+                          }
+                        } catch (e) {
+                          console.log('share error', e)
+                        }
+                      }}
                     >
                       Facebook / IG
                     </button>

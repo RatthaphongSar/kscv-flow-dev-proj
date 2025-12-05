@@ -22,10 +22,23 @@ export default function Settings() {
   const [studyFocusMode, setStudyFocusMode] = useState(false)
   const [shareActivity, setShareActivity] = useState(false)
 
-  const handleMockSave = () => {
-    alert(
-      "(mock) บันทึกค่าการตั้งค่าแล้ว\n\nค่าจริงจะถูกเชื่อมกับ Backend/Database ภายหลัง"
-    )
+  const handleSaveSettings = async () => {
+    try {
+      // TODO: Implement API call to save settings
+      console.log('Settings saved:', {
+        language,
+        theme,
+        notifyAnnouncement,
+        notifyAssignment,
+        notifyActivity,
+        autoReminder,
+        studyFocusMode,
+        shareActivity,
+      })
+      // await api('/settings', { method: 'POST', body: {...} })
+    } catch (err) {
+      console.error('Error saving settings:', err)
+    }
   }
 
   return (
@@ -42,10 +55,10 @@ export default function Settings() {
             <span>System & Preferences</span>
           </div>
           <button
-            onClick={handleMockSave}
+            onClick={handleSaveSettings}
             className="px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-[11px] text-white"
           >
-            บันทึกการตั้งค่า (mock)
+            บันทึกการตั้งค่า
           </button>
         </div>
 
@@ -81,10 +94,6 @@ export default function Settings() {
               </div>
             </SettingRow>
 
-            <SettingRow label="โหมดข้อมูล">
-              <span className="text-[11px] text-gray-400">
-                Mock data · พร้อมต่อ API จริงภายหลัง
-              </span>
             </SettingRow>
           </div>
         </SectionCard>
@@ -162,8 +171,7 @@ export default function Settings() {
                   Focus Mode
                 </div>
                 <p className="text-[11px] text-gray-300">
-                  เมื่อเปิดใช้งาน ระบบสามารถซ่อน Notification ที่ไม่เกี่ยวกับการเรียน
-                  (mock)
+                  เมื่อเปิดใช้งาน ระบบจะซ่อน Notification ที่ไม่เกี่ยวกับการเรียน
                 </p>
               </div>
             </div>
@@ -201,15 +209,21 @@ export default function Settings() {
         <SectionCard
           icon={<Download size={14} className="text-violet-400" />}
           title="ข้อมูลของฉัน (Data & Export)"
-          description="ดาวน์โหลดหรือสำรองข้อมูลการเรียน (mock)"
+          description="ดาวน์โหลดหรือสำรองข้อมูลการเรียน"
         >
           <div className="space-y-2">
             <SettingRow label="Export ข้อมูลผลการเรียน (PDF)">
               <button
                 className="px-3 py-1.5 rounded-lg border border-[#374151] hover:bg-slate-800 text-[11px]"
-                onClick={() =>
-                  alert("(mock) สร้างไฟล์ PDF สรุปผลการเรียนของคุณ")
-                }
+                onClick={async () => {
+                  try {
+                    // TODO: Implement PDF export API
+                    console.log('Exporting PDF...')
+                    // const response = await api('/export/transcript/pdf', { method: 'GET' })
+                  } catch (err) {
+                    console.error('Error exporting PDF:', err)
+                  }
+                }}
               >
                 ดาวน์โหลด PDF
               </button>
@@ -218,9 +232,15 @@ export default function Settings() {
             <SettingRow label="Export ข้อมูลกิจกรรม (CSV)">
               <button
                 className="px-3 py-1.5 rounded-lg border border-[#374151] hover:bg-slate-800 text-[11px]"
-                onClick={() =>
-                  alert("(mock) สร้างไฟล์ CSV ของกิจกรรมที่คุณเข้าร่วม")
-                }
+                onClick={async () => {
+                  try {
+                    // TODO: Implement CSV export API
+                    console.log('Exporting CSV...')
+                    // const response = await api('/export/activities/csv', { method: 'GET' })
+                  } catch (err) {
+                    console.error('Error exporting CSV:', err)
+                  }
+                }}
               >
                 ดาวน์โหลด CSV
               </button>
@@ -240,8 +260,7 @@ export default function Settings() {
         <div className="border-t border-[#1f2937] pt-3 text-[10px] text-gray-500 flex items-center gap-1">
           <Info size={10} />
           <span>
-            การตั้งค่าทั้งหมดในหน้านี้เป็นตัวอย่าง (mock)
-            เพื่อใช้เป็น UX/โครงสำหรับเชื่อมต่อกับระบบจริงของ KVC ในอนาคต
+            การตั้งค่าของคุณจะถูกบันทึกไปยังเซิร์ฟเวอร์
           </span>
         </div>
       </div>

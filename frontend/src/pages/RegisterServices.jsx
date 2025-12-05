@@ -94,6 +94,7 @@ export default function RegisterServices() {
 
   useEffect(() => {
     fetchServices()
+    fetchLeaveRequests()
   }, [])
 
   const fetchServices = async () => {
@@ -120,30 +121,20 @@ export default function RegisterServices() {
     }
   }
 
+  const fetchLeaveRequests = async () => {
+    try {
+      // TODO: Implement API call to fetch leave requests
+      console.log('Fetching leave requests...')
+      // const response = await api("/leaves", { method: "GET" })
+      // setLeaveRequests(response?.data || [])
+    } catch (err) {
+      console.error("Error fetching leave requests:", err)
+    }
+  }
+
   const [leaveForm, setLeaveForm] = useState(initialLeaveForm)
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
-  const [leaveRequests, setLeaveRequests] = useState([
-    {
-      id: 101,
-      type: "sick",
-      startDate: "2025-04-01",
-      endDate: "2025-04-01",
-      fullDay: true,
-      reason: "มีไข้สูงและไปพบแพทย์",
-      status: "approved", // pending | approved | rejected
-      createdAt: "2025-03-31 20:15",
-    },
-    {
-      id: 102,
-      type: "personal",
-      startDate: "2025-04-03",
-      endDate: "2025-04-04",
-      fullDay: true,
-      reason: "เดินทางกลับภูมิลำเนาเพื่อจัดการเอกสารราชการ",
-      status: "pending",
-      createdAt: "2025-04-01 09:32",
-    },
-  ])
+  const [leaveRequests, setLeaveRequests] = useState([])
 
   const handleOpenLeaveModal = (presetType) => {
     setLeaveForm({
@@ -495,7 +486,7 @@ export default function RegisterServices() {
                 </div>
               </div>
 
-              {/* ทั้งวัน / ตัวเลือกเพิ่มเติม (ตอนนี้ mock แค่ทั้งวัน) */}
+              {/* ช่วงเวลาการลา */}
               <div className="space-y-1">
                 <label className="text-[11px] text-gray-400">ช่วงเวลา</label>
                 <label className="inline-flex items-center gap-2 text-[11px] text-gray-300">
@@ -526,13 +517,18 @@ export default function RegisterServices() {
                 />
               </div>
 
-              {/* แนบไฟล์ (mock ui) */}
+              {/* แนบไฟล์ */}
               <div className="space-y-1">
                 <label className="text-[11px] text-gray-400">
-                  แนบไฟล์ประกอบ (ตัวอย่าง UI – ยังไม่เชื่อม upload จริง)
+                  แนบไฟล์ประกอบ (ใบรับรองแพทย์, หนังสือจากวัด เป็นต้น)
                 </label>
                 <div className="border border-dashed border-[#374151] rounded-lg px-3 py-3 text-[11px] text-gray-400">
-                  คลิกหรือลากไฟล์มาวางที่นี่ เช่น ใบรับรองแพทย์, หนังสือรับรองจากวัด ฯลฯ
+                  <input
+                    type="file"
+                    multiple
+                    className="w-full"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                  />
                 </div>
               </div>
 

@@ -178,7 +178,15 @@ export default function Resources() {
 
                 <button
                   className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-[11px]"
-                  onClick={() => alert(`(mock) ดาวน์โหลดไฟล์: ${f.name}`)}
+                  onClick={async () => {
+                    try {
+                      // TODO: Implement real file download API
+                      console.log('Downloading file:', f.name)
+                      // const response = await api(`/resources/${f.id}/download`, { method: 'GET' })
+                    } catch (err) {
+                      console.error('Error downloading file:', err)
+                    }
+                  }}
                 >
                   <Download size={13} />
                   ดาวน์โหลด

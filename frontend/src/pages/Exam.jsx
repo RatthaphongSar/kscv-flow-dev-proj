@@ -50,14 +50,14 @@ export default function Exam() {
   }, [exams])
 
   const handleOpenExamSystem = (exam) => {
-    // ตรงนี้ต่อกับระบบทำข้อสอบจริงทีหลัง เช่น navigate('/exam-system?code=...')
-    alert(`(mock) เปิดระบบทำข้อสอบสำหรับวิชา ${exam.course} – ${exam.type}`)
+    // TODO: Integrate with real exam system
+    console.log('Opening exam system for:', exam)
+    // navigate(`/exam-system?code=${exam.code}`)
   }
 
   const handleSetReminder = (exam) => {
-    alert(
-      `(mock) ตั้งเตือนสอบวิชา ${exam.course} วันที่ ${exam.date} เวลา ${exam.time}\n\nในระบบจริงสามารถต่อกับปฏิทิน / Notification ได้`
-    )
+    // TODO: Implement exam reminder notification
+    console.log('Setting reminder for exam:', exam.course)
   }
 
   const toggleExpand = (id) => {

@@ -107,8 +107,11 @@ export default function ClubsActivities() {
     )
   }
 
-  const handleJoinClub = (club) => {
-    alert(`(mock) ส่งคำขอเข้าร่วม "${club.name}" แล้ว!`)
+  const handleJoinClub = async (club) => {
+    try {
+      // TODO: Implement real club join request API
+      console.log('Joining club:', club.name)
+      // await api(`/clubs/${club.id}/join-request`, { method: 'POST' })
   }
 
   // ==========================
