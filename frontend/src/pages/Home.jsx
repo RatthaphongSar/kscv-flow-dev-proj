@@ -190,12 +190,12 @@ export default function Home() {
   }
 
   return (
-    <div className="w-full bg-[#020617] text-gray-100 px-4 py-4">
-      <div className="w-full flex flex-col gap-5">
+    <div className="w-full bg-[#020617] text-gray-100 px-3 sm:px-4 py-4">
+      <div className="w-full flex flex-col gap-3 sm:gap-5">
         
         {/* ===== WELCOME GREETING ===== */}
-        <div className="rounded-2xl border border-[#1f2937] bg-gradient-to-r from-violet-600/20 to-indigo-600/20 p-4">
-          <p className="text-sm text-gray-200">
+        <div className="rounded-2xl border border-[#1f2937] bg-gradient-to-r from-violet-600/20 to-indigo-600/20 p-3 sm:p-4">
+          <p className="text-xs sm:text-sm text-gray-200">
             สวัสดี{user?.fullname ? `, ${user.fullname}` : ''} 👋
           </p>
           <p className="text-xs text-gray-400 mt-1">
@@ -266,18 +266,17 @@ export default function Home() {
               ))}
             </svg>
 
-            <div className="relative z-10 px-6 py-6 md:px-8 md:py-8 space-y-5">
+            <div className="relative z-10 px-4 sm:px-6 md:px-8 py-4 sm:py-6 md:py-8 space-y-4 sm:space-y-5">
               <div>
-                <p className="uppercase tracking-widest text-violet-300 text-[10px] mb-1">
+                <p className="uppercase tracking-widest text-violet-300 text-[9px] sm:text-[10px] mb-1">
                   Kalasin Vocational College
                 </p>
-                <h1 className="text-3xl md:text-4xl font-bold leading-tight">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight">
                   KVC Portal{' '}
                   <span className="text-violet-400">Student &amp; Staff Hub</span>
                 </h1>
-                <p className="mt-2 text-sm text-gray-300 max-w-xl">
-                  ศูนย์กลางข่าวสาร ตารางเรียน การลา งานที่มอบหมาย และชุมชนออนไลน์
-                  สำหรับนักศึกษาและอาจารย์ในที่เดียว
+                <p className="mt-2 text-xs sm:text-sm text-gray-300 max-w-xl">
+                  ศูนย์กลางข่าวสาร ตารางเรียน การลา งานที่มอบหมาย
                 </p>
               </div>
 
