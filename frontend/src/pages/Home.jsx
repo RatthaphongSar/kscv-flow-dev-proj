@@ -439,35 +439,6 @@ export default function Home() {
 
           {/* SIDEBAR */}
           <aside className="space-y-3">
-            {/* Quick Stats & Menu */}
-            <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4">
-              <h3 className="text-sm font-semibold text-gray-100 mb-3">
-                ลิงก์ด่วน
-              </h3>
-              <div className="space-y-2">
-                <a href="/classes" className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-800 border border-transparent hover:border-[#1f2937]">
-                  <span className="text-[11px] text-gray-300">📚 ห้องเรียน & รายวิชา</span>
-                  <ChevronRight size={12} className="text-gray-500" />
-                </a>
-                <a href="/meetings" className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-800 border border-transparent hover:border-[#1f2937]">
-                  <span className="text-[11px] text-gray-300">📹 ห้องประชุม / บรรยายเสริม</span>
-                  <ChevronRight size={12} className="text-gray-500" />
-                </a>
-                <a href="/assignments" className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-800 border border-transparent hover:border-[#1f2937]">
-                  <span className="text-[11px] text-gray-300">✏️ งานที่มอบหมาย</span>
-                  <ChevronRight size={12} className="text-gray-500" />
-                </a>
-                <a href="/leaves" className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-800 border border-transparent hover:border-[#1f2937]">
-                  <span className="text-[11px] text-gray-300">🏥 การลา / ลาป่วย</span>
-                  <ChevronRight size={12} className="text-gray-500" />
-                </a>
-                <a href="/checkline" className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-800 border border-transparent hover:border-[#1f2937]">
-                  <span className="text-[11px] text-gray-300">✅ เช็คชื่อ / ปฏิทิน</span>
-                  <ChevronRight size={12} className="text-gray-500" />
-                </a>
-              </div>
-            </div>
-
             {/* Upcoming Schedule */}
             <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4">
               <h3 className="text-sm font-semibold text-gray-100 mb-2">
