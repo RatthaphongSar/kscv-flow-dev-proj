@@ -13,7 +13,7 @@ import {
   AlertTriangle,
   Loader,
 } from "lucide-react"
-import { apiClient } from "../utils/api"
+import { api } from "../utils/api"
 
 // ฟอร์มเริ่มต้นสำหรับคำร้องการลา
 const initialLeaveForm = {
@@ -102,9 +102,11 @@ export default function RegisterServices() {
       setError("")
 
       // Call backend API to get services data
-      const response = await apiClient.get("/services")
+      const response = await api("/services", { method: "GET" })
 
-      if (response && response.data) {
+      if (response && Array.isArray(response)) {
+        setServices(response || [])
+      } else if (response?.data && Array.isArray(response.data)) {
         setServices(response.data || [])
       } else {
         throw new Error("No services data received")
