@@ -61,8 +61,7 @@ export default function AssistantWidget({ userId = 'student-123', roomId, roomNa
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="rounded-full shadow-2xl bg-gradient-to-r from-violet-600 via-violet-500 to-indigo-500
-                     text-white px-4 py-2 flex items-center gap-2 text-sm border border-violet-400/60"
+          className="text-white px-4 py-2 flex items-center gap-2 text-sm"
         >
           <Bot size={18} className="drop-shadow" />
           <span>KVC Assistant</span>
