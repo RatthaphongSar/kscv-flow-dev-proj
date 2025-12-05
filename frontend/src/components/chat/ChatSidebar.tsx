@@ -111,19 +111,6 @@ export default function ChatSidebar({
         />
       </div>
 
-      {/* ผู้ใช้ปัจจุบัน */}
-      <div className="px-4 py-3 border-t border-[#1f2937] bg-[#020617]">
-        <div className="flex items-center gap-3">
-          <UserAvatar name={currentUser?.username || 'Guest'} size="sm" />
-          <div>
-            <div className="text-xs font-medium">
-              {currentUser?.username || 'Guest'}
-            </div>
-            <div className="text-[11px] text-gray-400">ออนไลน์</div>
-          </div>
-        </div>
-      </div>
-
       {/* Modal สร้างห้อง (หน้าต่างเล็ก) */}
       {isCreateOpen && (
         <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
