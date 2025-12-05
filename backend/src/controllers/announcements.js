@@ -17,7 +17,7 @@ async function getAnnouncements(req, res) {
     }
 
     // If student, only show announcements from their classes
-    if (req.user?.role === 'student') {
+    if (req.user?.role?.toLowerCase() === 'student') {
       // Get student's enrolled classes
       const enrollments = await prisma.enrollment.findMany({
         where: { studentId: userId },
@@ -87,7 +87,7 @@ async function getAnnouncements(req, res) {
 async function createAnnouncement(req, res) {
   try {
     // Check authorization
-    if (!['teacher', 'admin'].includes(req.user?.role)) {
+    if (!['teacher', 'admin'].includes(req.user?.role?.toLowerCase())) {
       return res.status(403).json({ error: 'Only teachers can create announcements' })
     }
 
@@ -109,7 +109,7 @@ async function createAnnouncement(req, res) {
       return res.status(404).json({ error: 'Class not found' })
     }
 
-    if (classData.teacherId !== userId && req.user?.role !== 'admin') {
+    if (classData.teacherId !== userId && req.user?.role?.toLowerCase() !== 'admin') {
       return res.status(403).json({ error: 'You can only announce in your own classes' })
     }
 
@@ -180,7 +180,7 @@ async function updateAnnouncement(req, res) {
     }
 
     // Check authorization
-    if (announcement.authorId !== userId && req.user?.role !== 'admin') {
+    if (announcement.authorId !== userId && req.user?.role?.toLowerCase() !== 'admin') {
       return res.status(403).json({ error: 'You can only update your own announcements' })
     }
 
@@ -244,7 +244,7 @@ async function deleteAnnouncement(req, res) {
     }
 
     // Check authorization
-    if (announcement.authorId !== userId && req.user?.role !== 'admin') {
+    if (announcement.authorId !== userId && req.user?.role?.toLowerCase() !== 'admin') {
       return res.status(403).json({ error: 'You can only delete your own announcements' })
     }
 

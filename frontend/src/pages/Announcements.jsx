@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import PageShell from "../components/PageShell"
 import { Bell, Bookmark, BookmarkCheck, Info, Share2, X, Loader } from "lucide-react"
-import { apiClient } from "../utils/api"
+import { announcementApi } from "../api/announcementApi"
 
 const FILTERS = ["All", "Course", "System", "Activity"]
 
@@ -23,9 +23,9 @@ export default function Announcements() {
       setError("")
 
       // Call backend API to get announcements
-      const response = await apiClient.get("/announcements")
+      const response = await announcementApi.getAnnouncements(undefined, 0, 50)
 
-      // API returns array directly
+      // API returns announcements array
       if (Array.isArray(response)) {
         setAnnouncements(response)
       } else {
