@@ -307,9 +307,9 @@ export default function MeetingPage() {
       ) : null}
 
       <div className="flex-1 overflow-hidden flex flex-col">
-        <div className="flex-1 px-4 py-4 rounded-2xl border border-[#1f2937] bg-[#020617] overflow-hidden flex">
+        <div className="flex-1 px-4 py-4 rounded-2xl border border-[#1f2937] bg-[#020617] overflow-hidden flex flex-col lg:flex-row">
           {/* Sidebar: Filter + Upcoming list สั้น ๆ */}
-        <aside className="w-72 border-r border-[#1f2937] bg-[#020617] flex flex-col">
+        <aside className="w-full lg:w-72 border-r border-[#1f2937] bg-[#020617] flex flex-col max-h-32 lg:max-h-none">
           <div className="px-4 py-3 border-b border-[#1f2937]">
             <h1 className="text-sm font-semibold text-gray-100">
               การนัดหมาย / Meeting
@@ -496,7 +496,7 @@ export default function MeetingPage() {
             </div>
 
             {/* ขวา: Meeting Detail Panel */}
-            <div className="w-80 bg-[#020617] text-xs p-4">
+            <div className="w-full lg:w-80 bg-[#020617] text-xs p-4 max-h-32 lg:max-h-none overflow-y-auto">
               <h3 className="text-sm font-semibold mb-3">
                 รายละเอียดนัดหมาย
               </h3>
