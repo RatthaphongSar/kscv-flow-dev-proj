@@ -22,6 +22,40 @@ export function AuthProvider({ children }) {
       return
     }
 
+    // Development mode: Auto-login with teacher credentials
+    const shouldAutoLogin = localStorage.getItem('_DEV_AUTOLOAD_TEACHER') === 'true'
+    if (shouldAutoLogin && import.meta.env.MODE === 'development') {
+      localStorage.removeItem('_DEV_AUTOLOAD_TEACHER')
+      AuthAPI.login('teacher-demo', 'Teacher123!')
+        .then((userData) => {
+          if (mounted && userData) {
+            setUser(userData)
+            localStorage.setItem('user', JSON.stringify(userData))
+            if (userData.accessToken) {
+              localStorage.setItem('access_token', userData.accessToken)
+            }
+          }
+        })
+        .catch((err) => {
+          console.warn('Dev auto-login failed:', err.message)
+          // Fallback to mock user
+          if (mounted) {
+            const mockUser = {
+              id: 'teacher-001',
+              username: 'teacher-demo',
+              email: 'teacher@university.edu',
+              role: 'TEACHER',
+            }
+            setUser(mockUser)
+            localStorage.setItem('user', JSON.stringify(mockUser))
+          }
+        })
+        .finally(() => {
+          if (mounted) setLoading(false)
+        })
+      return
+    }
+
     // Try to load from API
     AuthAPI.me()
       .then((u) => {
