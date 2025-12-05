@@ -62,7 +62,7 @@ export class ClassService {
       include: {
         teacher: { select: { id: true, username: true, email: true } },
         schedules: true,
-        announcementPin: { orderBy: { createdAt: 'desc' }, take: 1 },
+        announcements: { orderBy: { createdAt: 'desc' }, take: 1 },
       },
     });
   }
