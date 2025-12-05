@@ -120,7 +120,7 @@ export function VideoConferenceRoom({
       {/* Main video area */}
       <div className="flex-1 flex flex-col">
         {/* Video Grid */}
-        <div className="flex-1 p-4 bg-gray-950 overflow-auto">
+        <div className="flex-1 p-4 bg-gray-950 overflow-auto pt-20">
           {isScreenSharing ? (
             // Screen share view
             <div className="grid grid-cols-4 gap-4 h-full">
@@ -208,8 +208,8 @@ export function VideoConferenceRoom({
           )}
         </div>
 
-        {/* Control Bar */}
-        <div className="bg-gray-800 border-t border-gray-700 p-4">
+        {/* Control Bar - Fixed at Top */}
+        <div className="fixed top-0 left-0 right-0 z-40 bg-gray-800 border-b border-gray-700 p-4">
           <div className="flex items-center justify-between">
             {/* Left: Timer */}
             <div className="text-sm font-semibold text-gray-300">
