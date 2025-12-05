@@ -33,7 +33,7 @@ export default function Home() {
   const [createAnnouncementModal, setCreateAnnouncementModal] = useState({
     open: false,
     selectedClassId: '',
-    formData: { title: '', content: '', category: 'ประกาศ' },
+    formData: { title: '', content: '', category: 'ประกาศ', image: null, imagePreview: null },
     submitting: false,
   })
 
@@ -145,7 +145,7 @@ export default function Home() {
         submitting: true,
       })
 
-      const { title, content, category } = createAnnouncementModal.formData
+      const { title, content, category, imagePreview } = createAnnouncementModal.formData
       const classId = createAnnouncementModal.selectedClassId
 
       if (!title || !content || !classId) {
@@ -158,13 +158,14 @@ export default function Home() {
         content,
         category,
         classId,
+        image: imagePreview || undefined,
       })
 
       // Reset and reload
       setCreateAnnouncementModal({
         open: false,
         selectedClassId: '',
-        formData: { title: '', content: '', category: 'ประกาศ' },
+        formData: { title: '', content: '', category: 'ประกาศ', image: null, imagePreview: null },
         submitting: false,
       })
 
@@ -763,6 +764,60 @@ export default function Home() {
                   }
                   placeholder="กรอกเนื้อหาประกาศ"
                   className="w-full bg-[#020617] border border-[#374151] rounded-lg px-3 py-2 text-[11px] text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-violet-500 resize-none"
+                />
+              </div>
+
+              {/* Image Preview */}
+              {createAnnouncementModal.formData.imagePreview && (
+                <div className="relative rounded-lg overflow-hidden bg-[#1f2937] p-2">
+                  <img 
+                    src={createAnnouncementModal.formData.imagePreview} 
+                    alt="preview" 
+                    className="w-full h-40 object-cover rounded-md"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCreateAnnouncementModal({
+                        ...createAnnouncementModal,
+                        formData: {
+                          ...createAnnouncementModal.formData,
+                          image: null,
+                          imagePreview: null,
+                        },
+                      })
+                    }
+                    className="absolute top-3 right-3 p-1 bg-red-600 hover:bg-red-500 rounded-md"
+                  >
+                    <X size={14} className="text-white" />
+                  </button>
+                </div>
+              )}
+
+              {/* Image Upload */}
+              <div>
+                <label className="text-[11px] text-gray-400 block mb-1">รูปภาพ (ไม่บังคับ)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      const reader = new FileReader()
+                      reader.onloadend = () => {
+                        setCreateAnnouncementModal({
+                          ...createAnnouncementModal,
+                          formData: {
+                            ...createAnnouncementModal.formData,
+                            image: file,
+                            imagePreview: reader.result,
+                          },
+                        })
+                      }
+                      reader.readAsDataURL(file)
+                    }
+                  }}
+                  className="w-full bg-[#020617] border border-[#374151] rounded-lg px-3 py-2 text-[11px] text-gray-100 file:bg-violet-600 file:text-white file:border-0 file:rounded file:px-2 file:py-1 file:text-[10px] file:cursor-pointer hover:border-[#4b5563]"
                 />
               </div>
             </form>

@@ -1,4 +1,4 @@
-const { db } = require('../db')
+import { prisma } from '../db.js'
 
 /**
  * GET /announcements
@@ -19,7 +19,7 @@ async function getAnnouncements(req, res) {
     // If student, only show announcements from their classes
     if (req.user?.role === 'student') {
       // Get student's enrolled classes
-      const enrollments = await db.enrollment.findMany({
+      const enrollments = await prisma.enrollment.findMany({
         where: { studentId: userId },
         select: { classId: true },
       })
@@ -31,10 +31,10 @@ async function getAnnouncements(req, res) {
     }
 
     // Get total count
-    const total = await db.announcement.count({ where })
+    const total = await prisma.announcement.count({ where })
 
     // Get announcements with pagination
-    const announcements = await db.announcement.findMany({
+    const announcements = await prisma.announcement.findMany({
       where,
       select: {
         id: true,
@@ -100,7 +100,7 @@ async function createAnnouncement(req, res) {
     }
 
     // Check if teacher owns the class
-    const classData = await db.class.findUnique({
+    const classData = await prisma.class.findUnique({
       where: { id: classId },
       select: { teacherId: true },
     })
@@ -114,7 +114,7 @@ async function createAnnouncement(req, res) {
     }
 
     // Create announcement
-    const announcement = await db.announcement.create({
+    const announcement = await prisma.announcement.create({
       data: {
         title,
         content,
@@ -170,7 +170,7 @@ async function updateAnnouncement(req, res) {
     const userId = req.user?.id
 
     // Get announcement
-    const announcement = await db.announcement.findUnique({
+    const announcement = await prisma.announcement.findUnique({
       where: { id },
       select: { authorId: true },
     })
@@ -185,7 +185,7 @@ async function updateAnnouncement(req, res) {
     }
 
     // Update announcement
-    const updated = await db.announcement.update({
+    const updated = await prisma.announcement.update({
       where: { id },
       data: {
         ...(title && { title }),
@@ -234,7 +234,7 @@ async function deleteAnnouncement(req, res) {
     const userId = req.user?.id
 
     // Get announcement
-    const announcement = await db.announcement.findUnique({
+    const announcement = await prisma.announcement.findUnique({
       where: { id },
       select: { authorId: true },
     })
@@ -249,7 +249,7 @@ async function deleteAnnouncement(req, res) {
     }
 
     // Delete announcement
-    await db.announcement.delete({ where: { id } })
+    await prisma.announcement.delete({ where: { id } })
 
     return res.json({
       message: 'Announcement deleted successfully',
@@ -260,7 +260,7 @@ async function deleteAnnouncement(req, res) {
   }
 }
 
-module.exports = {
+export {
   getAnnouncements,
   createAnnouncement,
   updateAnnouncement,

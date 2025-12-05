@@ -1,11 +1,11 @@
-const { Router } = require('express')
-const {
+import { Router } from 'express'
+import {
   getAnnouncements,
   createAnnouncement,
   updateAnnouncement,
   deleteAnnouncement,
-} = require('../controllers/announcements')
-const { authRequired } = require('../middleware/auth')
+} from '../controllers/announcements.js'
+import { authRequired } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -24,4 +24,4 @@ router.patch('/:id', updateAnnouncement)
 // Delete announcement (author/admin only)
 router.delete('/:id', deleteAnnouncement)
 
-module.exports = router
+export default router

@@ -1,4 +1,4 @@
-import { api } from './config'
+import { api } from '../utils/api.js'
 
 export const announcementApi = {
   /**
@@ -10,8 +10,8 @@ export const announcementApi = {
     if (skip !== undefined) params.append('skip', String(skip))
     if (take !== undefined) params.append('take', String(take))
 
-    const response = await api.get(`/announcements?${params.toString()}`)
-    return response.data
+    const response: any = await api(`/announcements?${params.toString()}`, { method: 'GET' })
+    return response?.data
   },
 
   /**
@@ -25,8 +25,8 @@ export const announcementApi = {
     image?: string
     classId: string
   }) {
-    const response = await api.post('/announcements', data)
-    return response.data
+    const response: any = await api('/announcements', { method: 'POST', body: data })
+    return response?.data
   },
 
   /**
@@ -42,15 +42,15 @@ export const announcementApi = {
       image?: string
     }
   ) {
-    const response = await api.patch(`/announcements/${id}`, data)
-    return response.data
+    const response: any = await api(`/announcements/${id}`, { method: 'PATCH', body: data })
+    return response?.data
   },
 
   /**
    * Delete announcement (author/admin only)
    */
   async deleteAnnouncement(id: string) {
-    const response = await api.delete(`/announcements/${id}`)
-    return response.data
+    const response: any = await api(`/announcements/${id}`, { method: 'DELETE' })
+    return response?.data
   },
 }
