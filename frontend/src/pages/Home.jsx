@@ -19,123 +19,6 @@ import {
   BookOpen,
   AlertCircle,
 } from 'lucide-react'
-import Slider from 'react-slick'
-import CampusMap from '../components/CampusMap'
-
-// สไลด์ภาพ Highlight (สามารถต่อ API ภายหลังได้)
-const slides = [
-  {
-    id: 1,
-    img: '/images/news1.jpg',
-    title: 'โครงการปฐมนิเทศนักศึกษาใหม่',
-    desc: 'ต้อนรับนักศึกษาใหม่ ประจำปีการศึกษา 2568',
-  },
-  {
-    id: 2,
-    img: '/images/news2.jpg',
-    title: 'การแข่งขันทักษะวิชาชีพ',
-    desc: 'นักศึกษาคว้ารางวัลระดับประเทศ',
-  },
-  {
-    id: 3,
-    img: '/images/news3.jpg',
-    title: 'กิจกรรมเปิดโลกวิชาการ',
-    desc: 'แนะนำหลักสูตรและอาชีพในอนาคต',
-  },
-]
-
-// Feed ข่าว/โพสต์จากแอดมิน (mock)
-const posts = [
-  {
-    id: 1,
-    category: 'ประกาศ',
-    title: 'กำหนดการปฐมนิเทศนักศึกษาใหม่ 2568',
-    excerpt:
-      'ขอเชิญนักศึกษาใหม่ทุกสาขาเข้าร่วมปฐมนิเทศ ในวันที่ 10 มิ.ย. 2568 เวลา 08.30 น. ณ หอประชุมใหญ่ของวิทยาลัย …',
-    image: '/images/news1.jpg',
-    time: 'วันนี้ · 09:30 น.',
-    reactions: 24,
-    comments: 6,
-  },
-  {
-    id: 2,
-    category: 'ข่าวกิจกรรม',
-    title: 'ผลการแข่งขันทักษะวิชาชีพ ระดับชาติ',
-    excerpt:
-      'ทีมนักศึกษาแผนกเทคโนโลยีสารสนเทศ คว้ารางวัลชนะเลิศจากการแข่งขันพัฒนาเว็บแอปพลิเคชัน ระดับชาติ ประจำปี 2568 …',
-    image: '/images/news2.jpg',
-    time: 'เมื่อวานนี้ · 15:10 น.',
-    reactions: 42,
-    comments: 12,
-  },
-  {
-    id: 3,
-    category: 'ชุมชน & ชมรม',
-    title: 'รับสมัครสมาชิกชมรมใหม่ ภาคเรียนที่ 1/2568',
-    excerpt:
-      'เชิญชวนนักศึกษาทุกชั้นปีเข้าร่วมชมรมต่าง ๆ ของวิทยาลัย อาทิ ชมรม IT, ชมรมดนตรี, ชมรมจิตอาสา สมัครได้ผ่านระบบ Portal …',
-    image: '',
-    time: '2 วันที่แล้ว',
-    reactions: 15,
-    comments: 3,
-  },
-]
-
-// mock รายชื่อ User / Group สำหรับแชร์ (รอเชื่อม API จริง)
-const mockUsers = [
-  { id: 'u1', name: 'Suchawadee S.', role: 'IT Student ปี 2' },
-  { id: 'u2', name: 'Kritsada T.', role: 'อาจารย์แผนก IT' },
-  { id: 'u3', name: 'Ratchanee W.', role: 'อาจารย์ที่ปรึกษา' },
-]
-
-const mockGroups = [
-  { id: 'g1', name: 'CS-201 – Sec 2', members: 32 },
-  { id: 'g2', name: 'ENG-101 – Sec 1', members: 28 },
-  { id: 'g3', name: 'ชมรม IT Club', members: 45 },
-]
-
-// mock comment ต่อโพสต์ (ตัวอย่าง – รอเชื่อม API)
-const mockComments = {
-  1: [
-    {
-      id: 'c1',
-      author: 'Suchawadee S.',
-      role: 'IT Student ปี 2',
-      content: 'ตื่นเต้นรอวันปฐมนิเทศเลยค่ะ 🎉',
-      time: '5 นาทีที่แล้ว',
-      pinned: true,
-    },
-    {
-      id: 'c2',
-      author: 'Kritsada T.',
-      role: 'อาจารย์แผนก IT',
-      content: 'อย่าลืมเตรียมเอกสารให้ครบตามที่แจ้งในประกาศนะครับ',
-      time: '20 นาทีที่แล้ว',
-      pinned: false,
-    },
-  ],
-  2: [
-    {
-      id: 'c3',
-      author: 'Ratchanee W.',
-      role: 'อาจารย์ที่ปรึกษา',
-      content: 'ภูมิใจในนักศึกษาทุกคนมากค่ะ ✨',
-      time: 'เมื่อวานนี้',
-      pinned: false,
-    },
-  ],
-  3: [],
-}
-
-// หลักสูตรตัวอย่าง (โชว์ใน Sidebar)
-const courses = [
-  { id: 1, name: 'เทคโนโลยีสารสนเทศ' },
-  { id: 2, name: 'ดิจิทัลมีเดีย' },
-  { id: 3, name: 'วิศวกรรมซอฟต์แวร์' },
-  { id: 4, name: 'ระบบเครือข่าย (ปวส.)' },
-  { id: 5, name: 'โลจิสติกส์' },
-  { id: 6, name: 'ธุรกิจค้าปลีก' },
-]
 
 export default function Home() {
   const { user } = useAuth()
@@ -144,31 +27,13 @@ export default function Home() {
   const [announcements, setAnnouncements] = useState([])
   const [loading, setLoading] = useState(true)
   
-  const [feedState, setFeedState] = useState(() =>
-    Object.fromEntries(
-      posts.map((p) => [
-        p.id,
-        {
-          liked: false,
-          likes: p.reactions,
-        },
-      ]),
-    ),
-  )
-
-  // state สำหรับ share popup
+  // state สำหรับ feed (deprecated - will be refactored with real API)
   const [shareModal, setShareModal] = useState({
     open: false,
     post: null,
     url: '',
     tab: 'user', // user | group | link
   })
-
-  // state สำหรับ comment
-  const [comments, setComments] = useState(mockComments)
-  const [openCommentsPostId, setOpenCommentsPostId] = useState(null)
-  const [expandedCommentsPostId, setExpandedCommentsPostId] = useState(null)
-  const [commentDrafts, setCommentDrafts] = useState({})
 
   // Load user data on mount
   useEffect(() => {
@@ -198,31 +63,6 @@ export default function Home() {
       loadData()
     }
   }, [user])
-
-  const sliderSettings = {
-    dots: true,
-    infinite: true,
-    speed: 600,
-    autoplay: true,
-    autoplaySpeed: 4000,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-  }
-
-  const toggleLike = (id) => {
-    setFeedState((prev) => {
-      const current = prev[id]
-      if (!current) return prev
-      const liked = !current.liked
-      return {
-        ...prev,
-        [id]: {
-          liked,
-          likes: current.likes + (liked ? 1 : -1),
-        },
-      }
-    })
-  }
 
   // ล็อก body scroll เมื่อมี popup แชร์
   useEffect(() => {
@@ -278,68 +118,9 @@ export default function Home() {
     }
   }
 
-  const handleShareToUser = (user) => {
-    alert(`(จำลอง) แชร์โพสต์ให้ ${user.name} แล้ว`)
-  }
 
-  const handleShareToGroup = (group) => {
-    alert(`(จำลอง) แชร์โพสต์ไปยังกลุ่ม "${group.name}" แล้ว`)
-  }
 
-  // ====== Comment handlers ======
-  const handleToggleComments = (postId) => {
-    setOpenCommentsPostId((prev) => (prev === postId ? null : postId))
-  }
-
-  const handleToggleExpandComments = (postId) => {
-    setExpandedCommentsPostId((prev) => (prev === postId ? null : postId))
-  }
-
-  const handlePinComment = (postId, commentId) => {
-    setComments((prev) => {
-      const list = prev[postId] || []
-      const target = list.find((c) => c.id === commentId && c.pinned)
-      let next
-      if (target) {
-        // unpin ทั้งหมด
-        next = list.map((c) => ({ ...c, pinned: false }))
-      } else {
-        // pin อันเดียว
-        next = list.map((c) => ({ ...c, pinned: c.id === commentId }))
-      }
-      return { ...prev, [postId]: next }
-    })
-  }
-
-  const handleDraftChange = (postId, value) => {
-    setCommentDrafts((prev) => ({ ...prev, [postId]: value }))
-  }
-
-  const handleQuickMention = (postId, userName) => {
-    setCommentDrafts((prev) => {
-      const base = prev[postId] || ''
-      const space = base && !base.endsWith(' ') ? ' ' : ''
-      return { ...prev, [postId]: `${base}${space}@${userName} ` }
-    })
-  }
-
-  const handleAddComment = (postId) => {
-    const text = (commentDrafts[postId] || '').trim()
-    if (!text) return
-    setComments((prev) => {
-      const list = prev[postId] || []
-      const newComment = {
-        id: `new-${Date.now()}`,
-        author: 'คุณ',
-        role: 'Student',
-        content: text,
-        time: 'เมื่อสักครู่',
-        pinned: false,
-      }
-      return { ...prev, [postId]: [...list, newComment] }
-    })
-    setCommentDrafts((prev) => ({ ...prev, [postId]: '' }))
-  }
+  // Comment handlers removed - feed functionality deprecated
 
   return (
     <div className="w-full bg-[#020617] text-gray-100 px-4 py-4">
@@ -475,64 +256,25 @@ export default function Home() {
 
           {/* ขวา: ข่าวเด่น + แผนที่ */}
           <div className="flex flex-col gap-3">
-            {/* Slider Card */}
+            {/* Slider Card - Mock removed, will integrate real news API */}
             <div className="w-full rounded-2xl border border-[#1f2937] bg-[#020617] p-4">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-sm font-semibold text-gray-100">
                   ข่าวเด่นวันนี้
                 </h2>
                 <span className="text-[11px] text-gray-400">
-                  ข้อมูลตัวอย่าง · พร้อมต่อ API
+                  Coming soon - API integration needed
                 </span>
               </div>
 
-              <div className="mt-1 h-28 md:h-32">
-                <Slider {...sliderSettings}>
-                  {slides.map((s) => (
-                    <div key={s.id} className="px-1">
-                      <div className="flex h-24 md:h-28 overflow-hidden rounded-xl border border-[#111827] bg-[#020617]">
-                        {/* รูป: 40% */}
-                        <div className="w-2/5">
-                          <img
-                            src={s.img}
-                            alt={s.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-
-                        {/* ข้อความ: 60% */}
-                        <div className="w-3/5 p-2.5 flex flex-col justify-between">
-                          <div>
-                            <h3 className="text-[12px] font-semibold text-gray-100 line-clamp-2">
-                              {s.title}
-                            </h3>
-                            <p className="mt-1 text-[10px] text-gray-400 line-clamp-2">
-                              {s.desc}
-                            </p>
-                          </div>
-                          <a
-                            href="/announcements"
-                            className="mt-1 inline-flex items-center gap-1 text-[10px] text-violet-300 hover:text-violet-200"
-                          >
-                            อ่านเพิ่มเติม <ChevronRight size={11} />
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </Slider>
+              <div className="mt-1 h-28 md:h-32 rounded-xl border border-[#111827] bg-[#020617] flex items-center justify-center">
+                <p className="text-[11px] text-gray-500">
+                  ข่าวประกาศจะแสดงที่นี่เมื่อเชื่อมต่อกับระบบข่าว
+                </p>
               </div>
             </div>
 
-            {/* Quick Map / Campus Overview */}
-            <div className="w-full rounded-2xl border border-[#1f2937] bg-[#020617] p-3">
-              <h3 className="text-sm font-semibold text-gray-100 mb-2">
-                แผนที่ / พื้นที่วิทยาลัย
-              </h3>
-              <div className="h-40 rounded-xl overflow-hidden border border-[#111827]">
-                <CampusMap />
-              </div>
-            </div>
+
           </div>
         </div>
 
@@ -565,220 +307,7 @@ export default function Home() {
               </a>
             </div>
 
-            {posts.map((p) => {
-              const state = feedState[p.id]
-              const postComments = comments[p.id] || []
-              const sortedComments = [...postComments].sort(
-                (a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0),
-              )
-              const expanded = expandedCommentsPostId === p.id
-              const visibleComments = expanded
-                ? sortedComments
-                : sortedComments.slice(0, 3)
-
-              return (
-                <article
-                  key={p.id}
-                  id={`post-${p.id}`}
-                  className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4 flex flex-col gap-3"
-                >
-                  {/* header */}
-                  <div className="flex justify-between items-start gap-3">
-                    <div>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-violet-600/20 border border-violet-500/50 text-[10px] text-violet-200 mb-1">
-                        {p.category}
-                      </span>
-                      <h3 className="text-sm font-semibold text-gray-100">
-                        {p.title}
-                      </h3>
-                      <p className="text-[11px] text-gray-500">{p.time}</p>
-                    </div>
-                  </div>
-
-                  {/* body */}
-                  <div className="flex flex-col md:flex-row gap-3">
-                    {p.image && (
-                      <div className="w-full md:w-40 shrink-0">
-                        <img
-                          src={p.image}
-                          alt={p.title}
-                          className="w-full h-28 object-cover rounded-xl border border-[#111827]"
-                        />
-                      </div>
-                    )}
-                    <p className="text-xs text-gray-200 leading-relaxed">
-                      {p.excerpt}
-                    </p>
-                  </div>
-
-                  {/* reactions */}
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="flex items-center gap-3 text-[11px]">
-                      <button
-                        type="button"
-                        onClick={() => toggleLike(p.id)}
-                        className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full border border-transparent hover:border-violet-500/60 hover:bg-violet-600/10"
-                      >
-                        <Heart
-                          size={14}
-                          className={
-                            state?.liked ? 'text-pink-400 fill-pink-400' : ''
-                          }
-                        />
-                        <span>{state?.likes ?? p.reactions}</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full border border-transparent hover:border-gray-600 hover:bg-gray-800/50"
-                        onClick={() => handleToggleComments(p.id)}
-                      >
-                        <MessageCircle size={14} />
-                        <span>
-                          {postComments.length || p.comments} ความคิดเห็น
-                        </span>
-                      </button>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => sharePost(p)}
-                      className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full border border-gray-700 hover:border-violet-500 hover:bg-violet-600/10"
-                    >
-                      <Share2 size={13} />
-                      แชร์
-                    </button>
-                  </div>
-
-                  {/* ===== COMMENTS PANEL ===== */}
-                  {openCommentsPostId === p.id && (
-                    <div className="mt-2 rounded-2xl border border-[#1f2937] bg-[#020617] px-3 py-3 space-y-3">
-                      {/* header ของ comment */}
-                      <div className="flex items-center justify-between">
-                        <div className="text-[11px] text-gray-400">
-                          ความคิดเห็น •{' '}
-                          <span className="text-gray-200">
-                            {postComments.length} รายการ
-                          </span>
-                        </div>
-                        {postComments.length > 3 && (
-                          <button
-                            type="button"
-                            onClick={() => handleToggleExpandComments(p.id)}
-                            className="flex items-center gap-1 text-[11px] text-violet-300 hover:text-violet-200"
-                          >
-                            {expanded
-                              ? 'ย่อความคิดเห็น'
-                              : 'ดูความคิดเห็นทั้งหมด'}
-                            <ChevronDown
-                              size={12}
-                              className={`transition-transform ${
-                                expanded ? 'rotate-180' : ''
-                              }`}
-                            />
-                          </button>
-                        )}
-                      </div>
-
-                      {/* comment list */}
-                      {postComments.length === 0 ? (
-                        <p className="text-[11px] text-gray-500">
-                          ยังไม่มีความคิดเห็น เป็นคนแรกที่แสดงความเห็นได้เลย
-                        </p>
-                      ) : (
-                        <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                          {visibleComments.map((c) => (
-                            <div
-                              key={c.id}
-                              className="rounded-xl border border-[#1f2937] bg-[#020617] px-3 py-2 flex gap-2"
-                            >
-                              <div className="w-7 h-7 rounded-full bg-violet-600/40 flex items-center justify-center text-[11px] font-semibold shrink-0">
-                                {c.author.charAt(0)}
-                              </div>
-                              <div className="flex-1 space-y-0.5">
-                                <div className="flex items-start justify-between gap-2">
-                                  <div>
-                                    <div className="text-[11px] text-gray-100">
-                                      {c.author}
-                                    </div>
-                                    <div className="text-[10px] text-gray-500">
-                                      {c.role} · {c.time}
-                                    </div>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    className={`ml-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 border text-[9px] ${
-                                      c.pinned
-                                        ? 'border-amber-400 text-amber-300 bg-amber-400/10'
-                                        : 'border-transparent text-gray-500 hover:border-amber-400/60 hover:bg-amber-400/10'
-                                    }`}
-                                    onClick={() =>
-                                      handlePinComment(p.id, c.id)
-                                    }
-                                  >
-                                    <Pin
-                                      size={11}
-                                      className={
-                                        c.pinned ? 'fill-amber-300' : ''
-                                      }
-                                    />
-                                    {c.pinned ? 'Pinned' : 'Pin'}
-                                  </button>
-                                </div>
-                                <div className="text-[11px] text-gray-200">
-                                  {c.content}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* input comment */}
-                      <div className="pt-2 border-t border-[#1f2937] space-y-2">
-                        <div className="text-[11px] text-gray-400">
-                          เขียนความคิดเห็นของคุณ
-                        </div>
-                        <textarea
-                          rows={2}
-                          className="w-full bg-[#020617] border border-[#374151] rounded-lg px-3 py-2 text-[11px] text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
-                          placeholder="เขียนความคิดเห็นของคุณ... ใช้ @mention เพื่อกล่าวถึงเพื่อน / อาจารย์"
-                          value={commentDrafts[p.id] || ''}
-                          onChange={(e) =>
-                            handleDraftChange(p.id, e.target.value)
-                          }
-                        />
-                        {/* quick mention chips */}
-                        <div className="flex flex-wrap gap-1.5 text-[10px]">
-                          <span className="text-gray-500 mr-1">
-                            @Mention:
-                          </span>
-                          {mockUsers.map((u) => (
-                            <button
-                              key={u.id}
-                              type="button"
-                              className="px-2 py-0.5 rounded-full border border-[#374151] text-gray-300 hover:bg-slate-800"
-                              onClick={() =>
-                                handleQuickMention(p.id, u.name)
-                              }
-                            >
-                              @{u.name}
-                            </button>
-                          ))}
-                        </div>
-                        <div className="flex justify-end">
-                          <button
-                            type="button"
-                            className="px-3 py-1.5 rounded-md bg-violet-600 hover:bg-violet-500 text-[11px] text-white"
-                            onClick={() => handleAddComment(p.id)}
-                          >
-                            ส่งความคิดเห็น
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </article>
-              )
-            })}
+            {/* Feed placeholder - TODO: Load from API */}
           </section>
 
           {/* SIDEBAR */}
@@ -858,38 +387,7 @@ export default function Home() {
               </ul>
             </div>
 
-            {/* Courses */}
-            <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-gray-100">
-                  หลักสูตรเด่น
-                </h3>
-                <span className="text-[11px] text-gray-500">
-                  ตัวอย่าง · ปรับจาก API ได้
-                </span>
-              </div>
-              <ul className="space-y-1.5 text-[11px] text-gray-300">
-                {courses.map((c) => (
-                  <li
-                    key={c.id}
-                    className="flex items-center justify-between rounded-lg border border-[#111827] bg-[#020617] px-3 py-1.5 hover:border-violet-500/60 hover:bg-violet-600/5 transition"
-                  >
-                    <span>{c.name}</span>
-                    <ChevronRight size={12} className="text-gray-500" />
-                  </li>
-                ))}
-              </ul>
-            </div>
 
-            {/* Campus Map (สำหรับจอเล็ก) */}
-            <div className="md:hidden rounded-2xl border border-[#1f2937] bg-[#020617] p-3">
-              <h3 className="text-sm font-semibold text-gray-100 mb-2">
-                แผนที่ / พื้นที่วิทยาลัย
-              </h3>
-              <div className="h-40 rounded-xl overflow-hidden border border-[#111827]">
-                <CampusMap />
-              </div>
-            </div>
           </aside>
         </div>
       </div>
@@ -960,85 +458,16 @@ export default function Home() {
             <div className="p-4 text-xs max-h-[60vh] overflow-y-auto">
               {shareModal.tab === 'user' && (
                 <div className="space-y-3">
-                  <div>
-                    <div className="text-[11px] text-gray-400 mb-1">
-                      เลือกผู้ใช้ที่ต้องการแชร์ให้
-                    </div>
-                    <div className="relative mb-2">
-                      <Search
-                        size={14}
-                        className="absolute left-2 top-2 text-gray-500"
-                      />
-                      <input
-                        className="w-full bg-[#020617] border border-[#374151] rounded-md pl-7 pr-2 py-1.5 text-[11px] text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
-                        placeholder="ค้นหาชื่อผู้ใช้ (mock)"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    {mockUsers.map((u) => (
-                      <div
-                        key={u.id}
-                        className="flex items-center justify-between rounded-lg border border-[#1f2937] bg-[#020617] px-3 py-2"
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-violet-600/40 flex items-center justify-center text-[11px] font-semibold">
-                            {u.name.charAt(0)}
-                          </div>
-                          <div>
-                            <div className="text-gray-100 text-[11px]">
-                              {u.name}
-                            </div>
-                            <div className="text-[10px] text-gray-500">
-                              {u.role}
-                            </div>
-                          </div>
-                        </div>
-                        <button
-                          className="text-[11px] px-2 py-1 rounded-md border border-violet-500 text-violet-200 hover:bg-violet-600/20"
-                          onClick={() => handleShareToUser(u)}
-                        >
-                          แชร์
-                        </button>
-                      </div>
-                    ))}
+                  <div className="text-[11px] text-gray-400">
+                    Share feature coming soon - API integration needed
                   </div>
                 </div>
               )}
 
               {shareModal.tab === 'group' && (
                 <div className="space-y-3">
-                  <div className="text-[11px] text-gray-400 mb-1">
-                    เลือกกลุ่มที่ต้องการแชร์ให้
-                  </div>
-                  <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
-                    {mockGroups.map((g) => (
-                      <div
-                        key={g.id}
-                        className="flex items-center justify-between rounded-lg border border-[#1f2937] bg-[#020617] px-3 py-2 mb-1"
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-emerald-600/30 flex items-center justify-center">
-                            <Users size={13} />
-                          </div>
-                          <div>
-                            <div className="text-gray-100 text-[11px]">
-                              {g.name}
-                            </div>
-                            <div className="text-[10px] text-gray-500">
-                              สมาชิกประมาณ {g.members} คน
-                            </div>
-                          </div>
-                        </div>
-                        <button
-                          className="text-[11px] px-2 py-1 rounded-md border border-emerald-500 text-emerald-200 hover:bg-emerald-600/20"
-                          onClick={() => handleShareToGroup(g)}
-                        >
-                          แชร์ให้กลุ่ม
-                        </button>
-                      </div>
-                    ))}
+                  <div className="text-[11px] text-gray-400">
+                    Share feature coming soon - API integration needed
                   </div>
                 </div>
               )}
@@ -1078,7 +507,7 @@ export default function Home() {
                     <button
                       className="px-3 py-1.5 rounded-md border border-[#374151] text-gray-200 hover:bg-slate-800 text-[11px]"
                       onClick={() =>
-                        alert('(mock) แชร์ไปยัง Line / Messenger')
+                        alert('TODO: Implement Line / Messenger sharing')
                       }
                     >
                       Line / Messenger
@@ -1086,7 +515,7 @@ export default function Home() {
                     <button
                       className="px-3 py-1.5 rounded-md border border-[#374151] text-gray-200 hover:bg-slate-800 text-[11px]"
                       onClick={() =>
-                        alert('(mock) แชร์ไปยัง Facebook / IG')
+                        alert('TODO: Implement Facebook / IG sharing')
                       }
                     >
                       Facebook / IG
