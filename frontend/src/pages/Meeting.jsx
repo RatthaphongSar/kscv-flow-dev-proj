@@ -404,34 +404,30 @@ export default function MeetingPage() {
         </aside>
 
         {/* Main: Calendar + รายละเอียด */}
-        <section className="flex-1 flex flex-col">
+        <section className="flex-1 flex flex-col min-w-0">
           {/* Header */}
-          <div className="px-6 py-4 border-b border-[#1f2937] flex items-center justify-between bg-[#020617]">
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-gray-100">
+          <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-[#1f2937] flex flex-col sm:flex-row items-start sm:items-center justify-between bg-[#020617] gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-100 truncate">
                   Meeting & Schedule
                 </h2>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-violet-600/20 text-violet-300 border border-violet-500/40">
-                  Professional View
+                <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full bg-violet-600/20 text-violet-300 border border-violet-500/40 whitespace-nowrap">
+                  View
                 </span>
               </div>
-              <p className="text-xs text-gray-400 mt-1">
-                ดูภาพรวมการนัดหมายทั้งหมดในรูปแบบสัปดาห์ พร้อมรายละเอียดแต่ละนัด
-              </p>
-              <p className="text-[11px] text-gray-500 mt-0.5">
-                รองรับผู้เข้าร่วมสูงสุด {MAX_PARTICIPANTS} คนต่อห้อง (จำลอง)
+              <p className="text-[10px] sm:text-xs text-gray-400 mt-1">
+                ดูภาพรวมการนัดหมายทั้งหมด
               </p>
             </div>
 
             {/* สลับโหมดแสดงผล */}
-            <div className="flex flex-col items-end gap-2 text-[11px]">
-              <div className="flex items-center gap-2">
-                <span className="text-gray-400">โหมดแสดงผล:</span>
+            <div className="flex flex-col items-end gap-2 text-[10px] sm:text-[11px] flex-shrink-0">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <button
                   type="button"
                   onClick={() => setViewMode('list')}
-                  className={`px-3 py-1.5 rounded-md border text-xs ${
+                  className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-md border text-[10px] sm:text-xs ${
                     viewMode === 'list'
                       ? 'bg-violet-600 border-violet-500 text-white'
                       : 'border-[#374151] text-gray-300 hover:bg-slate-800'
@@ -442,22 +438,22 @@ export default function MeetingPage() {
                 <button
                   type="button"
                   onClick={() => setViewMode('week')}
-                  className={`px-3 py-1.5 rounded-md border text-xs ${
+                  className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-md border text-[10px] sm:text-xs ${
                     viewMode === 'week'
                       ? 'bg-violet-600 border-violet-500 text-white'
                       : 'border-[#374151] text-gray-300 hover:bg-slate-800'
                   }`}
                 >
-                  ปฏิทินสัปดาห์
+                  สัปดาห์
                 </button>
               </div>
 
-              {/* ปุ่มควบคุมสิทธิ์เริ่มห้อง (เฉพาะอาจารย์) */}
+              {/* ปุ่มควบคุมสิทธิ์เริ่มห้อง */}
               <button
                 type="button"
                 onClick={handleToggleMeetingStart}
                 disabled={!isTeacherUser}
-                className={`px-3 py-1.5 rounded-md border text-[11px] ${
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-md border text-[10px] sm:text-[11px] whitespace-nowrap ${
                   isTeacherUser
                     ? meetingStartedByTeacher
                       ? 'bg-red-600/90 border-red-500 text-white hover:bg-red-500'
@@ -467,17 +463,17 @@ export default function MeetingPage() {
               >
                 {isTeacherUser
                   ? meetingStartedByTeacher
-                    ? 'ปิดห้อง Meeting (เฉพาะอาจารย์)'
-                    : 'เริ่มห้อง Meeting (เฉพาะอาจารย์)'
-                  : 'รออาจารย์เริ่มห้อง Meeting'}
+                    ? 'ปิด'
+                    : 'เริ่ม'
+                  : 'รอ'}
               </button>
             </div>
           </div>
 
           {/* Content */}
-          <div className="flex-1 flex bg-[#020617]">
+          <div className="flex-1 flex bg-[#020617] min-w-0 overflow-hidden">
             {/* ซ้าย: Calendar / List */}
-            <div className="flex-1 border-r border-[#1f2937] overflow-y-auto">
+            <div className="flex-1 border-b lg:border-b-0 lg:border-r border-[#1f2937] overflow-y-auto min-w-0">
               {viewMode === 'week' ? (
                 <WeekView
                   weekDays={weekDays}
@@ -496,7 +492,7 @@ export default function MeetingPage() {
             </div>
 
             {/* ขวา: Meeting Detail Panel */}
-            <div className="w-full lg:w-80 bg-[#020617] text-xs p-4 max-h-32 lg:max-h-none overflow-y-auto">
+            <div className="w-full lg:w-80 bg-[#020617] text-xs p-2 sm:p-4 max-h-24 sm:max-h-32 lg:max-h-none overflow-y-auto">
               <h3 className="text-sm font-semibold mb-3">
                 รายละเอียดนัดหมาย
               </h3>
