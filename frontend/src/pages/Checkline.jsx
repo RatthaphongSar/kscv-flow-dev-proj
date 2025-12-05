@@ -10,6 +10,7 @@ import {
   Users,
 } from "lucide-react";
 import { classApi } from "../api/classApi";
+import { attendanceApi } from "../api/attendanceApi";
 
 // ======================================
 // Mock ข้อมูล attendance – ใช้ชั่วคราว
@@ -54,6 +55,8 @@ export default function ChecklinePage() {
   const [now, setNow] = useState(nowInitial);
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [summary, setSummary] = useState(null);
 
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
@@ -66,7 +69,7 @@ export default function ChecklinePage() {
 
   // Fetch classes on mount
   useEffect(() => {
-    const fetchClasses = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         const data = await classApi.getClasses();
@@ -82,8 +85,29 @@ export default function ChecklinePage() {
       }
     };
     
-    fetchClasses();
+    fetchData();
   }, []);
+
+  // Fetch attendance records when class changes
+  useEffect(() => {
+    if (!selectedClass) return;
+
+    const fetchAttendance = async () => {
+      try {
+        const records = await attendanceApi.getMyAttendance(selectedClass);
+        setAttendanceRecords(records || []);
+
+        // Get summary for the class
+        const summaryData = await attendanceApi.getAttendanceSummary(selectedClass);
+        setSummary(summaryData);
+      } catch (err) {
+        console.error("Error fetching attendance:", err);
+        setAttendanceRecords([]);
+      }
+    };
+
+    fetchAttendance();
+  }, [selectedClass]);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 30_000);
@@ -100,9 +124,15 @@ export default function ChecklinePage() {
     return d;
   });
 
-  const classRecords = mockCheckline.filter(r => r.classId === selectedClass);
-  const dailyRecord = classRecords.find(r => r.date === selectedDate);
-  const classInfo = mockClasses.find(c => c.id === selectedClass);
+  const classRecords = attendanceRecords.filter(r => {
+    const recordDate = new Date(r.date).toISOString().slice(0, 10);
+    return recordDate === r.date || r.classId === selectedClass;
+  });
+  const dailyRecord = classRecords.find(r => {
+    const recordDate = new Date(r.date).toISOString().slice(0, 10);
+    return recordDate === selectedDate;
+  });
+  const classInfo = classes.find(c => c.id === selectedClass);
   const assemblyRecord = mockAssembly.find(a => a.date === selectedDate);
 
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -244,12 +274,16 @@ export default function ChecklinePage() {
         {/* Weekly Summary */}
         <div className="border border-[#1f2937] rounded-xl p-4 bg-[#020617] mb-12">
           <h3 className="text-sm font-semibold mb-2">สรุปผลเช็คชื่อรายสัปดาห์</h3>
-          <ul className="text-xs text-gray-300 space-y-1">
-            <li>เข้าตรงเวลา: 12 ครั้ง</li>
-            <li>มาสาย: 3 ครั้ง</li>
-            <li>ขาดเรียน: 1 ครั้ง</li>
-            <li>เปอร์เซ็นต์เข้าเรียน: 89%</li>
-          </ul>
+          {summary ? (
+            <ul className="text-xs text-gray-300 space-y-1">
+              <li>เข้าตรงเวลา: {summary.present || 0} ครั้ง</li>
+              <li>มาสาย: {summary.late || 0} ครั้ง</li>
+              <li>ขาดเรียน: {summary.absent || 0} ครั้ง</li>
+              <li>เปอร์เซ็นต์เข้าเรียน: {summary.percentage || 0}%</li>
+            </ul>
+          ) : (
+            <p className="text-xs text-gray-400">กำลังโหลดข้อมูล...</p>
+          )}
         </div>
       </section>
 

@@ -90,3 +90,40 @@ export const listAttendanceByClass = async (req, res, next) => {
     next(err)
   }
 }
+
+/**
+ * Get attendance summary
+ * @route GET /summary/:classId
+ */
+export const getAttendanceSummary = async (req, res, next) => {
+  try {
+    const { classId } = req.params
+    const { startDate, endDate } = req.query
+
+    let where = { classId }
+    if (startDate || endDate) {
+      where.date = {}
+      if (startDate) where.date.gte = new Date(startDate)
+      if (endDate) where.date.lte = new Date(endDate)
+    }
+
+    const attendance = await prisma.attendance.findMany({
+      where,
+      select: { status: true }
+    })
+
+    const summary = {
+      total: attendance.length,
+      present: attendance.filter(a => a.status === 'present').length,
+      late: attendance.filter(a => a.status === 'late').length,
+      absent: attendance.filter(a => a.status === 'absent').length,
+      percentage: attendance.length > 0 
+        ? Math.round((attendance.filter(a => a.status === 'present').length / attendance.length) * 100)
+        : 0
+    }
+
+    res.json(summary)
+  } catch (err) {
+    next(err)
+  }
+}

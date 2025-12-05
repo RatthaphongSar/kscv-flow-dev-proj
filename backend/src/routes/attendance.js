@@ -25,4 +25,11 @@ router.get('/class/:classId', [
   param('classId').isString()
 ], ctrl.listAttendanceByClass);
 
+// Get attendance summary
+router.get('/summary/:classId', [
+  param('classId').isString(),
+  query('startDate').optional().isISO8601(),
+  query('endDate').optional().isISO8601()
+], ctrl.getAttendanceSummary);
+
 export default router;
