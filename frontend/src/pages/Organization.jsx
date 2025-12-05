@@ -83,7 +83,7 @@ export default function Organization() {
             </div>
           </div>
 
-          <div className="mt-4 grid gap-6 md:grid-cols-[1.2fr,1fr]">
+          <div className="mt-4 grid gap-6 sm:grid-cols-[1.2fr,1fr] md:grid-cols-[1.2fr,1fr]">
             {/* Timeline ทางซ้าย */}
             <div className="relative">
               <div className="absolute left-3 top-2 bottom-2 w-px bg-[#1f2937]" />

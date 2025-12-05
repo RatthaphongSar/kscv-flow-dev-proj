@@ -240,9 +240,9 @@ export default function Home() {
         )}
 
         {/* ===== HERO + SLIDER / MAP ===== */}
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {/* Hero Left */}
-          <div className="relative overflow-hidden rounded-2xl border border-[#1f2937] bg-gradient-to-br from-[#020617] via-[#020617] to-[#111827] lg:col-span-2">
+          <div className="relative overflow-hidden rounded-2xl border border-[#1f2937] bg-gradient-to-br from-[#020617] via-[#020617] to-[#111827] md:col-span-2 lg:col-span-2">
             {/* BG SVG light effects */}
             <svg
               className="absolute -right-24 -top-24 w-[420px] h-[420px] opacity-40"

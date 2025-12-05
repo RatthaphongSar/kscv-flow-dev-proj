@@ -63,7 +63,7 @@ export default function Schedule() {
             ยังไม่มีตารางเรียน
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {schedule.map((s, idx) => {
               const hasTask = s.task && s.task.trim().length > 0
               const dayLabel = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][

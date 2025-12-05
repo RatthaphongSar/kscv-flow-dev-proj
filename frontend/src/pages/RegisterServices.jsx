@@ -198,7 +198,7 @@ export default function RegisterServices() {
         title="Register Services"
         subtitle="บริการงานทะเบียน – แบบฟอร์มออนไลน์และระบบคำร้องการลา"
       >
-        <div className="grid gap-4 lg:grid-cols-[1.8fr,1.1fr]">
+        <div className="grid gap-4 md:grid-cols-[1.5fr,1fr] lg:grid-cols-[1.8fr,1.1fr]">
           {/* ===== MAIN: SERVICES + LEAVE ===== */}
           <div className="space-y-4">
             {/* กล่อง: รายการบริการงานทะเบียน */}

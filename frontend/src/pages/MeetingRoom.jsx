@@ -107,7 +107,7 @@ export default function MeetingRoom() {
       </div>
 
       {/* Video Grid */}
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 overflow-auto">
+      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 overflow-auto">
         {/* Main Video - Current User */}
         <div className={`relative rounded-2xl overflow-hidden border-4 transition-all ${
           speakingUser?.id === user?.id ? 'border-green-500 shadow-lg shadow-green-500/50' : 'border-slate-700'
