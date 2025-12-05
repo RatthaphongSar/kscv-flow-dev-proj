@@ -29,6 +29,12 @@ export default function Home() {
   const [announcements, setAnnouncements] = useState([])
   const [loading, setLoading] = useState(true)
   
+  // state สำหรับ toggle sidebar sections
+  const [sidebarCollapsed, setSidebarCollapsed] = useState({
+    schedule: false,
+    about: false,
+  })
+  
   // state สำหรับ create announcement modal
   const [createAnnouncementModal, setCreateAnnouncementModal] = useState({
     open: false,
@@ -441,48 +447,76 @@ export default function Home() {
           <aside className="space-y-3">
             {/* Upcoming Schedule */}
             <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4">
-              <h3 className="text-sm font-semibold text-gray-100 mb-2">
-                ตารางเรียนใกล้ที่สุด
-              </h3>
-              {classes.length === 0 ? (
-                <p className="text-[11px] text-gray-500">ไม่มีรายวิชาในวันนี้</p>
-              ) : (
-                <div className="space-y-2">
-                  {classes.slice(0, 3).map((cls, idx) => (
-                    <div key={idx} className="flex items-start gap-2 p-2 rounded-lg border border-[#111827] bg-[#020617]">
-                      <div className="w-10 h-10 rounded bg-violet-600/20 flex items-center justify-center text-[11px] font-semibold text-violet-300">
-                        {idx + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[11px] font-semibold text-gray-200 truncate">{cls.code}</div>
-                        <div className="text-[10px] text-gray-500">{cls.name}</div>
-                      </div>
+              <button
+                onClick={() => setSidebarCollapsed(s => ({ ...s, schedule: !s.schedule }))}
+                className="w-full flex items-center justify-between mb-2 hover:opacity-80 transition-opacity"
+              >
+                <h3 className="text-sm font-semibold text-gray-100">
+                  ตารางเรียนใกล้ที่สุด
+                </h3>
+                <ChevronDown 
+                  size={16} 
+                  className={`text-gray-400 transition-transform ${sidebarCollapsed.schedule ? 'rotate-180' : ''}`}
+                />
+              </button>
+
+              {!sidebarCollapsed.schedule && (
+                <>
+                  {classes.length === 0 ? (
+                    <p className="text-[11px] text-gray-500">ไม่มีรายวิชาในวันนี้</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {classes.slice(0, 3).map((cls, idx) => (
+                        <div key={idx} className="flex items-start gap-2 p-2 rounded-lg border border-[#111827] bg-[#020617]">
+                          <div className="w-10 h-10 rounded bg-violet-600/20 flex items-center justify-center text-[11px] font-semibold text-violet-300">
+                            {idx + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[11px] font-semibold text-gray-200 truncate">{cls.code}</div>
+                            <div className="text-[10px] text-gray-500">{cls.name}</div>
+                          </div>
+                        </div>
+                      ))}
+                      {classes.length > 3 && (
+                        <a href="/classes" className="text-[11px] text-violet-300 hover:text-violet-200 flex items-center gap-1">
+                          ดูตารางเรียนทั้งหมด <ChevronRight size={11} />
+                        </a>
+                      )}
                     </div>
-                  ))}
-                  {classes.length > 3 && (
-                    <a href="/classes" className="text-[11px] text-violet-300 hover:text-violet-200 flex items-center gap-1">
-                      ดูตารางเรียนทั้งหมด <ChevronRight size={11} />
-                    </a>
                   )}
-                </div>
+                </>
               )}
             </div>
 
             {/* About */}
             <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4">
-              <h3 className="text-sm font-semibold text-gray-100 mb-1">
-                เกี่ยวกับวิทยาลัยอาชีวศึกษากาฬสินธุรกิจาฬสินธุ์
-              </h3>
-              <p className="text-[11px] text-gray-300 leading-relaxed">
-                วิทยาลัยอาชีวศึกษากาฬสินธุ์ (KVC) มุ่งเน้นการสร้างบุคลากรสายอาชีพ
-                ที่พร้อมสู่ตลาดแรงงานและการศึกษาต่อ
-                ผ่านหลักสูตรที่ทันสมัยและการเรียนรู้ผ่านสถานการณ์จริงร่วมกับสถานประกอบการ
-              </p>
-              <ul className="mt-2 text-[11px] text-gray-400 space-y-1 list-disc pl-4">
-                <li>สาขาวิชาครอบคลุมทั้งสายเทคโนโลยีและสายบริหารธุรกิจ</li>
-                <li>เน้น Project-based Learning และความร่วมมือกับภาคอุตสาหกรรม</li>
-                <li>สนับสนุนกิจกรรมชมรมและชุมชนการเรียนรู้ออนไลน์</li>
-              </ul>
+              <button
+                onClick={() => setSidebarCollapsed(s => ({ ...s, about: !s.about }))}
+                className="w-full flex items-center justify-between mb-1 hover:opacity-80 transition-opacity"
+              >
+                <h3 className="text-sm font-semibold text-gray-100">
+                  เกี่ยวกับวิทยาลัย
+                </h3>
+                <ChevronDown 
+                  size={16} 
+                  className={`text-gray-400 transition-transform ${sidebarCollapsed.about ? 'rotate-180' : ''}`}
+                />
+              </button>
+
+              {!sidebarCollapsed.about && (
+                <>
+                  <p className="text-[11px] text-gray-300 leading-relaxed">
+                    วิทยาลัยอาชีวศึกษากาฬสินธุ์ (KVC) มุ่งเน้นการสร้างบุคลากรสายอาชีพ
+                    ที่พร้อมสู่ตลาดแรงงานและการศึกษาต่อ
+                    ผ่านหลักสูตรที่ทันสมัยและการเรียนรู้ผ่านสถานการณ์จริงร่วมกับสถานประกอบการ
+                  </p>
+                  <ul className="mt-2 text-[11px] text-gray-400 space-y-1 list-disc pl-4">
+                    <li>สาขาวิชาครอบคลุมทั้งสายเทคโนโลยีและสายบริหารธุรกิจ</li>
+                    <li>เน้น Project-based Learning และความร่วมมือกับภาคอุตสาหกรรม</li>
+                    <li>สนับสนุนกิจกรรมชมรมและชุมชนการเรียนรู้ออนไลน์</li>
+                  </ul>
+                </>
+              )}
             </div>
 
 
