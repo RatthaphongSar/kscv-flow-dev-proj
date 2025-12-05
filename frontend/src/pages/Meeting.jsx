@@ -298,7 +298,7 @@ export default function MeetingPage() {
     <div className={`h-[calc(100vh-112px)] w-full bg-[#020617] text-gray-100 flex flex-col ${isJoined && joinedMeetingId ? 'pt-[60px]' : ''}`}>
       {/* Top navbar - Fixed position when user is in a meeting */}
       {isJoined && joinedMeetingId ? (
-        <div className="fixed top-[56px] left-0 right-0 z-50 bg-gradient-to-r from-slate-900 to-slate-800 border-b border-[#1f2937] px-4 py-3 flex items-center justify-between shadow-lg">
+        <div className="hidden lg:fixed lg:top-[56px] lg:left-0 lg:right-0 lg:z-50 lg:bg-gradient-to-r lg:from-slate-900 lg:to-slate-800 lg:border-b lg:border-[#1f2937] lg:px-4 lg:py-3 lg:flex lg:items-center lg:justify-between lg:shadow-lg">
           <div className="text-sm font-semibold text-white">
             ห้องประชุม: {selectedMeeting?.title}
           </div>
@@ -307,28 +307,37 @@ export default function MeetingPage() {
       ) : null}
 
       <div className="flex-1 overflow-hidden flex flex-col">
-        <div className="flex-1 px-4 py-4 rounded-2xl border border-[#1f2937] bg-[#020617] overflow-hidden flex flex-col lg:flex-row">
+        <div className="flex-1 px-2 sm:px-4 py-4 rounded-2xl border border-[#1f2937] bg-[#020617] overflow-hidden flex flex-col lg:flex-row lg:pt-0">
+          {/* Show video navbar on mobile inside the main area */}
+          {isJoined && joinedMeetingId && (
+            <div className="lg:hidden w-full bg-gradient-to-r from-slate-900 to-slate-800 border-b border-[#1f2937] px-3 py-2 flex items-center justify-between shadow-lg mb-2 rounded-lg shrink-0">
+              <div className="text-xs sm:text-sm font-semibold text-white truncate">
+                ห้องประชุม: {selectedMeeting?.title}
+              </div>
+              <VideoCallControls onEndCall={handleJoinLeave} isNavbar={true} />
+            </div>
+          )}
           {/* Sidebar: Filter + Upcoming list สั้น ๆ */}
-        <aside className="w-full lg:w-72 border-r border-[#1f2937] bg-[#020617] flex flex-col max-h-32 lg:max-h-none">
-          <div className="px-4 py-3 border-b border-[#1f2937]">
-            <h1 className="text-sm font-semibold text-gray-100">
+        <aside className="w-full lg:w-72 border-r border-[#1f2937] bg-[#020617] flex flex-col max-h-40 sm:max-h-48 lg:max-h-none mb-4 lg:mb-0">
+          <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-[#1f2937]">
+            <h1 className="text-xs sm:text-sm font-semibold text-gray-100">
               การนัดหมาย / Meeting
             </h1>
-            <p className="text-[11px] text-gray-400">
+            <p className="text-[10px] sm:text-[11px] text-gray-400">
               นัดหมายที่เกี่ยวกับรายวิชาและอาจารย์ที่ปรึกษา
             </p>
           </div>
 
           {/* Filters */}
-          <div className="px-4 py-3">
-            <p className="text-[11px] text-gray-400 mb-1.5">ช่วงเวลา</p>
-            <div className="flex gap-2 text-[11px]">
+          <div className="px-3 sm:px-4 py-2 sm:py-3">
+            <p className="text-[10px] sm:text-[11px] text-gray-400 mb-1.5">ช่วงเวลา</p>
+            <div className="flex gap-1 sm:gap-2 text-[10px] sm:text-[11px]">
               <button
                 type="button"
                 onClick={() => setFilter('all')}
-                className={`px-2 py-1 rounded-full border ${
+                className={`px-2 sm:px-2 py-0.5 sm:py-1 rounded-full border text-xs ${
                   filter === 'all'
-                    ? 'bg-violet-600 border-violet-500 text-white'
+                    ? 'bg-blue-600 border-blue-500 text-white'
                     : 'border-[#374151] text-gray-300 hover:bg-slate-800'
                 }`}
               >
@@ -337,9 +346,9 @@ export default function MeetingPage() {
               <button
                 type="button"
                 onClick={() => setFilter('today')}
-                className={`px-2 py-1 rounded-full border ${
+                className={`px-2 sm:px-2 py-0.5 sm:py-1 rounded-full border text-xs ${
                   filter === 'today'
-                    ? 'bg-violet-600 border-violet-500 text-white'
+                    ? 'bg-blue-600 border-blue-500 text-white'
                     : 'border-[#374151] text-gray-300 hover:bg-slate-800'
                 }`}
               >
@@ -348,25 +357,25 @@ export default function MeetingPage() {
               <button
                 type="button"
                 onClick={() => setFilter('week')}
-                className={`px-2 py-1 rounded-full border ${
+                className={`px-2 sm:px-2 py-0.5 sm:py-1 rounded-full border text-xs ${
                   filter === 'week'
-                    ? 'bg-violet-600 border-violet-500 text-white'
+                    ? 'bg-blue-600 border-blue-500 text-white'
                     : 'border-[#374151] text-gray-300 hover:bg-slate-800'
                 }`}
               >
-                ภายในสัปดาห์นี้
+                ภายในสัปดาห์
               </button>
             </div>
           </div>
 
           {/* รายการ Upcoming สั้น ๆ */}
-          <div className="px-4 pb-3 text-[11px] text-gray-400">
+          <div className="px-3 sm:px-4 pb-2 sm:pb-3 text-[10px] sm:text-[11px] text-gray-400">
             รวม {filteredMeetings.length} นัดหมาย
           </div>
 
-          <div className="flex-1 overflow-y-auto px-2 pb-3 space-y-1">
+          <div className="flex-1 overflow-y-auto px-2 sm:px-2 pb-2 sm:pb-3 space-y-0.5 sm:space-y-1">
             {filteredMeetings.length === 0 && (
-              <div className="text-[11px] text-gray-500 px-2">
+              <div className="text-[10px] sm:text-[11px] text-gray-500 px-2">
                 ยังไม่มีการนัดหมายในช่วงเวลานี้
               </div>
             )}
@@ -378,22 +387,22 @@ export default function MeetingPage() {
                   key={m.id}
                   type="button"
                   onClick={() => setSelectedId(m.id)}
-                  className={`w-full text-left rounded-lg px-3 py-2 text-xs mb-1 transition
+                  className={`w-full text-left rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs mb-0.5 sm:mb-1 transition
                     ${
                       active
-                        ? 'bg-violet-600 text-white'
+                        ? 'bg-blue-600 text-white'
                         : 'bg-transparent text-gray-200 hover:bg-slate-800'
                     }`}
                 >
-                  <div className="font-semibold text-[13px] truncate">
+                  <div className="font-semibold text-xs sm:text-[13px] truncate">
                     {m.title}
                   </div>
-                  <div className="text-[11px] text-gray-300 truncate">
+                  <div className="text-[10px] sm:text-[11px] text-gray-300 truncate">
                     {m.course}
                   </div>
-                  <div className="flex items-center justify-between text-[10px] text-gray-400 mt-1">
+                  <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-gray-400 mt-0.5 sm:mt-1">
                     <span>{formatDateLabel(m.date)}</span>
-                    <span>
+                    <span className="text-[8px] sm:text-[10px]">
                       {m.start} - {m.end}
                     </span>
                   </div>
@@ -608,39 +617,38 @@ export default function MeetingPage() {
 
       {/* ===== POPUP ห้องประชุม / สไลด์ ===== */}
       {isJoined && showRoomModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="w-full max-w-5xl max-h-[90vh] bg-[#020617] border border-[#1f2937] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center bg-black/60 p-0 lg:p-4">
+          <div className="w-full lg:max-w-5xl max-h-[90vh] bg-[#020617] border lg:border border-[#1f2937] rounded-t-2xl lg:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
             {/* Header popup */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#1f2937] flex-shrink-0">
-              <div className="text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-gray-100">
+            <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 border-b border-[#1f2937] flex-shrink-0 bg-gradient-to-r from-slate-900 to-slate-800">
+              <div className="text-xs min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs sm:text-sm font-semibold text-gray-100">
                     ห้องประชุม – {selectedMeeting?.title}
                   </span>
-                  <span className="text-[11px] text-gray-400">
+                  <span className="text-[10px] sm:text-[11px] text-gray-400">
                     {selectedMeeting &&
                       `${formatDateLabel(selectedMeeting.date)} · ${
                         selectedMeeting.start
                       } - ${selectedMeeting.end}`}
                   </span>
                 </div>
-                <div className="text-[11px] text-gray-500">
-                  ผู้เข้าร่วม {participantsCount} / {MAX_PARTICIPANTS} คน ·
-                  ยกมือแล้ว {handsRaisedCount} คน (จำลอง)
+                <div className="text-[9px] sm:text-[11px] text-gray-500 mt-1">
+                  ผู้เข้าร่วม {participantsCount} / {MAX_PARTICIPANTS} คน · ยกมือแล้ว {handsRaisedCount} คน
                 </div>
                 {presentationStartAt && (
-                  <div className="text-[11px] text-violet-300 mt-1">
+                  <div className="text-[9px] sm:text-[11px] text-blue-300 mt-1">
                     เริ่มนำเสนอเวลา{' '}
                     {presentationStartAt.toLocaleTimeString('th-TH', {
                       hour: '2-digit',
                       minute: '2-digit',
                     })}{' '}
-                    น. (เวลาที่เริ่มแชร์สไลด์ – mock)
+                    น.
                   </div>
                 )}
               </div>
               <button
-                className="p-2 rounded-lg hover:bg-slate-800 flex-shrink-0"
+                className="p-1.5 sm:p-2 rounded-lg hover:bg-slate-700 flex-shrink-0"
                 onClick={() => setShowRoomModal(false)}
               >
                 <X size={16} className="text-gray-300" />
@@ -648,135 +656,130 @@ export default function MeetingPage() {
             </div>
 
             {/* Body popup */}
-            <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
               {/* Left: Slide area */}
-              <div className="flex-1 p-4 md:p-5 flex flex-col gap-3 overflow-y-auto">
-                <div className="flex items-center justify-between text-xs mb-1 flex-shrink-0">
+              <div className="flex-1 p-2 sm:p-3 lg:p-4 lg:p-5 flex flex-col gap-2 sm:gap-3 overflow-y-auto min-h-0">
+                <div className="flex items-center justify-between text-xs mb-0.5 sm:mb-1 flex-shrink-0">
                   <div className="flex items-center gap-1 text-gray-200">
-                    <FileText size={14} className="text-violet-400" />
-                    <span>การนำเสนอสไลด์</span>
+                    <FileText size={12} sm:size={14} className="text-blue-400" />
+                    <span className="text-xs sm:text-sm">สไลด์</span>
                   </div>
-                  <span className="text-[11px] text-gray-400">
-                    สไลด์ {currentSlide} / {TOTAL_SLIDES}
+                  <span className="text-[10px] sm:text-[11px] text-gray-400">
+                    {currentSlide} / {TOTAL_SLIDES}
                   </span>
                 </div>
 
                 <div
                   className="
                     flex-1
-                    rounded-2xl
-                    bg-gradient-to-br from-violet-900/70 via-slate-900 to-slate-950
-                    border border-violet-700/40
+                    rounded-xl sm:rounded-2xl
+                    bg-gradient-to-br from-blue-900/70 via-slate-900 to-slate-950
+                    border border-blue-700/40
                     flex items-center justify-center
-                    text-[12px] md:text-[13px] text-violet-100 text-center px-6
-                    min-h-[260px] md:min-h-[360px] lg:min-h-[420px]
+                    text-[11px] sm:text-[12px] md:text-[13px] text-blue-100 text-center px-3 sm:px-6
+                    min-h-[180px] sm:min-h-[240px] md:min-h-[320px] lg:min-h-[420px]
                   "
                 >
                   {isPresenting
-                    ? 'กำลังนำเสนอสไลด์ให้ทุกคนในห้อง (UI จำลอง – ภายหลังสามารถแสดง preview จากไฟล์จริงได้)'
-                    : 'ยังไม่ได้เริ่มนำเสนอสไลด์ · คลิก "เริ่มนำเสนอ" เพื่อเริ่มแชร์สไลด์ให้ผู้เข้าร่วมทั้งหมด'}
+                    ? 'กำลังนำเสนอสไลด์'
+                    : 'คลิก "เริ่มนำเสนอ" เพื่อเริ่ม'}
                 </div>
 
                 {/* Slide controls */}
-                <div className="flex flex-wrap items-center gap-2 text-[11px] mt-2 flex-shrink-0">
+                <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-[10px] sm:text-[11px] mt-1 sm:mt-2 flex-shrink-0">
                   <button
                     onClick={togglePresentation}
-                    className={`px-3 py-1.5 rounded-md border ${
+                    className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-md border text-xs ${
                       isPresenting
                         ? 'bg-red-600/90 border-red-500 text-white hover:bg-red-500'
-                        : 'bg-violet-600/90 border-violet-500 text-white hover:bg-violet-500'
+                        : 'bg-blue-600/90 border-blue-500 text-white hover:bg-blue-500'
                     }`}
                   >
-                    {isPresenting ? 'หยุดนำเสนอ' : 'เริ่มนำเสนอ'}
+                    {isPresenting ? 'หยุด' : 'เริ่ม'}
                   </button>
                   <button
                     onClick={goPrevSlide}
                     disabled={!isPresenting || currentSlide === 1}
-                    className="px-3 py-1.5 rounded-md border border-[#374151] text-gray-200 hover:bg-slate-900 disabled:opacity-40 disabled:hover:bg-transparent"
+                    className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-md border border-[#374151] text-gray-200 hover:bg-slate-900 disabled:opacity-40 disabled:hover:bg-transparent text-xs"
                   >
-                    ก่อนหน้า
+                    ก่อน
                   </button>
                   <button
                     onClick={goNextSlide}
                     disabled={!isPresenting || currentSlide === TOTAL_SLIDES}
-                    className="px-3 py-1.5 rounded-md border border-[#374151] text-gray-200 hover:bg-slate-900 disabled:opacity-40 disabled:hover:bg-transparent"
+                    className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-md border border-[#374151] text-gray-200 hover:bg-slate-900 disabled:opacity-40 disabled:hover:bg-transparent text-xs"
                   >
                     ถัดไป
                   </button>
-                  <span className="text-[10px] text-gray-500">
-                    * ภายหลังสามารถเชื่อมต่อกับระบบอัปโหลดไฟล์ PowerPoint / PDF
-                    จริง และ sync ให้ทุก device ได้
+                  <span className="text-[9px] sm:text-[10px] text-gray-500 ml-1 sm:ml-2">
+                    * การนำเสนอสไลด์จำลอง
                   </span>
                 </div>
               </div>
 
               {/* Right controls – คุมสิทธิ์ / log / เชิญคน */}
-              <div className="w-full md:w-60 border-t md:border-t-0 md:border-l border-[#1f2937] p-4 space-y-3 text-xs overflow-y-auto flex flex-col">
+              <div className="w-full lg:w-60 lg:min-w-0 border-t lg:border-t-0 lg:border-l border-[#1f2937] p-2 sm:p-3 lg:p-4 space-y-2 sm:space-y-3 text-xs overflow-y-auto flex flex-col max-h-48 lg:max-h-none lg:min-h-0">
                 {/* Mic */}
-                <div className="space-y-1 flex-shrink-0">
-                  <div className="text-[11px] text-gray-400">ไมโครโฟน</div>
-                  <div className="flex items-center justify-between gap-2">
+                <div className="space-y-0.5 sm:space-y-1 flex-shrink-0">
+                  <div className="text-[10px] sm:text-[11px] text-gray-400">ไมโครโฟน</div>
+                  <div className="flex items-center justify-between gap-1 sm:gap-2 flex-wrap">
                     <button
                       onClick={toggleMic}
-                      className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md bg-slate-900 border border-slate-700 hover:bg-slate-800"
+                      className="flex-1 min-w-0 flex items-center justify-center gap-1 px-1.5 sm:px-2 py-1 sm:py-1.5 rounded-md bg-slate-900 border border-slate-700 hover:bg-slate-800 text-xs"
                     >
                       <Mic
-                        size={13}
+                        size={12}
                         className={micOn ? 'text-emerald-400' : 'text-red-400'}
                       />
-                      <span>{micOn ? 'ปิดไมค์' : 'เปิดไมค์'}</span>
+                      <span className="hidden sm:inline text-xs">{micOn ? 'ปิด' : 'เปิด'}</span>
                     </button>
                     <span
-                      className={`px-2 py-1 rounded-full border text-[10px] ${
+                      className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full border text-[9px] sm:text-[10px] shrink-0 ${
                         micOn
                           ? 'border-emerald-400 text-emerald-200'
                           : 'border-red-400 text-red-200'
                       }`}
                     >
-                      ไมค์{micOn ? 'เปิดอยู่' : 'ปิดอยู่'}
+                      {micOn ? 'เปิด' : 'ปิด'}
                     </span>
                   </div>
                 </div>
 
                 {/* Hand raise */}
-                <div className="space-y-1 flex-shrink-0">
-                  <div className="text-[11px] text-gray-400">
-                    การยกมือขอพูด
-                  </div>
-                  <div className="flex items-center justify-between gap-2">
+                <div className="space-y-0.5 sm:space-y-1 flex-shrink-0">
+                  <div className="text-[10px] sm:text-[11px] text-gray-400">ยกมือ</div>
+                  <div className="flex items-center justify-between gap-1 sm:gap-2 flex-wrap">
                     <button
                       onClick={toggleHand}
-                      className={`flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-md border text-[11px] ${
+                      className={`flex-1 min-w-0 inline-flex items-center justify-center gap-1 px-1.5 sm:px-2 py-1 sm:py-1.5 rounded-md border text-xs ${
                         handRaised
                           ? 'border-amber-400 bg-amber-500/20 text-amber-200'
                           : 'border-[#374151] bg-slate-900 text-gray-200 hover:bg-slate-800'
                       }`}
                     >
-                      <Hand size={13} />
-                      {handRaised ? 'ลดมือ' : 'ยกมือขอพูด'}
+                      <Hand size={12} />
+                      <span className="hidden sm:inline text-xs">{handRaised ? 'ลด' : 'ยก'}</span>
                     </button>
-                    <span className="text-[10px] text-gray-400">
-                      ยกมือแล้ว {handsRaisedCount} คน
+                    <span className="text-[9px] sm:text-[10px] text-gray-400 shrink-0">
+                      {handsRaisedCount} คน
                     </span>
                   </div>
                 </div>
 
                 {/* Invite user (mock) */}
-                <div className="space-y-1 flex-shrink-0">
-                  <div className="text-[11px] text-gray-400">
-                    เชิญผู้เข้าร่วม (mock)
-                  </div>
-                  <div className="flex items-center gap-2">
+                <div className="space-y-0.5 sm:space-y-1 flex-shrink-0">
+                  <div className="text-[10px] sm:text-[11px] text-gray-400">เชิญ</div>
+                  <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                     <input
                       value={inviteName}
                       onChange={(e) => setInviteName(e.target.value)}
-                      placeholder="พิมพ์ชื่อ / รหัสนักศึกษา..."
-                      className="flex-1 bg-[#020617] border border-[#374151] rounded-md px-2 py-1.5 text-[11px] text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                      placeholder="ชื่อ..."
+                      className="flex-1 min-w-0 bg-[#020617] border border-[#374151] rounded-md px-1.5 sm:px-2 py-1 sm:py-1.5 text-[10px] sm:text-[11px] text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                     <button
                       onClick={handleInvite}
                       disabled={!inviteName.trim()}
-                      className="px-3 py-1.5 rounded-md border border-[#374151] text-[11px] hover:bg-slate-900 disabled:opacity-40"
+                      className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-md border border-[#374151] text-[10px] sm:text-[11px] hover:bg-slate-900 disabled:opacity-40 shrink-0"
                     >
                       เชิญ
                     </button>
@@ -784,30 +787,24 @@ export default function MeetingPage() {
                 </div>
 
                 {/* Info + event log */}
-                <div className="text-[10px] text-gray-500 pt-2 border-t border-[#1f2937] space-y-2 flex-1 flex flex-col">
-                  <div className="flex-shrink-0">
-                    * หน้านี้เป็น UI จำลองสำหรับห้อง Meeting / นำเสนอสไลด์
-                    เมื่อเชื่อมต่อ Backend จริง สามารถ:
-                    <ul className="list-disc list-inside mt-1 space-y-0.5">
-                      <li>ดึงรายชื่อผู้เข้าร่วมและสถานะไมค์จริง</li>
-                      <li>อัปโหลดไฟล์สไลด์และ sync ลำดับหน้า</li>
-                      <li>รับ event การยกมือ / chat ผ่าน WebSocket</li>
-                    </ul>
+                <div className="text-[9px] sm:text-[10px] text-gray-500 pt-1 sm:pt-2 border-t border-[#1f2937] space-y-1 sm:space-y-2 flex-1 flex flex-col min-h-0">
+                  <div className="flex-shrink-0 line-clamp-3">
+                    * ห้องประชุมจำลอง (UI demo)
                   </div>
 
-                  <div className="border border-[#1f2937] rounded-lg overflow-y-auto px-2 py-1.5 flex-1 min-h-0">
-                    <div className="text-[11px] text-gray-400 mb-1 sticky top-0 bg-[#020617]">
-                      กิจกรรมในห้อง (Notify เข้า–ออก / นำเสนอ)
+                  <div className="border border-[#1f2937] rounded-lg overflow-y-auto px-1.5 sm:px-2 py-1 sm:py-1.5 flex-1 min-h-0">
+                    <div className="text-[9px] sm:text-[10px] text-gray-400 mb-0.5 sticky top-0 bg-[#020617]">
+                      กิจกรรม
                     </div>
                     {roomEvents.length === 0 ? (
-                      <div className="text-[10px] text-gray-500">
-                        ยังไม่มีกิจกรรมในห้อง
+                      <div className="text-[9px] text-gray-500">
+                        ยังไม่มีกิจกรรม
                       </div>
                     ) : (
                       roomEvents.map((ev) => (
                         <div
                           key={ev.id}
-                          className="flex gap-2 text-[10px] text-gray-300 mb-1"
+                          className="flex gap-1 text-[8px] sm:text-[9px] text-gray-300 mb-0.5"
                         >
                           <span className="text-gray-500 shrink-0">
                             {ev.time.toLocaleTimeString('th-TH', {
@@ -824,11 +821,11 @@ export default function MeetingPage() {
 
                 {/* Leave from popup */}
                 <button
-                  className="w-full text-xs py-2 rounded-lg flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white flex-shrink-0"
+                  className="w-full text-xs sm:text-sm py-1.5 sm:py-2 rounded-lg flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white flex-shrink-0"
                   onClick={handleJoinLeave}
                 >
-                  <PhoneOff size={14} />
-                  ออกจากห้อง Meeting (จำลอง)
+                  <PhoneOff size={13} />
+                  ออกจากห้อง
                 </button>
               </div>
             </div>
