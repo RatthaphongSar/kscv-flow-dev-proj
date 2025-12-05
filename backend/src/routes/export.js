@@ -1,11 +1,11 @@
 import { Router } from 'express'
 import * as ctrl from '../controllers/export.js'
-import { authenticateJWT } from '../middleware/auth.js'
+import { authRequired } from '../middleware/auth.js'
 
 const router = Router()
 
 // All export routes require authentication
-router.use(authenticateJWT)
+router.use(authRequired)
 
 /**
  * Export academic transcript as PDF
