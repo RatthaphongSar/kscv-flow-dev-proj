@@ -1,5 +1,7 @@
 // frontend/src/pages/Home.jsx
 import { useState, useEffect } from 'react'
+import { useAuth } from '../context/AuthContext'
+import { classApi } from '../api/classApi'
 import {
   Search,
   ChevronRight,
@@ -12,6 +14,10 @@ import {
   Link2,
   Copy,
   Pin,
+  Calendar,
+  Clock,
+  BookOpen,
+  AlertCircle,
 } from 'lucide-react'
 import Slider from 'react-slick'
 import CampusMap from '../components/CampusMap'
@@ -132,6 +138,12 @@ const courses = [
 ]
 
 export default function Home() {
+  const { user } = useAuth()
+  const [classes, setClasses] = useState([])
+  const [upcomingMeetings, setUpcomingMeetings] = useState([])
+  const [announcements, setAnnouncements] = useState([])
+  const [loading, setLoading] = useState(true)
+  
   const [feedState, setFeedState] = useState(() =>
     Object.fromEntries(
       posts.map((p) => [
@@ -157,6 +169,35 @@ export default function Home() {
   const [openCommentsPostId, setOpenCommentsPostId] = useState(null)
   const [expandedCommentsPostId, setExpandedCommentsPostId] = useState(null)
   const [commentDrafts, setCommentDrafts] = useState({})
+
+  // Load user data on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true)
+        
+        // Fetch classes
+        if (user?.role === 'student') {
+          const classesData = await classApi.getClasses()
+          setClasses(classesData?.slice(0, 5) || [])
+        }
+        
+        // TODO: Fetch upcoming meetings from meetings API
+        // setUpcomingMeetings(...)
+        
+        // TODO: Fetch announcements from announcements API
+        // setAnnouncements(...)
+      } catch (err) {
+        console.error('Error loading home data:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    if (user) {
+      loadData()
+    }
+  }, [user])
 
   const sliderSettings = {
     dots: true,
@@ -303,6 +344,56 @@ export default function Home() {
   return (
     <div className="w-full bg-[#020617] text-gray-100 px-4 py-4">
       <div className="w-full flex flex-col gap-5">
+        
+        {/* ===== WELCOME GREETING ===== */}
+        <div className="rounded-2xl border border-[#1f2937] bg-gradient-to-r from-violet-600/20 to-indigo-600/20 p-4">
+          <p className="text-sm text-gray-200">
+            สวัสดี{user?.fullname ? `, ${user.fullname}` : ''} 👋
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            {user?.role === 'student' 
+              ? 'ยินดีต้อนรับกลับมายังพอร์ทัลนักศึกษา' 
+              : user?.role === 'teacher'
+              ? 'ยินดีต้อนรับกลับมายังพอร์ทัลอาจารย์'
+              : 'ยินดีต้อนรับกลับมายังพอร์ทัลระบบ'}
+          </p>
+        </div>
+
+        {/* ===== QUICK STATUS / TODAY'S SCHEDULE ===== */}
+        {user?.role === 'student' && (
+          <div className="grid gap-3 md:grid-cols-3">
+            {/* Classes Today */}
+            <div className="rounded-xl border border-[#1f2937] bg-[#020617] p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Calendar size={14} className="text-violet-400" />
+                <h3 className="text-xs font-semibold">ชั้นเรียนวันนี้</h3>
+              </div>
+              <p className="text-2xl font-bold text-gray-100">{classes.length || 0}</p>
+              <p className="text-[11px] text-gray-500">รายวิชาที่เรียน</p>
+            </div>
+
+            {/* Attendance */}
+            <div className="rounded-xl border border-[#1f2937] bg-[#020617] p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock size={14} className="text-emerald-400" />
+                <h3 className="text-xs font-semibold">การเช็คชื่อ</h3>
+              </div>
+              <p className="text-2xl font-bold text-gray-100">89%</p>
+              <p className="text-[11px] text-gray-500">อัตราการเข้าเรียน</p>
+            </div>
+
+            {/* Assignments */}
+            <div className="rounded-xl border border-[#1f2937] bg-[#020617] p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <BookOpen size={14} className="text-amber-400" />
+                <h3 className="text-xs font-semibold">งานที่มอบหมาย</h3>
+              </div>
+              <p className="text-2xl font-bold text-gray-100">3</p>
+              <p className="text-[11px] text-gray-500">งานที่ยังไม่ส่ง</p>
+            </div>
+          </div>
+        )}
+
         {/* ===== HERO + SLIDER / MAP ===== */}
         <div className="grid gap-4 lg:grid-cols-3">
           {/* Hero Left */}
@@ -444,6 +535,19 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* ===== IMPORTANT ALERTS ===== */}
+        {user?.role === 'student' && (
+          <div className="rounded-2xl border border-amber-600/50 bg-amber-600/10 p-4 flex gap-3">
+            <AlertCircle size={16} className="text-amber-400 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-amber-200">การลาจากการเรียน</p>
+              <p className="text-xs text-amber-100 mt-1">
+                คุณมีใบลาที่ยังไม่ได้รับอนุมัติ 1 ใบ - <a href="/leaves" className="underline hover:no-underline">ดูรายละเอียด</a>
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* ===== MAIN CONTENT: FEED + SIDEBAR ===== */}
         <div className="grid gap-4 lg:grid-cols-[2fr,1.15fr]">
@@ -679,6 +783,64 @@ export default function Home() {
 
           {/* SIDEBAR */}
           <aside className="space-y-3">
+            {/* Quick Stats & Menu */}
+            <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4">
+              <h3 className="text-sm font-semibold text-gray-100 mb-3">
+                ลิงก์ด่วน
+              </h3>
+              <div className="space-y-2">
+                <a href="/classes" className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-800 border border-transparent hover:border-[#1f2937]">
+                  <span className="text-[11px] text-gray-300">📚 ห้องเรียน & รายวิชา</span>
+                  <ChevronRight size={12} className="text-gray-500" />
+                </a>
+                <a href="/meetings" className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-800 border border-transparent hover:border-[#1f2937]">
+                  <span className="text-[11px] text-gray-300">📹 ห้องประชุม / บรรยายเสริม</span>
+                  <ChevronRight size={12} className="text-gray-500" />
+                </a>
+                <a href="/assignments" className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-800 border border-transparent hover:border-[#1f2937]">
+                  <span className="text-[11px] text-gray-300">✏️ งานที่มอบหมาย</span>
+                  <ChevronRight size={12} className="text-gray-500" />
+                </a>
+                <a href="/leaves" className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-800 border border-transparent hover:border-[#1f2937]">
+                  <span className="text-[11px] text-gray-300">🏥 การลา / ลาป่วย</span>
+                  <ChevronRight size={12} className="text-gray-500" />
+                </a>
+                <a href="/checkline" className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-800 border border-transparent hover:border-[#1f2937]">
+                  <span className="text-[11px] text-gray-300">✅ เช็คชื่อ / ปฏิทิน</span>
+                  <ChevronRight size={12} className="text-gray-500" />
+                </a>
+              </div>
+            </div>
+
+            {/* Upcoming Schedule */}
+            <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4">
+              <h3 className="text-sm font-semibold text-gray-100 mb-2">
+                ตารางเรียนใกล้ที่สุด
+              </h3>
+              {classes.length === 0 ? (
+                <p className="text-[11px] text-gray-500">ไม่มีรายวิชาในวันนี้</p>
+              ) : (
+                <div className="space-y-2">
+                  {classes.slice(0, 3).map((cls, idx) => (
+                    <div key={idx} className="flex items-start gap-2 p-2 rounded-lg border border-[#111827] bg-[#020617]">
+                      <div className="w-10 h-10 rounded bg-violet-600/20 flex items-center justify-center text-[11px] font-semibold text-violet-300">
+                        {idx + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[11px] font-semibold text-gray-200 truncate">{cls.code}</div>
+                        <div className="text-[10px] text-gray-500">{cls.name}</div>
+                      </div>
+                    </div>
+                  ))}
+                  {classes.length > 3 && (
+                    <a href="/classes" className="text-[11px] text-violet-300 hover:text-violet-200 flex items-center gap-1">
+                      ดูตารางเรียนทั้งหมด <ChevronRight size={11} />
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* About */}
             <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4">
               <h3 className="text-sm font-semibold text-gray-100 mb-1">
