@@ -114,7 +114,7 @@ export default function ChatSidebar({
       {/* Modal สร้างห้อง (หน้าต่างเล็ก) */}
       {isCreateOpen && (
         <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
-          <div className="w-80 rounded-xl bg-[#020617] border border-[#1f2937] shadow-xl p-4">
+          <div className="w-80 h-[70vh] max-h-96 rounded-xl bg-[#020617] border border-[#1f2937] shadow-xl p-4 flex flex-col">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold">สร้างห้องแชทใหม่</h3>
               <button
@@ -126,7 +126,7 @@ export default function ChatSidebar({
               </button>
             </div>
 
-            <form className="space-y-3" onSubmit={handleSubmitCreate}>
+            <form className="space-y-3 flex-1 overflow-y-auto" onSubmit={handleSubmitCreate}>
               <div>
                 <label className="block text-[11px] mb-1 text-gray-300">
                   ชื่อห้อง
@@ -168,7 +168,7 @@ export default function ChatSidebar({
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-1">
+              <div className="flex justify-end gap-2 pt-1 mt-auto">
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
