@@ -522,13 +522,13 @@ export class ClassService {
   }
 
   async createAnnouncement(data) {
-    return prisma.announcementPin.create({
+    return prisma.announcement.create({
       data,
     });
   }
 
   async getAnnouncements(classId) {
-    return prisma.announcementPin.findMany({
+    return prisma.announcement.findMany({
       where: { classId },
       orderBy: { createdAt: 'desc' },
     });
