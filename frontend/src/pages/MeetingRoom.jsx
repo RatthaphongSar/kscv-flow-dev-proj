@@ -15,6 +15,7 @@ export default function MeetingRoom() {
   const [participants, setParticipants] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [speakingUser, setSpeakingUser] = useState(null)
 
   useEffect(() => {
     const loadMeetingData = async () => {
@@ -35,6 +36,20 @@ export default function MeetingRoom() {
 
     loadMeetingData()
   }, [meetingId])
+
+  // Simulate speaking detection
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (participants.length > 0) {
+        const randomParticipant = participants[Math.floor(Math.random() * participants.length)]
+        if (Math.random() > 0.6) {
+          setSpeakingUser(randomParticipant)
+          setTimeout(() => setSpeakingUser(null), 1000)
+        }
+      }
+    }, 2000)
+    return () => clearInterval(interval)
+  }, [participants])
 
   const handleEndCall = async () => {
     try {
@@ -71,53 +86,66 @@ export default function MeetingRoom() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 pb-40">
-      {/* Video Feed Area */}
-      <div className="relative w-full h-screen bg-slate-900 border-b border-slate-700/50">
-        {/* Main Video Window */}
-        <div className="flex items-center justify-center w-full h-full bg-gradient-to-b from-slate-800 to-slate-900">
-          <div className="relative">
-            <img
-              src="https://via.placeholder.com/800x600?text=Video+Feed"
-              alt="Video feed"
-              className="w-96 h-72 rounded-lg object-cover"
-            />
-            <div className="absolute bottom-4 left-4 bg-slate-950/80 px-3 py-1 rounded text-xs text-foreground backdrop-blur">
-              {user?.username || 'You'}
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      {/* Video Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 pb-48">
+        {/* Main Video - Current User */}
+        <div className={`relative rounded-2xl overflow-hidden border-4 transition-all ${
+          speakingUser?.id === user?.id ? 'border-green-500 shadow-lg shadow-green-500/50' : 'border-slate-700'
+        }`}>
+          <img
+            src="https://via.placeholder.com/400x300?text=You"
+            alt="Your video"
+            className="w-full h-80 object-cover"
+          />
+          <div className="absolute bottom-4 left-4 bg-slate-950/80 px-4 py-2 rounded-lg text-sm text-foreground backdrop-blur">
+            {user?.username || 'You'} (You)
           </div>
+          {speakingUser?.id === user?.id && (
+            <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold animate-pulse">
+              🎤 Speaking
+            </div>
+          )}
         </div>
 
-        {/* Participants Panel */}
-        {participants.length > 0 && (
-          <div className="absolute top-4 right-4 bg-slate-950/80 backdrop-blur rounded-lg p-4 border border-slate-700/50 max-w-xs">
-            <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-700/50">
-              <Users size={18} className="text-primary" />
-              <span className="text-sm font-medium text-foreground">
-                {participants.length} Participant{participants.length !== 1 ? 's' : ''}
-              </span>
+        {/* Participant Videos */}
+        {participants.map((participant, index) => (
+          <div
+            key={participant.id}
+            className={`relative rounded-2xl overflow-hidden border-4 transition-all ${
+              speakingUser?.id === participant.id ? 'border-green-500 shadow-lg shadow-green-500/50' : 'border-slate-700'
+            }`}
+          >
+            <img
+              src={`https://via.placeholder.com/400x300?text=Participant+${index + 1}`}
+              alt={`${participant.username || participant.name}'s video`}
+              className="w-full h-80 object-cover"
+            />
+            <div className="absolute bottom-4 left-4 bg-slate-950/80 px-4 py-2 rounded-lg text-sm text-foreground backdrop-blur">
+              {participant.username || participant.name}
             </div>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
-              {participants.map((participant) => (
-                <div
-                  key={participant.id}
-                  className="flex items-center gap-2 p-2 bg-slate-800/50 rounded text-xs"
-                >
-                  <div className="w-2 h-2 bg-green-500 rounded-full" />
-                  <span className="text-foreground">{participant.username || participant.name}</span>
-                </div>
-              ))}
-            </div>
+            {speakingUser?.id === participant.id && (
+              <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold animate-pulse">
+                🎤 Speaking
+              </div>
+            )}
+            {/* Audio indicator animation */}
+            {speakingUser?.id === participant.id && (
+              <div className="absolute inset-0 border-4 border-green-500 rounded-2xl animate-pulse pointer-events-none" />
+            )}
           </div>
-        )}
+        ))}
+      </div>
 
-        {/* Meeting Info */}
-        <div className="absolute top-4 left-4 bg-slate-950/80 backdrop-blur rounded-lg p-4 border border-slate-700/50 max-w-sm">
-          <h2 className="text-lg font-bold text-foreground mb-2">{meeting?.title}</h2>
-          <p className="text-xs text-muted-foreground">{meeting?.description}</p>
-          {meeting?.class && (
-            <p className="text-xs text-primary mt-2">{meeting.class.name}</p>
-          )}
+      {/* Meeting Info Card - Floating */}
+      <div className="fixed top-6 left-6 bg-slate-950/80 backdrop-blur rounded-2xl p-6 border border-slate-700/50 max-w-sm z-40">
+        <h2 className="text-lg font-bold text-foreground mb-2">{meeting?.title}</h2>
+        <p className="text-xs text-muted-foreground mb-4">{meeting?.description}</p>
+        <div className="flex items-center gap-3 pt-4 border-t border-slate-700/50">
+          <Users size={18} className="text-primary" />
+          <span className="text-sm text-foreground">
+            {participants.length + 1} Participants
+          </span>
         </div>
       </div>
 
