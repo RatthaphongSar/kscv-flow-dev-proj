@@ -4,6 +4,7 @@ import { Router } from 'express'
 // === รวม route ย่อยทั้งหมดของระบบ ===
 // (มีอะไรอยู่แล้วคงไว้ได้ตามเดิม เพิ่ม chatRoutes เข้าไป)
 import advisorRoutes from './advisor.js'
+import announcementsRoutes from './announcements.js'
 import assignmentsRoutes from './assignments.js'
 import attendanceRoutes from './attendance.js'
 import authRoutes from './auth.js'
@@ -23,6 +24,7 @@ import organizationRoutes from './organization.js'
 import registerRoutes from './register.js'
 import resourcesRoutes from './resources.js'
 import scheduleRoutes from './schedule.js'
+import servicesRoutes from './services.js'
 import settingsRoutes from './settings.js'
 import usersRoutes from './users.js'
 
@@ -33,6 +35,7 @@ const router = Router()
 
 // mount ตาม base path ที่ต้องการ
 router.use('/advisor', advisorRoutes)
+router.use('/announcements', announcementsRoutes)
 router.use('/assignments', assignmentsRoutes)
 router.use('/attendance', attendanceRoutes)
 router.use('/auth', authRoutes)
@@ -51,6 +54,7 @@ router.use('/organization', organizationRoutes)
 router.use('/register', registerRoutes)
 router.use('/resources', resourcesRoutes)
 router.use('/schedule', scheduleRoutes)
+router.use('/services', servicesRoutes)
 router.use('/settings', settingsRoutes)
 router.use('/users', usersRoutes)
 router.use('/submissions', submissionRoutes)

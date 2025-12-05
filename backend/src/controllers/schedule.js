@@ -14,7 +14,7 @@ export const getSchedule = async (req, res, next) => {
 
     const schedules = await prisma.schedule.findMany({
       where,
-      include: { class: { select: { name: true, major: true } } },
+      include: { class: { select: { name: true, code: true, section: true } } },
       orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }]
     })
 
