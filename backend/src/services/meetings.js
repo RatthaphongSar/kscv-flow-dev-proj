@@ -195,8 +195,9 @@ export const startMeeting = async (meetingId, teacherId) => {
     throw new Error('Only the meeting creator can start this meeting');
   }
 
-  if (meeting.status !== 'scheduled') {
-    throw new Error('Can only start a scheduled meeting');
+  // Allow starting from scheduled or any non-terminal status
+  if (meeting.status === 'completed' || meeting.status === 'cancelled') {
+    throw new Error(`Cannot start a ${meeting.status} meeting`);
   }
 
   const updated = await prisma.meeting.update({
