@@ -1,0 +1,56 @@
+import { api } from './config'
+
+export const announcementApi = {
+  /**
+   * Get announcements with optional filters
+   */
+  async getAnnouncements(classId?: string, skip?: number, take?: number) {
+    const params = new URLSearchParams()
+    if (classId) params.append('classId', classId)
+    if (skip !== undefined) params.append('skip', String(skip))
+    if (take !== undefined) params.append('take', String(take))
+
+    const response = await api.get(`/announcements?${params.toString()}`)
+    return response.data
+  },
+
+  /**
+   * Create announcement (teacher/admin only)
+   */
+  async createAnnouncement(data: {
+    title: string
+    content: string
+    excerpt?: string
+    category?: string
+    image?: string
+    classId: string
+  }) {
+    const response = await api.post('/announcements', data)
+    return response.data
+  },
+
+  /**
+   * Update announcement (author/admin only)
+   */
+  async updateAnnouncement(
+    id: string,
+    data: {
+      title?: string
+      content?: string
+      excerpt?: string
+      category?: string
+      image?: string
+    }
+  ) {
+    const response = await api.patch(`/announcements/${id}`, data)
+    return response.data
+  },
+
+  /**
+   * Delete announcement (author/admin only)
+   */
+  async deleteAnnouncement(id: string) {
+    const response = await api.delete(`/announcements/${id}`)
+    return response.data
+  },
+}

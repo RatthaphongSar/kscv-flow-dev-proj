@@ -1,85 +1,268 @@
-import { prisma } from '../db.js'
+const { db } = require('../db')
 
 /**
- * Get all announcements (for current user's classes)
- * @route GET /
- * @returns {Array} List of announcements
+ * GET /announcements
+ * Get announcements - can filter by classId
  */
-export const getAnnouncements = async (req, res) => {
+async function getAnnouncements(req, res) {
   try {
+    const { classId, skip = 0, take = 20 } = req.query
     const userId = req.user?.id
 
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' })
+    // Build where clause
+    let where = {}
+
+    if (classId) {
+      where.classId = classId
     }
 
-    // Get all classes the user is enrolled in or teaching
-    const userClasses = await prisma.class.findMany({
-      where: {
-        OR: [
-          { teacherId: userId },
-          { students: { some: { studentId: userId } } }
-        ]
-      },
-      select: { id: true }
-    })
+    // If student, only show announcements from their classes
+    if (req.user?.role === 'student') {
+      // Get student's enrolled classes
+      const enrollments = await db.enrollment.findMany({
+        where: { studentId: userId },
+        select: { classId: true },
+      })
+      const classIds = enrollments.map((e) => e.classId)
+      if (classIds.length === 0) {
+        return res.json({ data: [], pagination: { skip: 0, take, total: 0 } })
+      }
+      where.classId = { in: classIds }
+    }
 
-    const classIds = userClasses.map(c => c.id)
+    // Get total count
+    const total = await db.announcement.count({ where })
 
-    // Get announcements for these classes
-    const announcements = await prisma.announcementPin.findMany({
-      where: {
-        classId: { in: classIds }
-      },
-      include: {
-        class: { select: { name: true, code: true } }
+    // Get announcements with pagination
+    const announcements = await db.announcement.findMany({
+      where,
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        excerpt: true,
+        category: true,
+        image: true,
+        createdAt: true,
+        updatedAt: true,
+        author: {
+          select: {
+            id: true,
+            username: true,
+            fullname: true,
+            role: true,
+          },
+        },
+        class: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
-      take: 50
+      skip: parseInt(skip) || 0,
+      take: parseInt(take) || 20,
     })
 
-    return res.json(announcements || [])
+    return res.json({
+      data: announcements,
+      pagination: {
+        skip: parseInt(skip) || 0,
+        take: parseInt(take) || 20,
+        total,
+      },
+    })
   } catch (err) {
-    console.error('Error fetching announcements:', err)
+    console.error('getAnnouncements error:', err)
     return res.status(500).json({ error: 'Failed to fetch announcements' })
   }
 }
 
 /**
- * Create announcement (teacher only)
- * @route POST /
+ * POST /announcements
+ * Create announcement - teacher/admin only
  */
-export const createAnnouncement = async (req, res) => {
+async function createAnnouncement(req, res) {
   try {
-    const { classId, title, description } = req.body
+    // Check authorization
+    if (!['teacher', 'admin'].includes(req.user?.role)) {
+      return res.status(403).json({ error: 'Only teachers can create announcements' })
+    }
+
+    const { title, content, excerpt, category, image, classId } = req.body
     const userId = req.user?.id
 
-    if (!userId || !classId || !title) {
-      return res.status(400).json({ error: 'Missing required fields' })
+    // Validation
+    if (!title || !content || !classId) {
+      return res.status(400).json({ error: 'Title, content, and classId are required' })
     }
 
-    // Verify user is the class teacher
-    const classRecord = await prisma.class.findUnique({
-      where: { id: classId }
+    // Check if teacher owns the class
+    const classData = await db.class.findUnique({
+      where: { id: classId },
+      select: { teacherId: true },
     })
 
-    if (!classRecord || classRecord.teacherId !== userId) {
-      return res.status(403).json({ error: 'Not authorized to create announcements for this class' })
+    if (!classData) {
+      return res.status(404).json({ error: 'Class not found' })
     }
 
-    const announcement = await prisma.announcementPin.create({
+    if (classData.teacherId !== userId && req.user?.role !== 'admin') {
+      return res.status(403).json({ error: 'You can only announce in your own classes' })
+    }
+
+    // Create announcement
+    const announcement = await db.announcement.create({
       data: {
-        classId,
         title,
-        content: description || '',
-        pinned: true
+        content,
+        excerpt: excerpt || content.substring(0, 150),
+        category: category || 'ประกาศ',
+        image,
+        authorId: userId,
+        classId,
       },
-      include: { class: { select: { name: true } } }
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        excerpt: true,
+        category: true,
+        image: true,
+        createdAt: true,
+        author: {
+          select: {
+            id: true,
+            username: true,
+            fullname: true,
+          },
+        },
+        class: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+          },
+        },
+      },
     })
 
-    return res.status(201).json(announcement)
+    return res.status(201).json({
+      message: 'Announcement created successfully',
+      data: announcement,
+    })
   } catch (err) {
-    console.error('Error creating announcement:', err)
+    console.error('createAnnouncement error:', err)
     return res.status(500).json({ error: 'Failed to create announcement' })
   }
+}
+
+/**
+ * PATCH /announcements/:id
+ * Update announcement - author/admin only
+ */
+async function updateAnnouncement(req, res) {
+  try {
+    const { id } = req.params
+    const { title, content, excerpt, category, image } = req.body
+    const userId = req.user?.id
+
+    // Get announcement
+    const announcement = await db.announcement.findUnique({
+      where: { id },
+      select: { authorId: true },
+    })
+
+    if (!announcement) {
+      return res.status(404).json({ error: 'Announcement not found' })
+    }
+
+    // Check authorization
+    if (announcement.authorId !== userId && req.user?.role !== 'admin') {
+      return res.status(403).json({ error: 'You can only update your own announcements' })
+    }
+
+    // Update announcement
+    const updated = await db.announcement.update({
+      where: { id },
+      data: {
+        ...(title && { title }),
+        ...(content && { content }),
+        ...(excerpt !== undefined && { excerpt }),
+        ...(category && { category }),
+        ...(image !== undefined && { image }),
+        updatedAt: new Date(),
+      },
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        excerpt: true,
+        category: true,
+        image: true,
+        createdAt: true,
+        updatedAt: true,
+        author: {
+          select: {
+            id: true,
+            username: true,
+            fullname: true,
+          },
+        },
+      },
+    })
+
+    return res.json({
+      message: 'Announcement updated successfully',
+      data: updated,
+    })
+  } catch (err) {
+    console.error('updateAnnouncement error:', err)
+    return res.status(500).json({ error: 'Failed to update announcement' })
+  }
+}
+
+/**
+ * DELETE /announcements/:id
+ * Delete announcement - author/admin only
+ */
+async function deleteAnnouncement(req, res) {
+  try {
+    const { id } = req.params
+    const userId = req.user?.id
+
+    // Get announcement
+    const announcement = await db.announcement.findUnique({
+      where: { id },
+      select: { authorId: true },
+    })
+
+    if (!announcement) {
+      return res.status(404).json({ error: 'Announcement not found' })
+    }
+
+    // Check authorization
+    if (announcement.authorId !== userId && req.user?.role !== 'admin') {
+      return res.status(403).json({ error: 'You can only delete your own announcements' })
+    }
+
+    // Delete announcement
+    await db.announcement.delete({ where: { id } })
+
+    return res.json({
+      message: 'Announcement deleted successfully',
+    })
+  } catch (err) {
+    console.error('deleteAnnouncement error:', err)
+    return res.status(500).json({ error: 'Failed to delete announcement' })
+  }
+}
+
+module.exports = {
+  getAnnouncements,
+  createAnnouncement,
+  updateAnnouncement,
+  deleteAnnouncement,
 }

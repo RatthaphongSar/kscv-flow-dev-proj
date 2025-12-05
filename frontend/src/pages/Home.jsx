@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { classApi } from '../api/classApi'
+import { announcementApi } from '../api/announcementApi'
 import {
   Search,
   ChevronRight,
@@ -18,6 +19,7 @@ import {
   Clock,
   BookOpen,
   AlertCircle,
+  Plus,
 } from 'lucide-react'
 
 export default function Home() {
@@ -27,6 +29,14 @@ export default function Home() {
   const [announcements, setAnnouncements] = useState([])
   const [loading, setLoading] = useState(true)
   
+  // state สำหรับ create announcement modal
+  const [createAnnouncementModal, setCreateAnnouncementModal] = useState({
+    open: false,
+    selectedClassId: '',
+    formData: { title: '', content: '', category: 'ประกาศ' },
+    submitting: false,
+  })
+
   // state สำหรับ feed (deprecated - will be refactored with real API)
   const [shareModal, setShareModal] = useState({
     open: false,
@@ -45,13 +55,17 @@ export default function Home() {
         if (user?.role === 'student') {
           const classesData = await classApi.getClasses()
           setClasses(classesData?.slice(0, 5) || [])
+        } else if (user?.role === 'teacher') {
+          const classesData = await classApi.getClasses()
+          setClasses(classesData || [])
         }
+        
+        // Fetch announcements
+        const announcementsData = await announcementApi.getAnnouncements(undefined, 0, 10)
+        setAnnouncements(announcementsData?.data || [])
         
         // TODO: Fetch upcoming meetings from meetings API
         // setUpcomingMeetings(...)
-        
-        // TODO: Fetch announcements from announcements API
-        // setAnnouncements(...)
       } catch (err) {
         console.error('Error loading home data:', err)
       } finally {
@@ -121,6 +135,52 @@ export default function Home() {
 
 
   // Comment handlers removed - feed functionality deprecated
+
+  // Announcement handlers
+  const handleCreateAnnouncement = async (e) => {
+    e.preventDefault()
+    try {
+      setCreateAnnouncementModal({
+        ...createAnnouncementModal,
+        submitting: true,
+      })
+
+      const { title, content, category } = createAnnouncementModal.formData
+      const classId = createAnnouncementModal.selectedClassId
+
+      if (!title || !content || !classId) {
+        alert('กรุณากรอกข้อมูลให้ครบถ้วน')
+        return
+      }
+
+      await announcementApi.createAnnouncement({
+        title,
+        content,
+        category,
+        classId,
+      })
+
+      // Reset and reload
+      setCreateAnnouncementModal({
+        open: false,
+        selectedClassId: '',
+        formData: { title: '', content: '', category: 'ประกาศ' },
+        submitting: false,
+      })
+
+      // Reload announcements
+      const announcementsData = await announcementApi.getAnnouncements(undefined, 0, 10)
+      setAnnouncements(announcementsData?.data || [])
+    } catch (err) {
+      console.error('Error creating announcement:', err)
+      alert('เกิดข้อผิดพลาดในการสร้างประกาศ')
+    } finally {
+      setCreateAnnouncementModal({
+        ...createAnnouncementModal,
+        submitting: false,
+      })
+    }
+  }
 
   return (
     <div className="w-full bg-[#020617] text-gray-100 px-4 py-4">
@@ -299,15 +359,81 @@ export default function Home() {
               <h2 className="text-sm font-semibold text-gray-100">
                 ฟีดข่าวสาร &amp; ประกาศล่าสุด
               </h2>
-              <a
-                href="/announcements"
-                className="text-[11px] text-gray-400 hover:text-violet-300 flex items-center gap-1"
-              >
-                ดูทั้งหมด <ChevronRight size={12} />
-              </a>
+              <div className="flex items-center gap-2">
+                {user?.role === 'teacher' && (
+                  <button
+                    onClick={() => setCreateAnnouncementModal({ ...createAnnouncementModal, open: true })}
+                    className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-md bg-violet-600 hover:bg-violet-500 text-white"
+                  >
+                    <Plus size={12} />
+                    โพส์ประกาศ
+                  </button>
+                )}
+                <a
+                  href="/announcements"
+                  className="text-[11px] text-gray-400 hover:text-violet-300 flex items-center gap-1"
+                >
+                  ดูทั้งหมด <ChevronRight size={12} />
+                </a>
+              </div>
             </div>
 
-            {/* Feed placeholder - TODO: Load from API */}
+            {/* Announcements Feed */}
+            <div className="space-y-2">
+              {announcements.length === 0 ? (
+                <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4 text-center">
+                  <p className="text-[11px] text-gray-500">ยังไม่มีประกาศข่าวสาร</p>
+                </div>
+              ) : (
+                announcements.map((announcement) => (
+                  <div
+                    key={announcement.id}
+                    className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4 hover:border-[#374151] transition"
+                  >
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-violet-600/20 border border-violet-500/50 text-[10px] text-violet-200 mb-1">
+                          {announcement.category}
+                        </span>
+                        <h3 className="text-sm font-semibold text-gray-100">
+                          {announcement.title}
+                        </h3>
+                        <div className="text-[10px] text-gray-500 mt-0.5">
+                          โดย {announcement.author?.fullname || announcement.author?.username}
+                          {' • '}
+                          {new Date(announcement.createdAt).toLocaleDateString('th-TH', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <p className="text-xs text-gray-200 leading-relaxed mb-2">
+                      {announcement.excerpt || announcement.content}
+                    </p>
+
+                    {/* Image if exists */}
+                    {announcement.image && (
+                      <img
+                        src={announcement.image}
+                        alt={announcement.title}
+                        className="w-full h-32 object-cover rounded-lg border border-[#111827] mb-2"
+                      />
+                    )}
+
+                    {/* Class Info */}
+                    <div className="text-[10px] text-gray-400">
+                      {announcement.class?.code} - {announcement.class?.name}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </section>
 
           {/* SIDEBAR */}
@@ -529,6 +655,139 @@ export default function Home() {
                   </p>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== CREATE ANNOUNCEMENT MODAL ===== */}
+      {createAnnouncementModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="w-full max-w-2xl bg-[#020617] border border-[#1f2937] rounded-2xl shadow-2xl overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-[#1f2937]">
+              <h2 className="text-sm font-semibold text-gray-100">สร้างประกาศข่าวสาร</h2>
+              <button
+                onClick={() =>
+                  setCreateAnnouncementModal({
+                    ...createAnnouncementModal,
+                    open: false,
+                  })
+                }
+                className="p-1 hover:bg-slate-800 rounded-lg"
+              >
+                <X size={16} className="text-gray-400" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <form onSubmit={handleCreateAnnouncement} className="p-4 space-y-3 max-h-[60vh] overflow-y-auto">
+              {/* Class Selection */}
+              <div>
+                <label className="text-[11px] text-gray-400 block mb-1">เลือกห้องเรียน *</label>
+                <select
+                  value={createAnnouncementModal.selectedClassId}
+                  onChange={(e) =>
+                    setCreateAnnouncementModal({
+                      ...createAnnouncementModal,
+                      selectedClassId: e.target.value,
+                    })
+                  }
+                  className="w-full bg-[#020617] border border-[#374151] rounded-lg px-3 py-2 text-[11px] text-gray-100 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                >
+                  <option value="">-- เลือกห้องเรียน --</option>
+                  {classes.map((cls) => (
+                    <option key={cls.id} value={cls.id}>
+                      {cls.code} - {cls.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="text-[11px] text-gray-400 block mb-1">หมวดหมู่</label>
+                <select
+                  value={createAnnouncementModal.formData.category}
+                  onChange={(e) =>
+                    setCreateAnnouncementModal({
+                      ...createAnnouncementModal,
+                      formData: {
+                        ...createAnnouncementModal.formData,
+                        category: e.target.value,
+                      },
+                    })
+                  }
+                  className="w-full bg-[#020617] border border-[#374151] rounded-lg px-3 py-2 text-[11px] text-gray-100 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                >
+                  <option value="ประกาศ">ประกาศ</option>
+                  <option value="ข่าวกิจกรรม">ข่าวกิจกรรม</option>
+                  <option value="ชุมชน & ชมรม">ชุมชน & ชมรม</option>
+                </select>
+              </div>
+
+              {/* Title */}
+              <div>
+                <label className="text-[11px] text-gray-400 block mb-1">หัวข้อ *</label>
+                <input
+                  type="text"
+                  value={createAnnouncementModal.formData.title}
+                  onChange={(e) =>
+                    setCreateAnnouncementModal({
+                      ...createAnnouncementModal,
+                      formData: {
+                        ...createAnnouncementModal.formData,
+                        title: e.target.value,
+                      },
+                    })
+                  }
+                  placeholder="กรอกหัวข้อประกาศ"
+                  className="w-full bg-[#020617] border border-[#374151] rounded-lg px-3 py-2 text-[11px] text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                />
+              </div>
+
+              {/* Content */}
+              <div>
+                <label className="text-[11px] text-gray-400 block mb-1">เนื้อหา *</label>
+                <textarea
+                  rows={6}
+                  value={createAnnouncementModal.formData.content}
+                  onChange={(e) =>
+                    setCreateAnnouncementModal({
+                      ...createAnnouncementModal,
+                      formData: {
+                        ...createAnnouncementModal.formData,
+                        content: e.target.value,
+                      },
+                    })
+                  }
+                  placeholder="กรอกเนื้อหาประกาศ"
+                  className="w-full bg-[#020617] border border-[#374151] rounded-lg px-3 py-2 text-[11px] text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-violet-500 resize-none"
+                />
+              </div>
+            </form>
+
+            {/* Footer */}
+            <div className="flex items-center gap-2 p-4 border-t border-[#1f2937]">
+              <button
+                onClick={() =>
+                  setCreateAnnouncementModal({
+                    ...createAnnouncementModal,
+                    open: false,
+                  })
+                }
+                className="px-3 py-1.5 rounded-md border border-[#374151] text-gray-200 hover:bg-slate-800 text-[11px]"
+                disabled={createAnnouncementModal.submitting}
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleCreateAnnouncement}
+                disabled={createAnnouncementModal.submitting}
+                className="ml-auto px-3 py-1.5 rounded-md bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-[11px] font-medium"
+              >
+                {createAnnouncementModal.submitting ? 'กำลังสร้าง...' : 'สร้างประกาศ'}
+              </button>
             </div>
           </div>
         </div>

@@ -1,6 +1,11 @@
-import { Router } from 'express'
-import * as ctrl from '../controllers/announcements.js'
-import { authRequired } from '../middleware/auth.js'
+const { Router } = require('express')
+const {
+  getAnnouncements,
+  createAnnouncement,
+  updateAnnouncement,
+  deleteAnnouncement,
+} = require('../controllers/announcements')
+const { authRequired } = require('../middleware/auth')
 
 const router = Router()
 
@@ -8,9 +13,15 @@ const router = Router()
 router.use(authRequired)
 
 // Get announcements
-router.get('/', ctrl.getAnnouncements)
+router.get('/', getAnnouncements)
 
-// Create announcement
-router.post('/', ctrl.createAnnouncement)
+// Create announcement (teacher/admin only)
+router.post('/', createAnnouncement)
 
-export default router
+// Update announcement (author/admin only)
+router.patch('/:id', updateAnnouncement)
+
+// Delete announcement (author/admin only)
+router.delete('/:id', deleteAnnouncement)
+
+module.exports = router
