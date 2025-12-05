@@ -162,7 +162,7 @@ export default function App() {
 
       {/* ============ PRIMARY NAV ============ */}
       <div className="w-full bg-[#020617] border-b border-[#1f2937] shrink-0">
-        <div className="w-full flex justify-center">
+        <div className="w-full flex justify-center overflow-x-auto">
           <div className="w-full max-w-[1400px] flex justify-around md:justify-start md:gap-2 px-3 py-2">
             <NavItem to="/" icon={Home} label="Home" />
             <NavItem to="/chat" icon={MessageSquare} label="Chat" />
