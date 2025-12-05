@@ -586,10 +586,10 @@ export default function ClassPage() {
   };
 
   return (
-    <div className="w-full h-[calc(100vh-64px)] bg-[#020617] flex overflow-hidden">
+    <div className="w-full h-[calc(100vh-64px)] bg-[#020617] flex flex-col lg:flex-row overflow-hidden">
 
       {/* Sidebar */}
-      <aside className="w-72 flex-shrink-0 border-r border-[#1f2937] bg-[#020617] flex flex-col overflow-hidden">
+      <aside className="w-full lg:w-72 lg:flex-shrink-0 border-r border-[#1f2937] bg-[#020617] flex flex-col overflow-hidden max-h-32 lg:max-h-none">
         <div className="px-4 py-3 border-b border-[#1f2937]">
           <h1 className="text-sm font-semibold text-gray-100">รายวิชา</h1>
           <p className="text-[11px] text-gray-400">

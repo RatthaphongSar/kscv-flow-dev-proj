@@ -63,28 +63,49 @@ export default function GradesTranscript() {
             ยังไม่มีผลการเรียน
           </div>
         ) : (
-          <table className="w-full text-xs text-gray-200">
-            <thead className="text-[11px] text-gray-400 border-b border-[#1f2937]">
-              <tr>
-                <th className="py-2 text-left">Code</th>
-                <th className="py-2 text-left">Subject</th>
-                <th className="py-2 text-center">Credit</th>
-                <th className="py-2 text-center">Grade</th>
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            {/* Mobile: Card View */}
+            <div className="block md:hidden space-y-2">
               {grades.map((g) => (
-                <tr key={g.code} className="border-b border-[#020617]">
-                  <td className="py-2">{g.code}</td>
-                  <td className="py-2">{g.name}</td>
-                  <td className="py-2 text-center">{g.credit}</td>
-                  <td className="py-2 text-center font-semibold text-emerald-300">
-                    {g.grade}
-                  </td>
-                </tr>
+                <div key={g.code} className="rounded-lg border border-[#1f2937] bg-[#111827] p-3">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <div className="text-xs font-semibold text-gray-100">{g.name}</div>
+                      <div className="text-[11px] text-gray-400">{g.code}</div>
+                    </div>
+                    <div className="text-lg font-bold text-emerald-300">{g.grade}</div>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-gray-400">
+                    <span>หน่วยกิจ: {g.credit}</span>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+
+            {/* Desktop: Table View */}
+            <table className="hidden md:table w-full text-xs text-gray-200">
+              <thead className="text-[11px] text-gray-400 border-b border-[#1f2937]">
+                <tr>
+                  <th className="py-2 text-left">Code</th>
+                  <th className="py-2 text-left">Subject</th>
+                  <th className="py-2 text-center">Credit</th>
+                  <th className="py-2 text-center">Grade</th>
+                </tr>
+              </thead>
+              <tbody>
+                {grades.map((g) => (
+                  <tr key={g.code} className="border-b border-[#020617]">
+                    <td className="py-2">{g.code}</td>
+                    <td className="py-2">{g.name}</td>
+                    <td className="py-2 text-center">{g.credit}</td>
+                    <td className="py-2 text-center font-semibold text-emerald-300">
+                      {g.grade}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
         )}
 
         <p className="text-[11px] text-gray-500 mt-3">

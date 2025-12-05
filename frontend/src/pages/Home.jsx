@@ -209,7 +209,7 @@ export default function Home() {
 
         {/* ===== QUICK STATUS / TODAY'S SCHEDULE ===== */}
         {user?.role === 'student' && (
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {/* Classes Today */}
             <div className="rounded-xl border border-[#1f2937] bg-[#020617] p-3">
               <div className="flex items-center gap-2 mb-2">
@@ -243,7 +243,7 @@ export default function Home() {
         )}
 
         {/* ===== HERO + SLIDER / MAP ===== */}
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
           {/* Hero Left */}
           <div className="relative overflow-hidden rounded-2xl border border-[#1f2937] bg-gradient-to-br from-[#020617] via-[#020617] to-[#111827] lg:col-span-2">
             {/* BG SVG light effects */}
@@ -359,7 +359,7 @@ export default function Home() {
         )}
 
         {/* ===== MAIN CONTENT: FEED + SIDEBAR ===== */}
-        <div className="grid gap-4 lg:grid-cols-[2fr,1.15fr]">
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-[2fr,1.15fr]">
           {/* FEED */}
           <section className="space-y-3">
             <div className="flex items-center justify-between">

@@ -27,7 +27,7 @@ export default function ChatLayout({
   onClearFiles,
 }) {
   return (
-    <div className="flex flex-1 min-h-0 w-full text-gray-100 overflow-hidden">
+    <div className="flex flex-1 min-h-0 w-full text-gray-100 overflow-hidden flex-col lg:flex-row">
       {/* ซ้าย: รายการแชท */}
       <ChatSidebar
         rooms={rooms}

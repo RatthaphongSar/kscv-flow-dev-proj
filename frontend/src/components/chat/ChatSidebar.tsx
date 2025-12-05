@@ -60,7 +60,7 @@ export default function ChatSidebar({
   }
 
   return (
-    <aside className="w-80 shrink-0 h-full bg-[#111827] border-r border-[#1f2937] flex flex-col relative overflow-hidden">
+    <aside className="w-full lg:w-80 lg:shrink-0 h-auto lg:h-full bg-[#111827] border-r border-[#1f2937] flex flex-col relative overflow-hidden">
       {/* Header */}
       <div className="px-4 pt-3 pb-2 border-b border-[#1f2937]">
         <div className="flex items-center justify-between mb-3">
