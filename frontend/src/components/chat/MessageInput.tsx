@@ -53,9 +53,9 @@ export default function MessageInput({
       {/* ช่องพิมพ์ */}
       <div className="flex-1">
         <input
-          className="w-full bg-[#111827] border border-[#374151] rounded-lg px-4 py-2.5 text-sm
+          className="w-full bg-[#1e293b] border border-[#334155] rounded-lg px-4 py-2.5 text-sm
                      text-gray-100 placeholder:text-gray-500
-                     focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500
+                     focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400
                      disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           placeholder="พิมพ์ข้อความ... (Enter ส่ง)"
           value={text}
@@ -80,8 +80,8 @@ export default function MessageInput({
       <button
         type="button"
         onClick={handleAttachClick}
-        className="h-9 w-9 flex items-center justify-center rounded-md bg-slate-800 border border-slate-700
-                   text-slate-200 hover:bg-slate-700 hover:border-slate-600 transition-colors
+        className="h-9 w-9 flex items-center justify-center rounded-md bg-[#1e293b] border border-[#334155]
+                   text-gray-300 hover:bg-[#334155] hover:border-[#475569] transition-colors
                    disabled:opacity-50 disabled:cursor-not-allowed"
         title="แนบไฟล์"
         disabled={isLoading}

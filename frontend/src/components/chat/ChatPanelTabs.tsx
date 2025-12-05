@@ -25,21 +25,21 @@ export default function ChatPanelTabs({ value, onChange, isTeacher = false }: Ch
   ]
 
   return (
-    <div className="flex gap-6 border-b border-[#374151]">
+    <div className="flex gap-1 border-b border-[#1f2937] bg-[#0f172a]">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => onChange(tab.id)}
-          className={`px-2 py-2.5 text-xs font-medium transition-all duration-200 relative ${
+          className={`px-4 py-3 text-sm font-medium transition-all duration-200 relative ${
             value === tab.id
-              ? 'text-violet-300'
-              : 'text-slate-400 hover:text-slate-300'
+              ? 'text-blue-300 bg-[#1e293b]'
+              : 'text-slate-400 hover:text-slate-300 hover:bg-[#111827]/50'
           }`}
         >
           {tab.label}
           {/* Underline indicator for active tab */}
           {value === tab.id && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-500" />
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-500" />
           )}
         </button>
       ))}

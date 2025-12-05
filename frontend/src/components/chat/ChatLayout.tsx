@@ -38,10 +38,10 @@ export default function ChatLayout({
   return (
     <div className="flex flex-1 min-h-0 w-full text-gray-100 overflow-hidden flex-col lg:flex-row">
       {/* Mobile Hamburger Button */}
-      <div className="lg:hidden shrink-0 border-b border-[#1f2937] bg-[#020617] px-3 py-2">
+      <div className="lg:hidden shrink-0 border-b border-[#1f2937] bg-[#0f172a] px-3 py-2">
         <button
           onClick={() => setShowRoomsList(!showRoomsList)}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-800"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-[#1e293b] transition-colors"
         >
           {showRoomsList ? <X size={20} /> : <Menu size={20} />}
           <span className="text-sm font-semibold">

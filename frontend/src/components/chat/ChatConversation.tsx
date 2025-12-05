@@ -62,7 +62,7 @@ export default function ChatConversation({
   }
 
   return (
-    <div className="flex-1 min-h-0 overflow-hidden flex flex-col bg-[#020617] relative w-full">
+    <div className="flex-1 min-h-0 overflow-hidden flex flex-col bg-[#0f172a] relative w-full">
       {/* Pinned messages section */}
       {_roomId && (
         <PinnedSection
