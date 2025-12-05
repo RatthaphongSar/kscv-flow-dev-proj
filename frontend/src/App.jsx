@@ -14,7 +14,7 @@ import {
   X,
 } from 'lucide-react'
 
-import AssistantWidget from './components/AssistantWidget'
+// import AssistantWidget from './components/AssistantWidget' // TODO: Re-enable when needed
 import { useAuth } from './context/AuthContext'
 import Preloader from './components/Preloader.jsx'
 
@@ -181,7 +181,8 @@ export default function App() {
         </div>
       </main>
 
-      <AssistantWidget userId={userId} roomName={roomName} />
+      {/* TODO: Re-enable KVC Assistant widget when ready */}
+      {/* <AssistantWidget userId={userId} roomName={roomName} /> */}
     </div>
   )
 }
