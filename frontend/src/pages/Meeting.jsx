@@ -603,7 +603,7 @@ export default function MeetingPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="w-full max-w-5xl max-h-[90vh] bg-[#020617] border border-[#1f2937] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
             {/* Header popup */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#1f2937]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#1f2937] flex-shrink-0">
               <div className="text-xs">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-gray-100">
@@ -632,7 +632,7 @@ export default function MeetingPage() {
                 )}
               </div>
               <button
-                className="p-2 rounded-lg hover:bg-slate-800"
+                className="p-2 rounded-lg hover:bg-slate-800 flex-shrink-0"
                 onClick={() => setShowRoomModal(false)}
               >
                 <X size={16} className="text-gray-300" />
@@ -640,10 +640,10 @@ export default function MeetingPage() {
             </div>
 
             {/* Body popup */}
-            <div className="flex-1 flex flex-col md:flex-row">
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
               {/* Slide area – ทำให้ใหญ่ขึ้น */}
-              <div className="flex-1 p-4 md:p-5 flex flex-col gap-3">
-                <div className="flex items-center justify-between text-xs mb-1">
+              <div className="flex-1 p-4 md:p-5 flex flex-col gap-3 overflow-y-auto">
+                <div className="flex items-center justify-between text-xs mb-1 flex-shrink-0">
                   <div className="flex items-center gap-1 text-gray-200">
                     <FileText size={14} className="text-violet-400" />
                     <span>การนำเสนอสไลด์</span>
@@ -670,7 +670,7 @@ export default function MeetingPage() {
                 </div>
 
                 {/* Slide controls */}
-                <div className="flex flex-wrap items-center gap-2 text-[11px] mt-2">
+                <div className="flex flex-wrap items-center gap-2 text-[11px] mt-2 flex-shrink-0">
                   <button
                     onClick={togglePresentation}
                     className={`px-3 py-1.5 rounded-md border ${
@@ -703,9 +703,9 @@ export default function MeetingPage() {
               </div>
 
               {/* Right controls – คุมสิทธิ์ / log / เชิญคน */}
-              <div className="w-full md:w-60 border-t md:border-t-0 md:border-l border-[#1f2937] p-4 space-y-3 text-xs">
+              <div className="w-full md:w-60 border-t md:border-t-0 md:border-l border-[#1f2937] p-4 space-y-3 text-xs overflow-y-auto flex flex-col">
                 {/* Mic */}
-                <div className="space-y-1">
+                <div className="space-y-1 flex-shrink-0">
                   <div className="text-[11px] text-gray-400">ไมโครโฟน</div>
                   <div className="flex items-center justify-between gap-2">
                     <button
@@ -731,7 +731,7 @@ export default function MeetingPage() {
                 </div>
 
                 {/* Hand raise */}
-                <div className="space-y-1">
+                <div className="space-y-1 flex-shrink-0">
                   <div className="text-[11px] text-gray-400">
                     การยกมือขอพูด
                   </div>
@@ -754,7 +754,7 @@ export default function MeetingPage() {
                 </div>
 
                 {/* Invite user (mock) */}
-                <div className="space-y-1">
+                <div className="space-y-1 flex-shrink-0">
                   <div className="text-[11px] text-gray-400">
                     เชิญผู้เข้าร่วม (mock)
                   </div>
@@ -776,8 +776,8 @@ export default function MeetingPage() {
                 </div>
 
                 {/* Info + event log */}
-                <div className="text-[10px] text-gray-500 pt-2 border-t border-[#1f2937] space-y-2">
-                  <div>
+                <div className="text-[10px] text-gray-500 pt-2 border-t border-[#1f2937] space-y-2 flex-1 flex flex-col">
+                  <div className="flex-shrink-0">
                     * หน้านี้เป็น UI จำลองสำหรับห้อง Meeting / นำเสนอสไลด์
                     เมื่อเชื่อมต่อ Backend จริง สามารถ:
                     <ul className="list-disc list-inside mt-1 space-y-0.5">
@@ -787,8 +787,8 @@ export default function MeetingPage() {
                     </ul>
                   </div>
 
-                  <div className="border border-[#1f2937] rounded-lg max-h-32 overflow-y-auto px-2 py-1.5">
-                    <div className="text-[11px] text-gray-400 mb-1">
+                  <div className="border border-[#1f2937] rounded-lg overflow-y-auto px-2 py-1.5 flex-1 min-h-0">
+                    <div className="text-[11px] text-gray-400 mb-1 sticky top-0 bg-[#020617]">
                       กิจกรรมในห้อง (Notify เข้า–ออก / นำเสนอ)
                     </div>
                     {roomEvents.length === 0 ? (
@@ -799,7 +799,7 @@ export default function MeetingPage() {
                       roomEvents.map((ev) => (
                         <div
                           key={ev.id}
-                          className="flex gap-2 text-[10px] text-gray-300"
+                          className="flex gap-2 text-[10px] text-gray-300 mb-1"
                         >
                           <span className="text-gray-500 shrink-0">
                             {ev.time.toLocaleTimeString('th-TH', {
@@ -816,7 +816,7 @@ export default function MeetingPage() {
 
                 {/* Leave from popup */}
                 <button
-                  className="w-full text-xs py-2 rounded-lg flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white"
+                  className="w-full text-xs py-2 rounded-lg flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white flex-shrink-0"
                   onClick={handleJoinLeave}
                 >
                   <PhoneOff size={14} />

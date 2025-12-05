@@ -86,9 +86,28 @@ export default function MeetingRoom() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col">
+      {/* Top Navbar with Call Controls */}
+      <div className="bg-gradient-to-r from-slate-900 to-slate-800 border-b border-slate-700/50 px-6 py-4 backdrop-blur sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h2 className="text-lg font-bold text-foreground">{meeting?.title}</h2>
+            <span className="text-xs text-muted-foreground px-3 py-1 bg-slate-700/50 rounded-full">
+              {participants.length + 1} Participants
+            </span>
+          </div>
+          
+          {/* Call Controls in Navbar */}
+          <VideoCallControls
+            onEndCall={handleEndCall}
+            meetingTitle={meeting?.title}
+            isNavbar={true}
+          />
+        </div>
+      </div>
+
       {/* Video Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 pb-48">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 overflow-auto">
         {/* Main Video - Current User */}
         <div className={`relative rounded-2xl overflow-hidden border-4 transition-all ${
           speakingUser?.id === user?.id ? 'border-green-500 shadow-lg shadow-green-500/50' : 'border-slate-700'
@@ -137,23 +156,8 @@ export default function MeetingRoom() {
         ))}
       </div>
 
-      {/* Meeting Info Card - Floating */}
-      <div className="fixed top-6 left-6 bg-slate-950/80 backdrop-blur rounded-2xl p-6 border border-slate-700/50 max-w-sm z-40">
-        <h2 className="text-lg font-bold text-foreground mb-2">{meeting?.title}</h2>
-        <p className="text-xs text-muted-foreground mb-4">{meeting?.description}</p>
-        <div className="flex items-center gap-3 pt-4 border-t border-slate-700/50">
-          <Users size={18} className="text-primary" />
-          <span className="text-sm text-foreground">
-            {participants.length + 1} Participants
-          </span>
-        </div>
-      </div>
-
-      {/* Call Controls */}
-      <VideoCallControls
-        onEndCall={handleEndCall}
-        meetingTitle={meeting?.title}
-      />
+      {/* Meeting Info Card - Small, positioned below navbar */}
+      {/* Removed - info is now in navbar */}
     </div>
   )
 }
