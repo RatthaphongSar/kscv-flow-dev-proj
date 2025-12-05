@@ -21,11 +21,12 @@ export default function GradesTranscript() {
       // Call backend API to get grades
       const response = await apiClient.get("/grades/transcript")
 
-      if (response && response.data) {
-        setGrades(response.data.grades || [])
-        setGpa(response.data.gpa || 0)
+      // API returns object with grades and gpa directly
+      if (response && typeof response === 'object') {
+        setGrades(response.grades || [])
+        setGpa(response.gpa || 0)
       } else {
-        throw new Error("No grades data received")
+        throw new Error("Invalid grades data received")
       }
     } catch (err) {
       console.error("Error fetching grades:", err)

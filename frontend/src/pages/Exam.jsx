@@ -23,10 +23,11 @@ export default function Exam() {
       // Call backend API to get exams
       const response = await apiClient.get("/exams")
 
-      if (response && response.data) {
-        setExams(response.data || [])
+      // API returns array directly
+      if (Array.isArray(response)) {
+        setExams(response)
       } else {
-        throw new Error("No exams data received")
+        throw new Error("Invalid exams data received")
       }
     } catch (err) {
       console.error("Error fetching exams:", err)

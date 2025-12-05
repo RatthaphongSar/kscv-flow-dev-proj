@@ -25,10 +25,11 @@ export default function Announcements() {
       // Call backend API to get announcements
       const response = await apiClient.get("/announcements")
 
-      if (response && response.data) {
-        setAnnouncements(response.data || [])
+      // API returns array directly
+      if (Array.isArray(response)) {
+        setAnnouncements(response)
       } else {
-        throw new Error("No announcements data received")
+        throw new Error("Invalid announcements data received")
       }
     } catch (err) {
       console.error("Error fetching announcements:", err)

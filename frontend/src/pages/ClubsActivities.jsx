@@ -38,11 +38,12 @@ export default function ClubsActivities() {
       // Call backend API to get clubs data
       const response = await apiClient.get("/clubs")
 
-      if (response && response.data) {
-        setMyClubs(response.data.myClubs || [])
-        setAvailableClubs(response.data.availableClubs || [])
+      // API returns object with myClubs and availableClubs directly
+      if (response && typeof response === 'object') {
+        setMyClubs(response.myClubs || [])
+        setAvailableClubs(response.availableClubs || [])
       } else {
-        throw new Error("No clubs data received")
+        throw new Error("Invalid clubs data received")
       }
     } catch (err) {
       console.error("Error fetching clubs:", err)

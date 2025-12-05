@@ -41,11 +41,12 @@ export default function AdvisorContact() {
       // Call backend API to get advisor info
       const response = await apiClient.get("/advisor")
 
-      if (response && response.data) {
-        setAdvisor(response.data.advisor || {})
-        setFaq(response.data.faq || [])
+      // API returns object with advisor and faq directly
+      if (response && typeof response === 'object') {
+        setAdvisor(response.advisor || {})
+        setFaq(response.faq || [])
       } else {
-        throw new Error("No advisor data received")
+        throw new Error("Invalid advisor data received")
       }
     } catch (err) {
       console.error("Error fetching advisor:", err)

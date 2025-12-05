@@ -24,10 +24,11 @@ export default function Resources() {
       // Call backend API to get resources
       const response = await apiClient.get("/resources")
 
-      if (response && response.data) {
-        setFiles(response.data || [])
+      // API returns array directly
+      if (Array.isArray(response)) {
+        setFiles(response)
       } else {
-        throw new Error("No resources data received")
+        throw new Error("Invalid resources data received")
       }
     } catch (err) {
       console.error("Error fetching resources:", err)

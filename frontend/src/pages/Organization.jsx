@@ -23,11 +23,12 @@ export default function Organization() {
       // Call backend API to get organization data
       const response = await apiClient.get("/organization")
 
-      if (response && response.data) {
-        setChain(response.data.chain || [])
-        setLeaders(response.data.leaders || [])
+      // API returns object with chain and leaders directly
+      if (response && typeof response === 'object') {
+        setChain(response.chain || [])
+        setLeaders(response.leaders || [])
       } else {
-        throw new Error("No organization data received")
+        throw new Error("Invalid organization data received")
       }
     } catch (err) {
       console.error("Error fetching organization:", err)

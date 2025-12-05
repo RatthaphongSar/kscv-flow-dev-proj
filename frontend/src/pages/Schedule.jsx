@@ -21,10 +21,11 @@ export default function Schedule() {
       // Call backend API to get schedule
       const response = await apiClient.get("/schedule")
       
-      if (response && response.data) {
-        setSchedule(response.data)
+      // API returns array directly
+      if (Array.isArray(response)) {
+        setSchedule(response)
       } else {
-        throw new Error("No schedule data received")
+        throw new Error("Invalid schedule data received")
       }
     } catch (err) {
       console.error("Error fetching schedule:", err)
