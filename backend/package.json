@@ -5,10 +5,14 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
+    "start:prod": "NODE_ENV=production node src/server.js",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "seed:user": "node scripts/seed-user.js",
     "seed:class": "node prisma/seed.js",
-    "backfill:pwd": "node scripts/backfill-password-hash.js"
+    "backfill:pwd": "node scripts/backfill-password-hash.js",
+    "db:migrate": "prisma migrate deploy",
+    "db:generate": "prisma generate"
   },
   "dependencies": {
     "@types/multer": "^2.0.0",

@@ -17,6 +17,9 @@ import { initSocket } from './socket.js'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+// Production optimizations
+const isProduction = process.env.NODE_ENV === 'production'
+
 const app = createApp()
 // NOTE: chat router already mounted under /api/chat in routes/index.js
 // app.use("/api/chat", chatRouter)  // ❌ COMMENTED OUT - duplicates /api/chat from apiRouter

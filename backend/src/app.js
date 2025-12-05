@@ -26,6 +26,9 @@ function parseCorsOrigins(raw) {
 export const createApp = () => {
   const app = express()
 
+  // Production optimizations
+  const isProduction = process.env.NODE_ENV === 'production'
+
   app.set('trust proxy', 1)
   app.set('etag', 'strong')
 
@@ -43,35 +46,51 @@ export const createApp = () => {
   }))
 
   // ประสิทธิภาพ network
-  app.use(compression()) 
-  app.use(express.urlencoded({ extended: true }))
-  app.use(express.json({ limit: '1mb' }))
+  app.use(compression({
+    level: isProduction ? 6 : 3,
+    threshold: 1024,
+    filter: (req, res) => {
+      if (req.headers['x-no-compression']) return false
+      return compression.filter(req, res)
+    }
+  }))
+  
+  app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+  app.use(express.json({ limit: '10mb' }))
   app.use(cookieParser())
 
-  app.use(morgan(process.env.NODE_ENV === 'production' ? 'tiny' : 'dev'))
+  // Logging
+  const morganFormat = isProduction ? 'combined' : 'dev'
+  app.use(morgan(morganFormat, {
+    skip: (req, res) => isProduction && res.statusCode < 400
+  }))
 
   const limiter = rateLimit({
     windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 60_000),
     max: Number(process.env.RATE_LIMIT_MAX || 120),
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    skip: (req) => !isProduction && req.ip === '::1'
   })
   app.use(limiter)
 
   // Public cache policy (GET เท่านั้น)
   app.use((req, res, next) => {
     if (req.method === 'GET') {
-      res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=120')
+      const cacheTime = isProduction ? 300 : 30
+      res.set('Cache-Control', `public, max-age=${cacheTime}, stale-while-revalidate=600`)
     }
     next()
   })
 
   // Root welcome
   app.get('/', (_req, res) => {
-    res.json({ service: 'KVC API', version: '0.1.0', health: '/health', docs: '/docs' })
+    res.json({ service: 'KVC API', version: '0.1.0', health: '/health', docs: '/docs', env: process.env.NODE_ENV })
   })
 
-  app.get('/health', (_req, res) => res.json({ ok: true }))
+  app.get('/health', (_req, res) => {
+    res.json({ ok: true, timestamp: new Date().toISOString(), uptime: process.uptime() })
+  })
 
   // Mock auth middleware (for testing/development)
   app.use('/api', mockAuthMiddleware)
