@@ -589,22 +589,22 @@ export default function ClassPage() {
     <div className="w-full h-[calc(100vh-64px)] bg-[#020617] flex flex-col lg:flex-row overflow-hidden">
 
       {/* Sidebar */}
-      <aside className="w-full lg:w-72 lg:flex-shrink-0 border-r border-[#1f2937] bg-[#020617] flex flex-col overflow-hidden max-h-32 lg:max-h-none">
-        <div className="px-4 py-3 border-b border-[#1f2937]">
-          <h1 className="text-sm font-semibold text-gray-100">รายวิชา</h1>
-          <p className="text-[11px] text-gray-400">
+      <aside className="w-full lg:w-72 lg:flex-shrink-0 border-b lg:border-b-0 lg:border-r border-[#1f2937] bg-[#020617] flex flex-col overflow-hidden max-h-24 sm:max-h-28 lg:max-h-none">
+        <div className="px-4 py-2 lg:py-3 border-b border-[#1f2937]">
+          <h1 className="text-xs lg:text-sm font-semibold text-gray-100">รายวิชา</h1>
+          <p className="text-[10px] lg:text-[11px] text-gray-400">
             วิชาที่ลงทะเบียนในภาคการศึกษานี้
           </p>
         </div>
 
-        <div className="px-3 py-3">
+        <div className="px-2 lg:px-3 py-2 lg:py-3">
           <input
-            className="w-full bg-[#020617] border border-[#374151] rounded-md px-3 py-1.5 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+            className="w-full bg-[#020617] border border-[#374151] rounded-md px-2 lg:px-3 py-1.5 text-xs text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
             placeholder="ค้นหารายวิชา..."
           />
         </div>
 
-        <div className="flex-1 overflow-y-auto px-2 pb-3 space-y-1 min-h-0">
+        <div className="flex-1 overflow-y-auto px-1 lg:px-2 pb-2 lg:pb-3 space-y-0.5 lg:space-y-1 min-h-0">
           {loading ? (
             <div className="px-3 py-2 text-xs text-gray-400">กำลังโหลด...</div>
           ) : error ? (
@@ -627,16 +627,16 @@ export default function ClassPage() {
                         <button
                           key={cls.id}
                           onClick={() => setSelectedId(cls.id)}
-                          className={`w-full text-left rounded-lg px-3 py-2 text-xs mb-1 transition
+                          className={`w-full text-left rounded-lg px-2 lg:px-3 py-1.5 lg:py-2 text-xs mb-0.5 lg:mb-1 transition truncate
                             ${
                               active
                                 ? "bg-violet-600 text-white"
                                 : "bg-transparent text-gray-200 hover:bg-slate-800"
                             }`}
                         >
-                          <div className="font-semibold text-[13px]">{cls.code}</div>
-                          <div className="text-[11px] truncate">{cls.name}</div>
-                          <div className="text-[10px] text-gray-400 mt-1">
+                          <div className="font-semibold text-[12px] lg:text-[13px]">{cls.code}</div>
+                          <div className="text-[10px] lg:text-[11px] truncate">{cls.name}</div>
+                          <div className="text-[9px] lg:text-[10px] text-gray-400 mt-0.5 lg:mt-1">
                             {cls.section} • {cls.semester || "---"}
                           </div>
                         </button>
@@ -721,24 +721,24 @@ export default function ClassPage() {
       <section className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
         {/* Header */}
-        <div className="px-6 py-4 border-b border-[#1f2937] flex items-center justify-between bg-[#020617] flex-shrink-0">
+        <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-[#1f2937] flex items-center justify-between bg-[#020617] flex-shrink-0 gap-2 sm:gap-4">
           {selectedClass ? (
             <>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-semibold text-gray-100">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-100 truncate">
                     {selectedClass.name}
                   </h2>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-violet-600/20 text-violet-300 border border-violet-500/40">
-                    {selectedClass.code} • {selectedClass.section}
+                  <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full bg-violet-600/20 text-violet-300 border border-violet-500/40 whitespace-nowrap">
+                    {selectedClass.code}
                   </span>
                 </div>
-                <p className="text-xs text-gray-400 mt-1">
-                  ห้อง: {selectedClass.room || "---"} • เซมิเสตอร์: {selectedClass.semester || "---"} • หน่วยกิต: {selectedClass.credits || 0}
+                <p className="text-[10px] sm:text-xs text-gray-400 mt-1 truncate">
+                  ห้อง: {selectedClass.room || "---"} • เซมิเสตอร์: {selectedClass.semester || "---"}
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                 {/* Show Join Request button for students */}
                 {userRole === "STUDENT" && (
                   // Show status if already enrolled or has pending request
@@ -782,11 +782,11 @@ export default function ClassPage() {
         </div>
 
         {/* Tabs */}
-        <div className="px-6 pt-3 border-b border-[#1f2937] bg-[#020617] flex-shrink-0">
-          <div className="flex gap-4 text-xs overflow-x-auto scrollbar-hide">
+        <div className="px-3 sm:px-6 pt-2 sm:pt-3 border-b border-[#1f2937] bg-[#020617] flex-shrink-0 overflow-x-auto">
+          <div className="flex gap-2 sm:gap-4 text-xs overflow-x-auto scrollbar-hide">
             <button
               onClick={() => setActiveTab("overview")}
-              className={`pb-2 border-b-2 whitespace-nowrap ${
+              className={`pb-2 border-b-2 whitespace-nowrap text-[11px] sm:text-xs ${
                 activeTab === "overview"
                   ? "border-violet-500 text-gray-100"
                   : "border-transparent text-gray-400 hover:text-gray-200"
@@ -798,102 +798,102 @@ export default function ClassPage() {
             {userRole === "STUDENT" && (
               <button
                 onClick={() => setActiveTab("assignment")}
-                className={`pb-2 border-b-2 flex items-center gap-1 whitespace-nowrap ${
+                className={`pb-2 border-b-2 flex items-center gap-1 whitespace-nowrap text-[11px] sm:text-xs ${
                   activeTab === "assignment"
                     ? "border-violet-500 text-gray-100"
                     : "border-transparent text-gray-400 hover:text-gray-200"
                 }`}
               >
-                <FileText size={14} />
-                งานที่ได้รับมอบหมาย
+                <FileText size={12} className="hidden sm:block" />
+                งาน
               </button>
             )}
 
             <button
               onClick={() => setActiveTab("attendance")}
-              className={`pb-2 border-b-2 flex items-center gap-1 whitespace-nowrap ${
+              className={`pb-2 border-b-2 flex items-center gap-1 whitespace-nowrap text-[11px] sm:text-xs ${
                 activeTab === "attendance"
                   ? "border-violet-500 text-gray-100"
                   : "border-transparent text-gray-400 hover:text-gray-200"
               }`}
             >
-              <Users size={14} />
-              การเข้าเรียน
+              <Users size={12} className="hidden sm:block" />
+              เข้าเรียน
             </button>
 
             <button
               onClick={() => setActiveTab("announcements")}
-              className={`pb-2 border-b-2 flex items-center gap-1 whitespace-nowrap ${
+              className={`pb-2 border-b-2 flex items-center gap-1 whitespace-nowrap text-[11px] sm:text-xs ${
                 activeTab === "announcements"
                   ? "border-violet-500 text-gray-100"
                   : "border-transparent text-gray-400 hover:text-gray-200"
               }`}
             >
-              <Bell size={14} />
+              <Bell size={12} className="hidden sm:block" />
               ประกาศ
             </button>
 
             <button
               onClick={() => setActiveTab("schedule")}
-              className={`pb-2 border-b-2 flex items-center gap-1 whitespace-nowrap ${
+              className={`pb-2 border-b-2 flex items-center gap-1 whitespace-nowrap text-[11px] sm:text-xs ${
                 activeTab === "schedule"
                   ? "border-violet-500 text-gray-100"
                   : "border-transparent text-gray-400 hover:text-gray-200"
               }`}
             >
-              <Calendar size={14} />
-              ตารางเรียน
+              <Calendar size={12} className="hidden sm:block" />
+              ตาราง
             </button>
 
             {userRole === "TEACHER" && (
               <button
                 onClick={() => setActiveTab("scheduleManager")}
-                className={`pb-2 border-b-2 flex items-center gap-1 whitespace-nowrap ${
+                className={`pb-2 border-b-2 flex items-center gap-1 whitespace-nowrap text-[11px] sm:text-xs ${
                   activeTab === "scheduleManager"
                     ? "border-violet-500 text-gray-100"
                     : "border-transparent text-gray-400 hover:text-gray-200"
                 }`}
               >
-                <Calendar size={14} />
-                จัดการตารางเรียน
+                <Calendar size={12} className="hidden sm:block" />
+                จัดการ
               </button>
             )}
 
             {userRole === "TEACHER" && (
               <button
                 onClick={() => setIsJoinRequestModalOpen(true)}
-                className="pb-2 border-b-2 flex items-center gap-1 whitespace-nowrap border-transparent text-gray-400 hover:text-gray-200 relative"
+                className="pb-2 border-b-2 flex items-center gap-1 whitespace-nowrap border-transparent text-gray-400 hover:text-gray-200 relative text-[11px] sm:text-xs"
               >
-                <Users size={14} />
-                คำขอเข้าร่วม
+                <Users size={12} className="hidden sm:block" />
+                คำขอ
               </button>
             )}
 
             {userRole === "TEACHER" && (
               <button
                 onClick={() => setActiveTab("createAssignments")}
-                className={`pb-2 border-b-2 flex items-center gap-1 whitespace-nowrap ${
+                className={`pb-2 border-b-2 flex items-center gap-1 whitespace-nowrap text-[11px] sm:text-xs ${
                   activeTab === "createAssignments"
                     ? "border-violet-500 text-gray-100"
                     : "border-transparent text-gray-400 hover:text-gray-200"
                 }`}
               >
-                <Plus size={14} />
-                สร้างงาน
+                <Plus size={12} className="hidden sm:block" />
+                สร้าง
               </button>
             )}
 
             {userRole === "TEACHER" && (
               <button
                 onClick={() => setActiveTab("settings")}
-                className={`pb-2 border-b-2 flex items-center gap-1 whitespace-nowrap ${
+                className={`pb-2 border-b-2 flex items-center gap-1 whitespace-nowrap text-[11px] sm:text-xs ${
                   activeTab === "settings"
                     ? "border-violet-500 text-gray-100"
                     : "border-transparent text-gray-400 hover:text-gray-200"
                 }`}
               >
-                <Settings size={14} />
-                ตั้งค่า
+                <Settings size={12} className="hidden sm:block" />
+                ตั้ง
               </button>
             )}
           </div>
