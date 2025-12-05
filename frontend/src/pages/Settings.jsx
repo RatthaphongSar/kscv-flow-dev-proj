@@ -51,8 +51,6 @@ export default function Settings() {
       setIsSaving(false)
     }
   }
-    }
-  }
 
   return (
     <PageShell
