@@ -101,15 +101,13 @@ export default function ChatSidebar({
       </div>
 
       {/* รายการห้อง */}
-      <div className="flex-1 overflow-y-auto">
-        <ConversationList
-          rooms={filteredRooms}
-          activeRoom={activeRoom}
-          onSelectRoom={onSelectRoom}
-          pinnedRooms={pinnedRooms}
-          onTogglePin={onTogglePin}
-        />
-      </div>
+      <ConversationList
+        rooms={filteredRooms}
+        activeRoom={activeRoom}
+        onSelectRoom={onSelectRoom}
+        pinnedRooms={pinnedRooms}
+        onTogglePin={onTogglePin}
+      />
 
       {/* Modal สร้างห้อง (หน้าต่างเล็ก) */}
       {isCreateOpen && (
