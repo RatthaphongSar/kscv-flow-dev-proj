@@ -33,7 +33,7 @@ export default function ConversationList({
   }
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-1">
+    <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-1 bg-[#111827]">
       {rooms.map((room) => {
         const isActive = activeRoom?.id === room.id
         const unreadCount = getUnreadCount(room.id)
