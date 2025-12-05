@@ -1,5 +1,5 @@
 import { prisma } from '../db.js'
-import { createObjectCsvStringifier } from 'csv-stringify/sync'
+import { stringify } from 'csv-stringify/sync'
 import PDFDocument from 'pdfkit'
 
 /**
@@ -169,17 +169,15 @@ export const exportActivitiesCSV = async (req, res) => {
       })
     }
 
-    // Create CSV stringifier
-    const stringifier = createObjectCsvStringifier({
-      header: [
-        { id: 'type', title: 'Activity Type' },
-        { id: 'name', title: 'Name' },
-        { id: 'joinedDate', title: 'Joined Date' },
-        { id: 'status', title: 'Status' }
-      ]
+    // Generate CSV with headers
+    const headers = ['Activity Type', 'Name', 'Joined Date', 'Status']
+    const csvRows = [headers]
+    
+    csvRecords.forEach((record) => {
+      csvRows.push([record.type, record.name, record.joinedDate, record.status])
     })
 
-    const csv = stringifier.stringify(csvRecords)
+    const csv = stringify(csvRows)
 
     res.setHeader('Content-Type', 'text/csv')
     res.setHeader('Content-Disposition', `attachment; filename="activities-${user.username}.csv"`)
@@ -222,19 +220,22 @@ export const exportAttendanceCSV = async (req, res) => {
       remarks: att.remarks || 'N/A'
     }))
 
-    // Create CSV stringifier
-    const stringifier = createObjectCsvStringifier({
-      header: [
-        { id: 'classCode', title: 'Class Code' },
-        { id: 'className', title: 'Class Name' },
-        { id: 'date', title: 'Date' },
-        { id: 'time', title: 'Time' },
-        { id: 'status', title: 'Status' },
-        { id: 'remarks', title: 'Remarks' }
-      ]
+    // Generate CSV with headers
+    const headers = ['Class Code', 'Class Name', 'Date', 'Time', 'Status', 'Remarks']
+    const csvRows = [headers]
+    
+    csvRecords.forEach((record) => {
+      csvRows.push([
+        record.classCode,
+        record.className,
+        record.date,
+        record.time,
+        record.status,
+        record.remarks
+      ])
     })
 
-    const csv = stringifier.stringify(csvRecords)
+    const csv = stringify(csvRows)
 
     res.setHeader('Content-Type', 'text/csv')
     res.setHeader('Content-Disposition', `attachment; filename="attendance-${req.user.username}.csv"`)
