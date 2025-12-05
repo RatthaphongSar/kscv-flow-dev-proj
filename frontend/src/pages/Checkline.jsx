@@ -8,9 +8,12 @@ import {
   AlertTriangle,
   Info,
   Users,
+  Send,
+  Loader,
 } from "lucide-react";
 import { classApi } from "../api/classApi";
 import { attendanceApi } from "../api/attendanceApi";
+import { useAuth } from "../context/AuthContext";
 
 // ======================================
 // Mock ข้อมูล attendance – ใช้ชั่วคราว
@@ -56,7 +59,11 @@ export default function ChecklinePage() {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [classAttendanceList, setClassAttendanceList] = useState([]);
   const [summary, setSummary] = useState(null);
+  const [checkingIn, setCheckingIn] = useState(false);
+  const [checkInStatus, setCheckInStatus] = useState(null);
+  const { user } = useAuth();
 
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
@@ -100,6 +107,12 @@ export default function ChecklinePage() {
         // Get summary for the class
         const summaryData = await attendanceApi.getAttendanceSummary(selectedClass);
         setSummary(summaryData);
+
+        // Get class attendance (if teacher)
+        if (user?.role === 'teacher') {
+          const classRecords = await attendanceApi.getAttendanceByClass(selectedClass);
+          setClassAttendanceList(classRecords || []);
+        }
       } catch (err) {
         console.error("Error fetching attendance:", err);
         setAttendanceRecords([]);
@@ -107,12 +120,60 @@ export default function ChecklinePage() {
     };
 
     fetchAttendance();
-  }, [selectedClass]);
+  }, [selectedClass, user?.role]);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 30_000);
     return () => clearInterval(timer);
   }, []);
+
+  // Handle check-in
+  const handleCheckIn = async () => {
+    if (!selectedClass) return;
+
+    try {
+      setCheckingIn(true);
+      setCheckInStatus(null);
+
+      const currentTime = new Date();
+      const hours = String(currentTime.getHours()).padStart(2, '0');
+      const minutes = String(currentTime.getMinutes()).padStart(2, '0');
+
+      // Determine status based on time (simplified - assume 08:00 is on-time)
+      const totalMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+      let status = 'present';
+      if (totalMinutes >= 8 * 60) {
+        status = 'late';
+      }
+
+      await attendanceApi.checkIn(
+        selectedClass,
+        todayStr,
+        status,
+        `Checked in at ${hours}:${minutes}`
+      );
+
+      setCheckInStatus({
+        type: 'success',
+        message: `เช็คชื่อสำเร็จ - ${status === 'present' ? 'เข้าตรงเวลา' : 'มาสาย'}`
+      });
+
+      // Refresh attendance data
+      const records = await attendanceApi.getMyAttendance(selectedClass);
+      setAttendanceRecords(records || []);
+      setSelectedDate(todayStr);
+
+      setTimeout(() => setCheckInStatus(null), 3000);
+    } catch (err) {
+      console.error("Error checking in:", err);
+      setCheckInStatus({
+        type: 'error',
+        message: 'เช็คชื่อไม่สำเร็จ กรุณาลองใหม่'
+      });
+    } finally {
+      setCheckingIn(false);
+    }
+  };
 
   const startOfWeek = getStartOfWeek(today);
   const targetWeekStart = new Date(startOfWeek);
@@ -291,80 +352,176 @@ export default function ChecklinePage() {
       <aside className="w-80 bg-[#020617] p-4 text-xs overflow-y-auto">
         <h3 className="text-sm font-semibold mb-3">รายละเอียดเช็คชื่อ</h3>
 
+        {/* STUDENT CHECK-IN BUTTON */}
+        {user?.role === 'student' && weekOffset === 0 && (
+          <div className="mb-4 p-3 border border-violet-500/50 rounded-lg bg-violet-500/10">
+            {!selectedDate || selectedDate !== todayStr ? (
+              <p className="text-xs text-gray-400 mb-2">เลือกวันนี้เพื่อรายงานตัว</p>
+            ) : (
+              <>
+                <p className="text-xs text-gray-300 mb-2">รายงานตัวเช็คชื่อ</p>
+                <button
+                  onClick={handleCheckIn}
+                  disabled={checkingIn || !selectedClass}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-violet-600 hover:bg-violet-700 disabled:bg-gray-700 rounded-lg text-white text-xs font-medium transition"
+                >
+                  {checkingIn ? (
+                    <>
+                      <Loader size={14} className="animate-spin" />
+                      กำลังส่ง...
+                    </>
+                  ) : (
+                    <>
+                      <Send size={14} />
+                      รายงานตัว
+                    </>
+                  )}
+                </button>
+
+                {checkInStatus && (
+                  <div className={`mt-2 p-2 rounded text-xs text-center ${
+                    checkInStatus.type === 'success'
+                      ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/50'
+                      : 'bg-red-500/20 text-red-200 border border-red-500/50'
+                  }`}>
+                    {checkInStatus.message}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
         {!selectedDate ? (
           <p className="text-gray-400">เลือกวันที่จากปฏิทิน</p>
         ) : (
           <>
-            {/* CLASS CHECK-IN */}
-            <div className="space-y-3 text-gray-300 mb-6">
-              <h4 className="text-sm font-semibold">เช็คชื่อเข้าชั้นเรียน</h4>
+            {/* TEACHER VIEW: STUDENT ATTENDANCE LIST */}
+            {user?.role === 'teacher' && (
+              <div className="space-y-3 mb-6">
+                <h4 className="text-sm font-semibold flex items-center gap-1">
+                  <Users size={14} className="text-violet-400" />
+                  นักเรียนที่เช็คชื่อ ({selectedDate})
+                </h4>
 
-              {!dailyRecord ? (
-                <p className="text-gray-400">ไม่มีข้อมูลเช็คชื่อของวันนี้</p>
-              ) : (
-                <>
-                  <div>
-                    <div className="text-[11px] text-gray-400">รายวิชา</div>
-                    <div className="text-sm font-semibold">{classInfo.name}</div>
-                    <div className="text-[11px]">{classInfo.code}</div>
+                {classAttendanceList.length === 0 ? (
+                  <p className="text-gray-400">ยังไม่มีนักเรียนเช็คชื่อ</p>
+                ) : (
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {classAttendanceList
+                      .filter(rec => {
+                        const recDate = new Date(rec.date).toISOString().slice(0, 10);
+                        return recDate === selectedDate;
+                      })
+                      .map(rec => (
+                        <div
+                          key={rec.id}
+                          className="p-2 rounded bg-[#1f2937] border border-[#374151]"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1">
+                              <div className="font-semibold text-gray-200">{rec.student?.username}</div>
+                              <div className="text-[11px] text-gray-400">{rec.student?.year || '-'} / {rec.student?.major || '-'}</div>
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                              <span className={`text-[11px] px-2 py-0.5 rounded font-medium ${
+                                rec.status === 'present'
+                                  ? 'bg-emerald-500/20 text-emerald-300'
+                                  : rec.status === 'late'
+                                  ? 'bg-amber-500/20 text-amber-300'
+                                  : 'bg-red-500/20 text-red-300'
+                              }`}>
+                                {rec.status === 'present' && 'เข้าตรงเวลา'}
+                                {rec.status === 'late' && 'มาสาย'}
+                                {rec.status === 'absent' && 'ขาดเรียน'}
+                              </span>
+                              {rec.remark && (
+                                <span className="text-[10px] text-gray-400">{rec.remark}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                   </div>
+                )}
+              </div>
+            )}
 
-                  <div className="flex items-center gap-2">
-                    <Calendar size={14} className="text-gray-400" />
-                    <span>{fmt(selectedDate)}</span>
-                  </div>
+            {/* STUDENT VIEW: CLASS CHECK-IN INFO */}
+            {user?.role === 'student' && (
+              <>
+                {/* CLASS CHECK-IN */}
+                <div className="space-y-3 text-gray-300 mb-6">
+                  <h4 className="text-sm font-semibold">เช็คชื่อเข้าชั้นเรียน</h4>
 
-                  <div className="flex items-center gap-2">
-                    <Clock size={14} className="text-gray-400" />
-                    <span>เวลาเช็คชื่อ: {dailyRecord.checkinTime}</span>
-                  </div>
+                  {!dailyRecord ? (
+                    <p className="text-gray-400">ยังไม่มีการเช็คชื่อในวันนี้</p>
+                  ) : (
+                    <>
+                      <div>
+                        <div className="text-[11px] text-gray-400">รายวิชา</div>
+                        <div className="text-sm font-semibold">{classInfo?.name}</div>
+                        <div className="text-[11px]">{classInfo?.code}</div>
+                      </div>
 
-                  <div className="flex items-center gap-2">
-                    <Info size={14} className="text-gray-400" />
-                    <span>
-                      สถานะ:{" "}
-                      {dailyRecord.status === "present" && "เข้าตรงเวลา"}
-                      {dailyRecord.status === "late" && "มาสาย"}
-                      {dailyRecord.status === "absent" && "ขาดเรียน"}
-                    </span>
-                  </div>
-                </>
-              )}
-            </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar size={14} className="text-gray-400" />
+                        <span>{fmt(selectedDate)}</span>
+                      </div>
 
-            {/* ASSEMBLY */}
-            <div className="space-y-3 text-gray-300 mb-6">
-              <h4 className="text-sm font-semibold flex items-center gap-1">
-                <Users size={14} className="text-violet-400" />
-                เช็คชื่อเข้าแถว (Assembly)
-              </h4>
+                      <div className="flex items-center gap-2">
+                        <Clock size={14} className="text-gray-400" />
+                        <span>เวลาเช็คชื่อ: {dailyRecord?.checkinTime || '-'}</span>
+                      </div>
 
-              {!assemblyRecord ? (
-                <p className="text-gray-400">ไม่มีข้อมูลเข้าแถววันนี้</p>
-              ) : (
-                <>
-                  <div className="flex items-center gap-2">
-                    <Calendar size={14} className="text-gray-400" />
-                    <span>{fmt(selectedDate)}</span>
-                  </div>
+                      <div className="flex items-center gap-2">
+                        <Info size={14} className="text-gray-400" />
+                        <span>
+                          สถานะ:{" "}
+                          {dailyRecord?.status === "present" && "เข้าตรงเวลา"}
+                          {dailyRecord?.status === "late" && "มาสาย"}
+                          {dailyRecord?.status === "absent" && "ขาดเรียน"}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
 
-                  <div className="flex items-center gap-2">
-                    <Clock size={14} className="text-gray-400" />
-                    <span>เวลาเข้าแถว: {assemblyRecord.time}</span>
-                  </div>
+                {/* ASSEMBLY */}
+                <div className="space-y-3 text-gray-300 mb-6">
+                  <h4 className="text-sm font-semibold flex items-center gap-1">
+                    <Users size={14} className="text-violet-400" />
+                    เช็คชื่อเข้าแถว (Assembly)
+                  </h4>
 
-                  <div className="flex items-center gap-2">
-                    <Info size={14} className="text-gray-400" />
-                    <span>
-                      สถานะ:{" "}
-                      {assemblyRecord.status === "present" && "ตรงเวลา"}
-                      {assemblyRecord.status === "late" && "สาย"}
-                      {assemblyRecord.status === "absent" && "ไม่เข้าแถว"}
-                    </span>
-                  </div>
-                </>
-              )}
-            </div>
+                  {!assemblyRecord ? (
+                    <p className="text-gray-400">ไม่มีข้อมูลเข้าแถววันนี้</p>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <Calendar size={14} className="text-gray-400" />
+                        <span>{fmt(selectedDate)}</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Clock size={14} className="text-gray-400" />
+                        <span>เวลาเข้าแถว: {assemblyRecord.time}</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Info size={14} className="text-gray-400" />
+                        <span>
+                          สถานะ:{" "}
+                          {assemblyRecord.status === "present" && "ตรงเวลา"}
+                          {assemblyRecord.status === "late" && "สาย"}
+                          {assemblyRecord.status === "absent" && "ไม่เข้าแถว"}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
 
             {/* =================== PIPELINE TIMELINE =================== */}
             <h4 className="text-sm font-semibold mb-2">Timeline (Pipeline)</h4>
