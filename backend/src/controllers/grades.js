@@ -15,7 +15,7 @@ export const getTranscript = async (req, res, next) => {
       where: { studentId: userId },
       include: {
         exam: {
-          include: { class: { select: { name: true, code: true, major: true } } }
+          include: { class: { select: { name: true, code: true, section: true } } }
         }
       },
       orderBy: { createdAt: 'desc' }
