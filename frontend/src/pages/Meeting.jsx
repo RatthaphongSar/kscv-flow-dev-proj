@@ -834,7 +834,6 @@ export default function MeetingPage() {
       )}
     </div>
     </div>
-    </div>
   )
 }
 

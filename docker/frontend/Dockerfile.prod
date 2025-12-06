@@ -1,0 +1,76 @@
+# Multi-stage Dockerfile for KVC Frontend
+# Optimized for self-hosting on Windows PC
+# Builds React + Vite, serves with Express
+
+# ============================================================
+# Stage 1: Build Application
+# ============================================================
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies (needed for build)
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Build the React + Vite application
+# Output goes to ./dist directory
+RUN npm run build
+
+# ============================================================
+# Stage 2: Production Server
+# ============================================================
+FROM node:18-alpine AS production
+
+WORKDIR /app
+
+# Install utilities
+RUN apk add --no-cache dumb-init
+
+# Copy package files for production server
+COPY package*.json ./
+COPY server.js ./
+
+# Install only production dependencies
+# (Express, socket.io-client, etc. for the Node server)
+RUN npm ci --only=production && npm cache clean --force
+
+# Copy built frontend from builder stage
+COPY --from=builder /app/dist ./dist
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# Set ownership
+RUN chown -R nodejs:nodejs /app
+
+# Switch to non-root user
+USER nodejs
+
+# ============================================================
+# Health Check
+# ============================================================
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
+
+# ============================================================
+# Expose Port
+# ============================================================
+# Inside container, frontend server listens on 3000
+# nginx reverse proxy will forward / requests here
+EXPOSE 3000
+
+# ============================================================
+# Entry Point & Start Command
+# ============================================================
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start the Express production server
+# server.js will serve dist/ directory (built React app)
+CMD ["node", "server.js"]

@@ -9,6 +9,12 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  optimizeDeps: {
+    include: ['recharts'],
+  },
+  ssr: {
+    noExternal: ['recharts'],
+  },
   server: {
     port: 5173,
     // https: true,  // Disabled for development to match http backend
