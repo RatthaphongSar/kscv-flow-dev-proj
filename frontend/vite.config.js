@@ -13,6 +13,7 @@ export default defineConfig({
   build: {
     // Production optimizations
     minify: 'terser',
+    sourcemap: true, // Enable sourcemap for debugging
     terserOptions: {
       compress: {
         drop_console: true,

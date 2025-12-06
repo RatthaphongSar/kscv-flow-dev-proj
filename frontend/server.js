@@ -25,12 +25,15 @@ const __dirname = path.dirname(__filename);
 
 // Get port from command line or use default
 const PORT = process.argv[2] ? parseInt(process.argv[2]) : 3000;
-const HOST = 'localhost';
+const HOST = '0.0.0.0'; // Listen on all interfaces for Docker
 
 // Paths
 const certDir = path.join(__dirname, '..', 'backend', 'certs');
 const distDir = path.join(__dirname, 'dist');
 const publicDir = path.join(__dirname, 'dist');
+
+// Backend API URL - support both Docker internal and local access
+const BACKEND_API_URL = process.env.BACKEND_API_URL || 'http://backend:4001';
 
 // Check if dist folder exists
 if (!fs.existsSync(distDir)) {
@@ -62,14 +65,14 @@ app.use(express.static(distDir, {
 
 // Middleware: API proxy (if backend running)
 app.use('/api', createProxyMiddleware({
-  target: 'http://localhost:3001', // Backend API port
+  target: BACKEND_API_URL, // Backend API port
   changeOrigin: true,
   logLevel: 'info',
   onProxyRes: (proxyRes) => {
     proxyRes.headers['Access-Control-Allow-Origin'] = '*';
   },
   onError: (err, req, res) => {
-    console.log('⚠️  Backend not available, using mock data');
+    console.log('⚠️  Backend not available at', BACKEND_API_URL);
   }
 }));
 
@@ -86,22 +89,38 @@ let options = {};
 try {
   if (fs.existsSync(path.join(certDir, 'localhost.pem')) && 
       fs.existsSync(path.join(certDir, 'localhost-key.pem'))) {
-    options = {
-      key: fs.readFileSync(path.join(certDir, 'localhost-key.pem')),
-      cert: fs.readFileSync(path.join(certDir, 'localhost.pem'))
-    };
-    console.log('✅ HTTPS certificates loaded');
+    const keyContent = fs.readFileSync(path.join(certDir, 'localhost-key.pem'), 'utf8');
+    const certContent = fs.readFileSync(path.join(certDir, 'localhost.pem'), 'utf8');
+    
+    // Validate PEM format before using
+    if (keyContent.includes('BEGIN') && certContent.includes('BEGIN')) {
+      options = {
+        key: keyContent,
+        cert: certContent
+      };
+      console.log('✅ HTTPS certificates loaded');
+    } else {
+      console.warn('⚠️  Certificate files exist but have invalid PEM format, using HTTP only');
+    }
   } else {
     console.warn('⚠️  HTTPS certificates not found, using HTTP only');
   }
 } catch (err) {
-  console.warn('⚠️  Could not load certificates:', err.message);
+  console.warn('⚠️  Could not load certificates:', err.message, ', using HTTP only');
 }
 
 // Create HTTPS or HTTP server
-const server = Object.keys(options).length > 0 
-  ? https.createServer(options, app)
-  : http.createServer(app);
+let server;
+try {
+  if (Object.keys(options).length > 0) {
+    server = https.createServer(options, app);
+  } else {
+    server = http.createServer(app);
+  }
+} catch (err) {
+  console.warn('⚠️  HTTPS error:', err.message, ', falling back to HTTP');
+  server = http.createServer(app);
+}
 
 // Start server
 server.listen(PORT, HOST, () => {
@@ -114,7 +133,7 @@ server.listen(PORT, HOST, () => {
   console.log('║                                                        ║');
   console.log('║  📁 Serving: dist/ (built production files)            ║');
   console.log('║  🔄 Hot Reload: Edit src/ → npm run build → Refresh   ║');
-  console.log('║  🔗 API: http://localhost:3001 (if backend running)    ║');
+  console.log('║  🔗 API: http://localhost:4001 (if backend running)    ║');
   console.log('║                                                        ║');
   console.log('║  Commands:                                             ║');
   console.log('║  • npm run build  - Build for production               ║');
