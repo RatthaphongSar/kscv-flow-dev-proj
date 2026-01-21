@@ -4,8 +4,7 @@
  * Usage: node scripts/gen-cert.js
  */
 
-import { generateKeyPairSync, createPrivateKey, createPublicKey } from 'crypto';
-import { X509Certificate } from 'crypto';
+import { generateKeyPairSync } from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -20,7 +19,7 @@ if (!fs.existsSync(certDir)) {
 
 try {
   // Generate RSA key pair
-  const { privateKey, publicKey } = generateKeyPairSync('rsa', {
+  const { privateKey } = generateKeyPairSync('rsa', {
     modulusLength: 2048,
   });
 

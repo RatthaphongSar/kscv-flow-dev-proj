@@ -8,9 +8,7 @@ import { ChatSocketProvider } from './context/ChatSocketContext'
 import "./styles/index.css";
 
 // Development mode: Auto-login with test teacher credentials
-if (!localStorage.getItem('access_token') && import.meta.env.MODE === 'development') {
-  // This will trigger auto-login in AuthContext during mount
-  localStorage.setItem('_DEV_AUTOLOAD_TEACHER', 'true');
+if (import.meta.env.MODE === 'development' && localStorage.getItem('_DEV_AUTOLOAD_TEACHER') === 'true') {
   console.log('✓ Development mode: Will attempt auto-login with teacher credentials');
 }
 

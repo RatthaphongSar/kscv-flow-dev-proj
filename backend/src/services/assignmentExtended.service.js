@@ -120,12 +120,6 @@ export class AssignmentExtendedService {
     }
 
     // Calculate percentage
-    const assignment = await prisma.assignment.findUnique({
-      where: { id: assignmentId },
-    });
-
-    const percentage = (gradeData.score / assignment.maxScore) * 100;
-
     // Update submission
     return prisma.assignmentSubmission.update({
       where: {
@@ -158,10 +152,6 @@ export class AssignmentExtendedService {
     }
 
     // Allow resubmission by resetting status and incrementing allowed count
-    const assignment = await prisma.assignment.findUnique({
-      where: { id: assignmentId },
-    });
-
     return prisma.assignmentSubmission.update({
       where: {
         assignmentId_studentId: { assignmentId, studentId },

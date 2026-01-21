@@ -151,7 +151,7 @@ export default function Assignment() {
           </div>
 
           {/* List */}
-          <div className="space-y-2 text-xs">
+          <div className="space-y-2 text-xs" data-testid="assignments-list">
             {loading ? (
               <div className="text-center py-4 text-gray-400">กำลังโหลด...</div>
             ) : assignments.length === 0 ? (

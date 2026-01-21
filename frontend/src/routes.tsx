@@ -1,16 +1,9 @@
 import { createBrowserRouter } from 'react-router-dom';
-import { ChatLayout } from '@/components/chat/ChatLayout';
-import { ChatWindow } from '@/components/chat/ChatWindow';
+import ChatPage from '@/pages/Chat';
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <ChatLayout />,
-    children: [
-      {
-        path: 'chat/:id',
-        element: <ChatWindow />,
-      },
-    ],
+    element: <ChatPage />,
   },
 ]);

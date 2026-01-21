@@ -5,7 +5,6 @@
 
 import React, { useState } from 'react';
 import { X, Send, File, AlertCircle, Loader, CheckCircle, FileText } from 'lucide-react';
-import { formatDate } from '../../utils/dateUtils';
 
 interface SubmissionConfirmationModalProps {
   isOpen: boolean;
@@ -38,6 +37,16 @@ const SubmissionConfirmationModal: React.FC<SubmissionConfirmationModalProps> = 
 }) => {
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return dateString;
+    return date.toLocaleDateString('th-TH', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
 
   if (!isOpen) return null;
 

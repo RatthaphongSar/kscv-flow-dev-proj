@@ -258,7 +258,6 @@ export const sendMessage = async (req, res, next) => {
     })
 
     // Process files if any
-    let attachedFile = null
     if (files && files.length > 0) {
       try {
         const file = files[0] // multer stores as array
@@ -281,7 +280,6 @@ export const sendMessage = async (req, res, next) => {
           data: { fileId: chatFile.id }
         })
 
-        attachedFile = chatFile
       } catch (fileErr) {
         console.error('[sendMessage] File processing error:', fileErr)
         // Continue without file if error
@@ -305,7 +303,9 @@ export const sendMessage = async (req, res, next) => {
     try {
       const io = getIO()
       io.to(roomId).emit('chatMessage', finalMessage)
-    } catch (_) {}
+    } catch (err) {
+      console.error('[sendMessage] Socket emit error:', err)
+    }
 
     return res.status(201).json(finalMessage)
   } catch (err) {

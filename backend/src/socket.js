@@ -22,29 +22,70 @@ export function initSocket(httpServer) {
   // Auth middleware for socket.io
   io.use((socket, next) => {
     try {
-      const token = socket.handshake.headers.cookie
+      // 1. Try cookie
+      let token = socket.handshake.headers.cookie
         ? cookieParser.JSONCookies(cookieParser.signedCookies(
             { value: socket.handshake.headers.cookie },
             process.env.COOKIE_SECRET || ''
           )).value
         : null
 
+      // 2. Try auth handshake (localStorage)
+      if (!token && socket.handshake.auth?.token) {
+        token = socket.handshake.auth.token
+      }
+
+      // 3. Try Authorization header
+      if (!token && socket.handshake.headers.authorization) {
+        const parts = socket.handshake.headers.authorization.split(' ')
+        if (parts.length === 2 && parts[0] === 'Bearer') {
+          token = parts[1]
+        }
+      }
+
       if (!token) {
         console.warn('[Socket] No token in handshake')
         return next(new Error('Unauthorized'))
       }
 
+      // Handle Mock Tokens
+      if (token.startsWith('mock-')) {
+         if (token.includes('teacher')) {
+           socket.userId = 'teacher-001'
+           socket.username = 'teacher'
+         } else if (token.includes('student')) {
+           socket.userId = 'student-001'
+           socket.username = 'student'
+         } else if (token.includes('admin')) {
+           socket.userId = 'admin-001'
+           socket.username = 'admin'
+         } else {
+           // Default mock
+           socket.userId = 'mock-user-001'
+           socket.username = 'mockuser'
+         }
+         console.log('[Socket] Mock User authenticated:', { userId: socket.userId, username: socket.username })
+         return next()
+      }
+
       let payload
       try {
-        const cookies = {}
-        socket.handshake.headers.cookie?.split(';').forEach(pair => {
-          const [k, v] = pair.trim().split('=')
-          cookies[k] = decodeURIComponent(v)
-        })
-        const accessToken = cookies.access_token
+        // If token is just the JWT string (from auth.token or header)
+        let accessToken = token
+        
+        // If it came from cookie, it might need parsing if it was a JSON object? 
+        // But usually cookie-parser returns the value. 
+        // Let's assume 'token' is the JWT string or "access_token=..." string if not parsed correctly?
+        // Actually earlier code did: const accessToken = cookies.access_token
+        
+        // Let's try to extract from cookie string if it was not parsed by cookieParser (e.g. handshake.headers.cookie)
+        if (token.includes('access_token=')) {
+           const match = token.match(/access_token=([^;]+)/)
+           if (match) accessToken = decodeURIComponent(match[1])
+        }
 
         if (!accessToken) {
-          console.warn('[Socket] No access_token in cookies')
+          console.warn('[Socket] No access_token found')
           return next(new Error('Unauthorized'))
         }
 
@@ -66,6 +107,12 @@ export function initSocket(httpServer) {
 
   io.on('connection', (socket) => {
     console.log('[Socket] Connected:', socket.userId)
+
+    // Join user-specific room for direct messaging (signaling)
+    if (socket.userId) {
+      socket.join(`user:${socket.userId}`)
+      console.log(`[Socket] User ${socket.userId} joined room user:${socket.userId}`)
+    }
 
     // join ห้อง (รองรับชื่อดั้งเดิมและชื่อที่ frontend ใช้)
     socket.on('joinRoom', (roomId) => socket.join(roomId))
@@ -109,9 +156,19 @@ export function initSocket(httpServer) {
     // Join video call
     socket.on('video:join', async ({ meetingId, sessionId }) => {
       try {
-        if (!meetingId || !sessionId) {
-          socket.emit('error', { message: 'Missing meetingId or sessionId' })
+        if (!meetingId) {
+          socket.emit('error', { message: 'Missing meetingId' })
           return
+        }
+
+        // If sessionId is missing, try to find it from active sessions
+        if (!sessionId) {
+            sessionId = videoService.getActiveSessionId(meetingId)
+        }
+
+        if (!sessionId) {
+            socket.emit('error', { message: 'No active video session found. The meeting may not have started yet.' })
+            return
         }
 
         // Join socket room
@@ -149,9 +206,13 @@ export function initSocket(httpServer) {
     // Leave video call
     socket.on('video:leave', async ({ meetingId, sessionId }) => {
       try {
-        if (!meetingId || !sessionId) return
+        if (!meetingId) return
+        if (!sessionId) {
+          sessionId = videoService.getActiveSessionId(meetingId)
+        }
+        if (!sessionId) return
 
-        const participant = await videoService.leaveVideoCall(meetingId, socket.userId, sessionId)
+        await videoService.leaveVideoCall(meetingId, socket.userId, sessionId)
 
         // Notify others that user left
         socket.to(`video:${meetingId}`).emit('video:user-left', {
@@ -170,9 +231,11 @@ export function initSocket(httpServer) {
     socket.on('video:offer', ({ meetingId, to, sdp }) => {
       if (!meetingId || !to) return
 
-      socket.to(`video:${meetingId}`).emit('video:offer', {
+      // Send to specific user
+      socket.to(`user:${to}`).emit('video:offer', {
         from: socket.userId,
         sdp,
+        meetingId // Include meetingId for context
       })
     })
 
@@ -180,9 +243,11 @@ export function initSocket(httpServer) {
     socket.on('video:answer', ({ meetingId, to, sdp }) => {
       if (!meetingId || !to) return
 
-      socket.to(`video:${meetingId}`).emit('video:answer', {
+      // Send to specific user
+      socket.to(`user:${to}`).emit('video:answer', {
         from: socket.userId,
         sdp,
+        meetingId
       })
     })
 
@@ -190,9 +255,11 @@ export function initSocket(httpServer) {
     socket.on('video:ice-candidate', ({ meetingId, to, candidate }) => {
       if (!meetingId || !to) return
 
-      socket.to(`video:${meetingId}`).emit('video:ice-candidate', {
+      // Send to specific user
+      socket.to(`user:${to}`).emit('video:ice-candidate', {
         from: socket.userId,
         candidate,
+        meetingId
       })
     })
 

@@ -59,7 +59,7 @@ export default function Announcements() {
       subtitle="ข่าวประกาศจากวิทยาลัยและอาจารย์ผู้สอน"
       right="Ready to connect to /api/announcements"
     >
-      <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4 space-y-4">
+      <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4 space-y-4" data-testid="announcements-list">
         
         {/* ==== Header + Filter ==== */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
@@ -92,7 +92,7 @@ export default function Announcements() {
             <span className="text-gray-400">โหลดประกาศ...</span>
           </div>
         ) : error ? (
-          <div className="rounded-lg border border-red-500/30 bg-red-900/20 p-4 text-center text-red-300">
+          <div className="rounded-lg border border-red-500/30 bg-red-900/20 p-4 text-center text-red-300" data-testid="error-message">
             {error}
           </div>
         ) : filtered.length === 0 ? (
@@ -124,7 +124,7 @@ export default function Announcements() {
       {/* ===== MODAL ===== */}
       {modal.open && (
         <div className="fixed inset-0 z-40 bg-black/60 flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-[#020617] border border-[#1f2937] rounded-xl p-4 space-y-3">
+          <div className="w-full max-w-lg bg-[#020617] border border-[#1f2937] rounded-xl p-4 space-y-3" data-testid="announcement-detail">
             {/* header */}
             <div className="flex justify-between items-start">
               <div>
@@ -162,7 +162,7 @@ export default function Announcements() {
 
 function AnnouncementCard({ data, bookmarked, onBookmark, onDetail }) {
   return (
-    <div className="rounded-xl border border-[#1f2937] bg-[#020617] p-3 relative">
+    <div className="rounded-xl border border-[#1f2937] bg-[#020617] p-3 relative" data-testid="announcement-item">
       <div className="flex items-center justify-between mb-1">
         <h3 className="text-sm font-medium text-gray-100 truncate">
           {data.title}

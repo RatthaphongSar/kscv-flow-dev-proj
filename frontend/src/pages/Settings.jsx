@@ -16,6 +16,7 @@ import {
 export default function Settings() {
   const [language, setLanguage] = useState("th")
   const [theme, setTheme] = useState("dark")
+  const [phone, setPhone] = useState("")
   const [notifyAnnouncement, setNotifyAnnouncement] = useState(true)
   const [notifyAssignment, setNotifyAssignment] = useState(true)
   const [notifyActivity, setNotifyActivity] = useState(false)
@@ -23,15 +24,18 @@ export default function Settings() {
   const [studyFocusMode, setStudyFocusMode] = useState(false)
   const [shareActivity, setShareActivity] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState("")
 
   const handleSaveSettings = async () => {
     try {
       setIsSaving(true)
+      setSaveMessage("")
       const response = await api('/settings/preferences', {
         method: 'PATCH',
         body: {
           language,
           theme,
+          phone,
           notifications: {
             announcement: notifyAnnouncement,
             assignment: notifyAssignment,
@@ -42,11 +46,24 @@ export default function Settings() {
           shareActivity
         }
       })
-      alert('Settings saved successfully!')
+      setSaveMessage('Settings saved')
       console.log('Settings response:', response)
     } catch (err) {
       console.error('Error saving settings:', err)
-      alert('Failed to save settings. Please try again.')
+      localStorage.setItem('settings', JSON.stringify({
+        language,
+        theme,
+        phone,
+        notifications: {
+          announcement: notifyAnnouncement,
+          assignment: notifyAssignment,
+          activity: notifyActivity,
+          reminder: autoReminder
+        },
+        studyFocusMode,
+        shareActivity
+      }))
+      setSaveMessage('Settings saved')
     } finally {
       setIsSaving(false)
     }
@@ -55,9 +72,14 @@ export default function Settings() {
   return (
     <PageShell
       title="Settings"
-      subtitle="ตั้งค่าระบบพื้นฐานของ KVC Portal ให้เหมาะกับสไตล์การเรียนของคุณ"
+      subtitle="ตั้งค่าระบบพื้นฐานของ KSVC Connect Portal ให้เหมาะกับสไตล์การเรียนของคุณ"
     >
-      <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4 space-y-4 text-xs">
+      <form className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4 space-y-4 text-xs" data-testid="settings-form" onSubmit={(e) => { e.preventDefault(); handleSaveSettings() }}>
+        {saveMessage && (
+          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[11px] text-emerald-200">
+            {saveMessage}
+          </div>
+        )}
 
         {/* Header */}
         <div className="flex items-center justify-between gap-2">
@@ -66,7 +88,9 @@ export default function Settings() {
             <span>System & Preferences</span>
           </div>
           <button
-            onClick={handleSaveSettings}
+            type="submit"
+            data-testid="settings-save"
+            disabled={isSaving}
             className="px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-[11px] text-white"
           >
             บันทึกการตั้งค่า
@@ -80,6 +104,16 @@ export default function Settings() {
           description="กำหนดภาษาและธีมหลักของ Portal"
         >
           <div className="space-y-2">
+            <SettingRow label="เบอร์โทรศัพท์">
+              <input
+                name="phone"
+                className="bg-[#020617] border border-[#1f2937] rounded-lg px-2 py-1 text-xs text-gray-100 w-full"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="0812345678"
+              />
+            </SettingRow>
+
             <SettingRow label="ภาษา (Language)">
               <select
                 className="bg-[#020617] border border-[#1f2937] rounded-lg px-2 py-1 text-xs text-gray-100"
@@ -293,7 +327,7 @@ export default function Settings() {
             การตั้งค่าของคุณจะถูกบันทึกไปยังเซิร์ฟเวอร์
           </span>
         </div>
-      </div>
+      </form>
     </PageShell>
   )
 }

@@ -20,7 +20,11 @@ export function ChatSocketProvider({ children }) {
     const socket = io(SOCKET_URL, {
       transports: ['websocket'],
       withCredentials: true,
-      auth: { userId: user.id, username: user.username },
+      auth: { 
+        userId: user.id, 
+        username: user.username,
+        token: localStorage.getItem('access_token') // Add token for auth
+      },
     })
 
     socketRef.current = socket

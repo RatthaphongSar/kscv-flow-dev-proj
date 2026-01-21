@@ -5,7 +5,7 @@ import classApi from '../../api/classApi';
 
 interface ScheduleItem {
   id: string;
-  dayOfWeek: string;
+  dayOfWeek: number | string;
   startTime: string;
   endTime: string;
   room?: string;
@@ -45,8 +45,15 @@ export default function ClassSchedule({ classId }: ClassScheduleProps) {
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const thaiDaysOfWeek = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัส', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
 
+  const normalizeDayOfWeek = (value: number | string) => {
+    if (typeof value === 'number') return value;
+    const parsed = Number(value);
+    if (!Number.isNaN(parsed)) return parsed;
+    return daysOfWeek.indexOf(value);
+  };
+
   const getScheduleForDay = (dayIndex: number) => {
-    return schedule.filter((item) => item.dayOfWeek === dayIndex);
+    return schedule.filter((item) => normalizeDayOfWeek(item.dayOfWeek) === dayIndex);
   };
 
   const getTypeColor = (type?: string) => {
@@ -164,8 +171,8 @@ export default function ClassSchedule({ classId }: ClassScheduleProps) {
                 {schedule.map((item) => (
                   <tr key={item.id} className="border-b border-[#0f172a] hover:bg-[#0f172a] transition">
                     <td className="px-4 py-3 text-gray-300 capitalize">
-                      {daysOfWeek.indexOf(item.dayOfWeek) >= 0
-                        ? thaiDaysOfWeek[daysOfWeek.indexOf(item.dayOfWeek)]
+                      {normalizeDayOfWeek(item.dayOfWeek) >= 0
+                        ? thaiDaysOfWeek[normalizeDayOfWeek(item.dayOfWeek)]
                         : item.dayOfWeek}
                     </td>
                     <td className="px-4 py-3 text-gray-300">

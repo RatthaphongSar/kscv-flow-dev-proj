@@ -81,7 +81,7 @@ export const attachDoctorCert = async (req, res, next) => {
 export const approveOrReject = async (req, res, next) => {
   try {
     const { id } = req.params
-    const { status, remarks } = req.body
+    const { status } = req.body
 
     if (!status || !['approved', 'rejected'].includes(status)) {
       return res.status(400).json({ error: "status must be 'approved' or 'rejected'" })

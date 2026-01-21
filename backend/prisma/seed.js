@@ -88,7 +88,7 @@ async function seed() {
     console.log('✅ Test class created/updated:', testClass.id);
 
     // Enroll students (skip if already enrolled)
-    const enrollment1 = await prisma.enrollment.upsert({
+    await prisma.enrollment.upsert({
       where: {
         classId_studentId: {
           classId: testClass.id,
@@ -104,7 +104,7 @@ async function seed() {
     });
     console.log('✅ Student 1 enrolled');
 
-    const enrollment2 = await prisma.enrollment.upsert({
+    await prisma.enrollment.upsert({
       where: {
         classId_studentId: {
           classId: testClass.id,

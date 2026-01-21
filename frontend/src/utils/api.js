@@ -31,7 +31,8 @@ export async function api(path, options = {}) {
   if (!finalHeaders.has('Authorization')) {
     const token = localStorage.getItem('access_token');
     if (token) {
-      finalHeaders.set('Authorization', `Bearer ${token}`);
+      const hasBearer = token.toLowerCase().startsWith('bearer ');
+      finalHeaders.set('Authorization', hasBearer ? token : `Bearer ${token}`);
     }
   }
 

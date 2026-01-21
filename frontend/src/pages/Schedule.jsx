@@ -8,6 +8,7 @@ export default function Schedule() {
   const [schedule, setSchedule] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [viewMode, setViewMode] = useState("weekly")
 
   useEffect(() => {
     fetchSchedule()
@@ -41,12 +42,22 @@ export default function Schedule() {
       title="Schedule"
       subtitle="ตารางเรียนประจำสัปดาห์"
     >
-      <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4 text-xs">
+      <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4 text-xs" data-testid="schedule-view">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <CalendarDays size={16} className="text-sky-400" />
-            <span className="text-sm font-semibold">Weekly View</span>
+            <span className="text-sm font-semibold">
+              {viewMode === "weekly" ? "Weekly View" : "Monthly View"}
+            </span>
           </div>
+          <button
+            type="button"
+            data-testid="schedule-toggle"
+            onClick={() => setViewMode(viewMode === "weekly" ? "monthly" : "weekly")}
+            className="text-[11px] px-3 py-1 rounded-full border border-[#374151] text-gray-300 hover:bg-slate-800"
+          >
+            {viewMode === "weekly" ? "Monthly" : "Weekly"}
+          </button>
         </div>
 
         {loading ? (

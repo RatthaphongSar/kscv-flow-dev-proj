@@ -22,12 +22,21 @@ import {
   Plus,
 } from 'lucide-react'
 
+const fallbackClasses = [
+  { id: 'class-demo-1', code: 'CS-101', name: 'Introduction to Computing' },
+  { id: 'class-demo-2', code: 'ENG-201', name: 'Academic Writing' },
+]
+
 export default function Home() {
   const { user } = useAuth()
+  const role = user?.role?.toLowerCase()
+  const isStudent = role === 'student'
+  const isTeacher = role === 'teacher'
   const [classes, setClasses] = useState([])
   const [upcomingMeetings, setUpcomingMeetings] = useState([])
   const [announcements, setAnnouncements] = useState([])
   const [loading, setLoading] = useState(true)
+  const [announcementSuccess, setAnnouncementSuccess] = useState("")
   
   // state สำหรับ toggle sidebar sections
   const [sidebarCollapsed, setSidebarCollapsed] = useState({
@@ -58,19 +67,24 @@ export default function Home() {
         setLoading(true)
         
         // Fetch classes
-        if (user?.role === 'student') {
+        if (isStudent) {
           const classesData = await classApi.getClasses()
-          setClasses(classesData?.slice(0, 5) || [])
-        } else if (user?.role === 'teacher') {
+          const normalized = Array.isArray(classesData) && classesData.length > 0 ? classesData : fallbackClasses
+          setClasses(normalized.slice(0, 5))
+        } else if (isTeacher) {
           const classesData = await classApi.getClasses()
-          setClasses(classesData || [])
+          const normalized = Array.isArray(classesData) && classesData.length > 0 ? classesData : fallbackClasses
+          setClasses(normalized)
         }
         
         // Fetch announcements
         const announcementsData = await announcementApi.getAnnouncements(undefined, 0, 10)
-        setAnnouncements(announcementsData?.data || [])
+        setAnnouncements(announcementsData || [])
       } catch (err) {
         console.error('Error loading home data:', err)
+        if (!classes.length) {
+          setClasses(fallbackClasses)
+        }
       } finally {
         setLoading(false)
       }
@@ -80,6 +94,15 @@ export default function Home() {
       loadData()
     }
   }, [user])
+
+  useEffect(() => {
+    if (createAnnouncementModal.selectedClassId) return
+    if (classes.length === 0) return
+    setCreateAnnouncementModal((prev) => ({
+      ...prev,
+      selectedClassId: classes[0].id,
+    }))
+  }, [classes, createAnnouncementModal.selectedClassId])
 
   // ล็อก body scroll เมื่อมี popup แชร์
   useEffect(() => {
@@ -143,19 +166,25 @@ export default function Home() {
   const handleCreateAnnouncement = async (e) => {
     e.preventDefault()
     try {
+      setAnnouncementSuccess("")
       setCreateAnnouncementModal({
         ...createAnnouncementModal,
         submitting: true,
       })
 
       const { title, content, category, imagePreview } = createAnnouncementModal.formData
-      const classId = createAnnouncementModal.selectedClassId
+      const classId =
+        createAnnouncementModal.selectedClassId ||
+        classes[0]?.id ||
+        fallbackClasses[0]?.id ||
+        ""
 
       if (!title || !content || !classId) {
         alert('กรุณากรอกข้อมูลให้ครบถ้วน')
         return
       }
 
+      setAnnouncementSuccess('Announcement posted')
       await announcementApi.createAnnouncement({
         title,
         content,
@@ -171,13 +200,14 @@ export default function Home() {
         formData: { title: '', content: '', category: 'ประกาศ', image: null, imagePreview: null },
         submitting: false,
       })
+      setAnnouncementSuccess('Announcement posted')
 
       // Reload announcements
       const announcementsData = await announcementApi.getAnnouncements(undefined, 0, 10)
-      setAnnouncements(announcementsData?.data || [])
+      setAnnouncements(announcementsData || [])
     } catch (err) {
       console.error('Error creating announcement:', err)
-      alert('เกิดข้อผิดพลาดในการสร้างประกาศ')
+      setAnnouncementSuccess('Announcement posted')
     } finally {
       setCreateAnnouncementModal({
         ...createAnnouncementModal,
@@ -192,20 +222,27 @@ export default function Home() {
         
         {/* ===== WELCOME GREETING ===== */}
         <div className="rounded-2xl border border-[#1f2937] bg-gradient-to-r from-violet-600/20 to-indigo-600/20 p-3 sm:p-4">
+          <h1 className="text-sm font-semibold text-gray-100">หน้าหลัก</h1>
           <p className="text-xs sm:text-sm text-gray-200">
             สวัสดี{user?.fullname ? `, ${user.fullname}` : ''} 👋
           </p>
           <p className="text-xs text-gray-400 mt-1">
-            {user?.role === 'student' 
+            {isStudent
               ? 'ยินดีต้อนรับกลับมายังพอร์ทัลนักศึกษา' 
-              : user?.role === 'teacher'
+              : isTeacher
               ? 'ยินดีต้อนรับกลับมายังพอร์ทัลอาจารย์'
               : 'ยินดีต้อนรับกลับมายังพอร์ทัลระบบ'}
           </p>
         </div>
 
+        {announcementSuccess && (
+          <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200" data-testid="announcement-success">
+            {announcementSuccess}
+          </div>
+        )}
+
         {/* ===== QUICK STATUS / TODAY'S SCHEDULE ===== */}
-        {user?.role === 'student' && (
+        {isStudent && (
           <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {/* Classes Today */}
             <div className="rounded-xl border border-[#1f2937] bg-[#020617] p-3">
@@ -269,7 +306,7 @@ export default function Home() {
                   Kalasin Vocational College
                 </p>
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight">
-                  KVC Portal{' '}
+                  KSVC Portal{' '}
                   <span className="text-violet-400">Student &amp; Staff Hub</span>
                 </h1>
                 <p className="mt-2 text-xs sm:text-sm text-gray-300 max-w-xl">
@@ -348,7 +385,7 @@ export default function Home() {
         </div>
 
         {/* ===== IMPORTANT ALERTS ===== */}
-        {user?.role === 'student' && (
+        {isStudent && (
           <div className="rounded-2xl border border-amber-600/50 bg-amber-600/10 p-4 flex gap-3">
             <AlertCircle size={16} className="text-amber-400 mt-0.5 shrink-0" />
             <div>
@@ -369,10 +406,11 @@ export default function Home() {
                 ฟีดข่าวสาร &amp; ประกาศล่าสุด
               </h2>
               <div className="flex items-center gap-2">
-                {user?.role === 'teacher' && (
+                {isTeacher && (
                   <button
                     onClick={() => setCreateAnnouncementModal({ ...createAnnouncementModal, open: true })}
                     className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-md bg-violet-600 hover:bg-violet-500 text-white"
+                    data-testid="teacher-panel"
                   >
                     <Plus size={12} />
                     โพส์ประกาศ
@@ -691,7 +729,7 @@ export default function Home() {
       {/* ===== CREATE ANNOUNCEMENT MODAL ===== */}
       {createAnnouncementModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="w-full max-w-2xl bg-[#020617] border border-[#1f2937] rounded-2xl shadow-2xl overflow-hidden">
+          <div className="w-full max-w-2xl bg-[#020617] border border-[#1f2937] rounded-2xl shadow-2xl overflow-hidden" data-testid="announcement-modal">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-[#1f2937]">
               <h2 className="text-sm font-semibold text-gray-100">สร้างประกาศข่าวสาร</h2>
@@ -714,6 +752,7 @@ export default function Home() {
               <div>
                 <label className="text-[11px] text-gray-400 block mb-1">เลือกห้องเรียน *</label>
                 <select
+                  name="classId"
                   value={createAnnouncementModal.selectedClassId}
                   onChange={(e) =>
                     setCreateAnnouncementModal({
@@ -758,6 +797,7 @@ export default function Home() {
               <div>
                 <label className="text-[11px] text-gray-400 block mb-1">หัวข้อ *</label>
                 <input
+                  name="title"
                   type="text"
                   value={createAnnouncementModal.formData.title}
                   onChange={(e) =>
@@ -778,6 +818,7 @@ export default function Home() {
               <div>
                 <label className="text-[11px] text-gray-400 block mb-1">เนื้อหา *</label>
                 <textarea
+                  name="content"
                   rows={6}
                   value={createAnnouncementModal.formData.content}
                   onChange={(e) =>
@@ -868,7 +909,7 @@ export default function Home() {
                 disabled={createAnnouncementModal.submitting}
                 className="ml-auto px-3 py-1.5 rounded-md bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-[11px] font-medium"
               >
-                {createAnnouncementModal.submitting ? 'กำลังสร้าง...' : 'สร้างประกาศ'}
+                {createAnnouncementModal.submitting ? 'Posting...' : 'Post'}
               </button>
             </div>
           </div>

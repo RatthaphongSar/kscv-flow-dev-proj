@@ -11,14 +11,46 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let mounted = true
 
+    const accessToken = localStorage.getItem('access_token')
+    const normalizedToken = (accessToken || '').toLowerCase()
+    const roleFromToken = normalizedToken.includes('student')
+      ? 'STUDENT'
+      : normalizedToken.includes('teacher')
+        ? 'TEACHER'
+        : null
     const stored = localStorage.getItem('user')
-    if (stored) {
+    if (stored && accessToken) {
       try {
-        if (mounted) setUser(JSON.parse(stored))
+        const parsed = JSON.parse(stored)
+        if (roleFromToken && parsed?.role && parsed.role.toUpperCase() !== roleFromToken) {
+          localStorage.removeItem('user')
+        } else {
+          if (mounted) setUser(parsed)
+          if (mounted) setLoading(false)
+          return
+        }
       } catch (e) {
         console.error('Failed to parse stored user:', e)
+        localStorage.removeItem('user')
       }
-      if (mounted) setLoading(false)
+    } else if (stored && !accessToken) {
+      localStorage.removeItem('user')
+    }
+
+    const isMockToken = normalizedToken.includes('mock-')
+    if (accessToken && isMockToken) {
+      const mockRole = localStorage.getItem('mockRole') || roleFromToken || 'TEACHER'
+      const mockUser = {
+        id: mockRole === 'TEACHER' ? 'teacher-001' : 'student-001',
+        username: mockRole === 'TEACHER' ? 'teacher' : 'student1',
+        email: mockRole === 'TEACHER' ? 'teacher@university.edu' : 'student1@university.edu',
+        role: mockRole,
+      }
+      if (mounted) {
+        setUser(mockUser)
+        localStorage.setItem('user', JSON.stringify(mockUser))
+        setLoading(false)
+      }
       return
     }
 
@@ -48,6 +80,7 @@ export function AuthProvider({ children }) {
             }
             setUser(mockUser)
             localStorage.setItem('user', JSON.stringify(mockUser))
+            localStorage.setItem('access_token', 'mock-teacher-token')
           }
         })
         .finally(() => {
@@ -56,6 +89,16 @@ export function AuthProvider({ children }) {
       return
     }
 
+    if (!accessToken) {
+      if (mounted) {
+        setUser(null)
+        setLoading(false)
+      }
+      return
+    }
+
+    const resolveMockRole = () => localStorage.getItem('mockRole') || roleFromToken || 'TEACHER'
+
     // Try to load from API
     AuthAPI.me()
       .then((u) => {
@@ -63,8 +106,7 @@ export function AuthProvider({ children }) {
           setUser(u)
           localStorage.setItem('user', JSON.stringify(u))
         } else if (mounted) {
-          // Create mock user if API fails (for testing)
-          const mockRole = localStorage.getItem('mockRole') || 'TEACHER'
+          const mockRole = resolveMockRole()
           const mockUser = {
             id: mockRole === 'TEACHER' ? 'teacher-001' : 'student-001',
             username: mockRole === 'TEACHER' ? 'teacher' : 'student1',
@@ -73,12 +115,12 @@ export function AuthProvider({ children }) {
           }
           setUser(mockUser)
           localStorage.setItem('user', JSON.stringify(mockUser))
+          localStorage.setItem('access_token', `mock-${mockRole.toLowerCase()}-token`)
         }
       })
       .catch(() => {
-        // Create mock user on API error (for testing without full auth)
         if (mounted) {
-          const mockRole = localStorage.getItem('mockRole') || 'TEACHER'
+          const mockRole = resolveMockRole()
           const mockUser = {
             id: mockRole === 'TEACHER' ? 'teacher-001' : 'student-001',
             username: mockRole === 'TEACHER' ? 'teacher' : 'student1',
@@ -87,6 +129,7 @@ export function AuthProvider({ children }) {
           }
           setUser(mockUser)
           localStorage.setItem('user', JSON.stringify(mockUser))
+          localStorage.setItem('access_token', `mock-${mockRole.toLowerCase()}-token`)
         }
       })
       .finally(() => {

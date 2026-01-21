@@ -46,11 +46,19 @@ export async function startVideoSession(meetingId) {
 }
 
 /**
- * End a video session
- * @param {string} meetingId - Meeting ID
- * @param {string} sessionId - Video session ID
- * @returns {Promise<VideoSession>}
+ * Get active session ID for a meeting
+ * @param {string} meetingId
+ * @returns {string|null}
  */
+export function getActiveSessionId(meetingId) {
+    const session = activeSessions.get(meetingId);
+    if (session) return session.sessionId;
+    
+    // If not in memory, maybe we should check DB? 
+    // But for now, let's rely on memory or return null (which will cause join to fail if not handled)
+    return null; 
+}
+
 export async function endVideoSession(meetingId, sessionId) {
   try {
     const duration = Math.floor(

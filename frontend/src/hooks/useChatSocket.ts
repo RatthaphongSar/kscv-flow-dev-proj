@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { useChatStore } from '../../stores/chat';
-import { chatService } from '../../services/chat';
-import { useChatSettings } from '../../stores/chatSettings';
+import { useChatStore } from '../stores/chat';
+import { chatService } from '../services/chat';
+import { useChatSettings } from '../stores/chatSettings';
 
 export function useChatSocket() {
   const {
@@ -12,26 +12,31 @@ export function useChatSocket() {
     markAsRead,
   } = useChatStore();
 
-  const { sounds, notifications } = useChatSettings();
+  const { notifications } = useChatSettings();
 
   useEffect(() => {
     // Handle incoming messages
     const unsubscribeMessage = chatService.onMessageReceived((message) => {
-      if (message.roomId === currentRoomId) {
-        markAsRead(message.roomId);
-        chatService.updateMessageStatus(message.id, 'read');
-      }
+      if (!currentRoomId) return;
+      if (message.roomId && message.roomId !== currentRoomId) return;
+      markAsRead(currentRoomId);
+      chatService.updateMessageStatus(message.id, 'read');
 
       // Play sound if enabled
-      if (sounds === 'all' || (sounds === 'mentions' && message.text.includes('@me'))) {
+      if (
+        notifications.sounds &&
+        (notifications.mode === 'all' ||
+          (notifications.mode === 'mentions' && message.text.includes('@me')))
+      ) {
         const audio = new Audio('/notification.mp3');
         audio.play().catch(() => {});
       }
 
       // Show browser notification if enabled
       if (
-        notifications === 'all' ||
-        (notifications === 'mentions' && message.text.includes('@me'))
+        notifications.desktop &&
+        (notifications.mode === 'all' ||
+          (notifications.mode === 'mentions' && message.text.includes('@me')))
       ) {
         if (Notification.permission === 'granted') {
           new Notification('New Message', {
@@ -66,7 +71,7 @@ export function useChatSocket() {
       unsubscribeTypingStop();
       unsubscribeStatus();
     };
-  }, [currentRoomId, sounds, notifications]);
+  }, [currentRoomId, notifications, markAsRead, setTyping]);
 
   // Handle file uploads
   const handleFileUpload = async (file: File) => {

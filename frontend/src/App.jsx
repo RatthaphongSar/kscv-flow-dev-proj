@@ -32,6 +32,7 @@ function NavItem({ to, icon: Icon, label, badge, onClick }) {
     <Link
       to={to}
       onClick={onClick}
+      data-testid="nav-item"
       className={`relative flex items-center gap-2 px-3 py-2 rounded-lg transition
         ${active ? 'bg-violet-600 text-white' : 'text-gray-300 hover:bg-slate-800'}`}
     >
@@ -81,13 +82,14 @@ export default function App() {
             <button
               className="p-2 rounded-lg hover:bg-slate-800"
               onClick={() => setOpen(true)}
+              data-testid="sidebar-toggle"
             >
               <Menu className="text-gray-200" />
             </button>
 
             <Link to="/" className="flex items-center gap-2 text-violet-400 font-bold">
               <div className="w-8 h-8 rounded-lg overflow-hidden">
-                <img src="/kvc-logo.png" className="w-full h-full object-contain scale-150" />
+                <img src="/kvc-logo.png" alt="KVC logo" className="w-full h-full object-contain scale-150" />
               </div>
               <span className="hidden sm:inline text-sm">Kalasin Vocational College</span>
             </Link>
@@ -136,6 +138,7 @@ export default function App() {
         className={`fixed inset-y-0 left-0 w-72 bg-[#020617] border-r border-[#1f2937] z-50 transform transition-transform ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
+        data-testid="sidebar"
       >
         <div className="flex items-center justify-between p-4 border-b border-[#1f2937]">
           <span className="font-bold text-violet-400">Navigation</span>
@@ -163,7 +166,7 @@ export default function App() {
       {/* ============ PRIMARY NAV ============ */}
       <div className="w-full bg-[#020617] border-b border-[#1f2937] shrink-0">
         <div className="w-full flex justify-center overflow-x-auto">
-          <div className="w-full max-w-[1400px] flex justify-around md:justify-start md:gap-2 px-3 py-2">
+          <div className="w-full max-w-[1400px] flex justify-around md:justify-start md:gap-2 px-3 py-2" data-testid="main-nav">
             <NavItem to="/" icon={Home} label="Home" />
             <NavItem to="/chat" icon={MessageSquare} label="Chat" />
             <NavItem to="/class" icon={GraduationCap} label="Class" />

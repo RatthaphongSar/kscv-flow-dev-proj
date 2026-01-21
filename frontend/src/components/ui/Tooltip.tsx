@@ -21,7 +21,7 @@ const TooltipContent = forwardRef<
 ));
 TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 
-export interface TooltipProps extends HTMLAttributes<HTMLDivElement> {
+export interface TooltipProps extends Omit<HTMLAttributes<HTMLDivElement>, 'content'> {
   content: ReactNode;
   side?: 'top' | 'right' | 'bottom' | 'left';
   align?: 'start' | 'center' | 'end';

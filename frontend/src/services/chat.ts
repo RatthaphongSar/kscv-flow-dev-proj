@@ -49,7 +49,10 @@ class ChatService {
     }
 
     this.socket = io(CHAT_SERVER_URL, {
-      auth: { userId },
+      auth: { 
+        userId,
+        token: localStorage.getItem('access_token') 
+      },
       transports: ['websocket'],
       withCredentials: true, // เผื่อใช้ cookie/JWT ร่วมกับ backend
     })

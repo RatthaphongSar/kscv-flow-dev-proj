@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import * as ctrl from '../controllers/class.controller.js';
-import { body, param, query } from 'express-validator';
+import { query } from 'express-validator';
 const router = Router();
 
 // List classes for user (by enrollment/teaching)

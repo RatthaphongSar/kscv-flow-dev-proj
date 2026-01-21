@@ -44,6 +44,7 @@ export function initializeTypingIndicatorSystem(io) {
  * @param userId - User ID of connected client
  */
 export function registerTypingIndicatorListeners(socket, userId) {
+  const io = socket?.nsp?.server;
   /**
    * Handle typing:start event
    * Client emits when user starts typing
@@ -111,7 +112,7 @@ export function registerTypingIndicatorListeners(socket, userId) {
    * Expected payload: { roomId, userId, timestamp? }
    */
   socket.on('typing:stop', (data) => {
-    const { roomId, userId: emittedUserId, timestamp } = data;
+    const { roomId, userId: emittedUserId } = data;
 
     // Validate
     if (!roomId || !emittedUserId) {

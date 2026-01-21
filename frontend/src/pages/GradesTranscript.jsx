@@ -43,10 +43,13 @@ export default function GradesTranscript() {
       subtitle="ผลการเรียนในเทอมปัจจุบัน"
       right={`GPA: ${gpa.toFixed(2)}`}
     >
-      <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4">
+      <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4" data-testid="grades-container">
         <div className="flex items-center gap-2 mb-3">
           <GraduationCap size={16} className="text-emerald-400" />
           <span className="text-sm font-semibold">Term 2 / 2025</span>
+        </div>
+        <div className="text-[11px] text-gray-500 mb-3" data-testid="gpa-display">
+          {gpa.toFixed(2)}
         </div>
 
         {loading ? (

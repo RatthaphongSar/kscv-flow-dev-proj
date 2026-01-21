@@ -18,7 +18,6 @@ export function useApi(path, deps = []) {
       if (alive) setLoading(false)
     })
     return () => { alive = false }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
 
   return { data, error, loading }

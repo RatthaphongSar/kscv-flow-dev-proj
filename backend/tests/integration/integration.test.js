@@ -327,8 +327,6 @@ describe('KVC Backend API Integration Tests', () => {
   });
 
   describe('Assignments API', () => {
-    let assignmentId;
-
     describe('POST /api/assignments', () => {
       test('teacher should create assignment', async () => {
         const res = await request(app)
@@ -338,7 +336,6 @@ describe('KVC Backend API Integration Tests', () => {
           .expect(201);
 
         expect(res.body).toHaveProperty('id');
-        assignmentId = res.body.id;
       });
 
       test('student should not create assignment', async () => {

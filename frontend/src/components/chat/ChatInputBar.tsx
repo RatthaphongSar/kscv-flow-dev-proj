@@ -12,8 +12,16 @@ interface ChatInputBarProps {
 
 export function ChatInputBar({ roomId, onMessageSent, disabled = false }: ChatInputBarProps) {
   const [messageText, setMessageText] = useState('')
-  const { selectedFiles, uploading, error, addFiles, removeFile, clearFiles, uploadWithMessage } =
-    useFileUpload()
+  const {
+    selectedFiles,
+    uploading,
+    error,
+    addFiles,
+    removeFile,
+    clearFiles,
+    uploadWithMessage,
+    formatFileSize,
+  } = useFileUpload()
 
   const handleFileSelected = (files: FileList) => {
     addFiles(Array.from(files))
@@ -61,9 +69,10 @@ export function ChatInputBar({ roomId, onMessageSent, disabled = false }: ChatIn
           {selectedFiles.map((file) => (
             <AttachmentPreview
               key={file.id}
-              file={file}
+              file={file.file}
+              preview={file.preview}
               onRemove={() => removeFile(file.id)}
-              disabled={uploading}
+              formatFileSize={formatFileSize}
             />
           ))}
         </div>

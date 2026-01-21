@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import * as ctrl from '../controllers/advisor.js';
-import { body, param, query } from 'express-validator';
+import { param } from 'express-validator';
 import { authRequired } from '../middleware/auth.js';
 const router = Router();
 

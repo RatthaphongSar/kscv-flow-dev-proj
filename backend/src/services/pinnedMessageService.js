@@ -86,7 +86,7 @@ export const unpinMessage = async (messageId, roomId, userId) => {
   }
 
   // Delete the pin
-  const result = await prisma.pinnedMessage.delete({
+  await prisma.pinnedMessage.delete({
     where: {
       messageId_roomId: {
         messageId,

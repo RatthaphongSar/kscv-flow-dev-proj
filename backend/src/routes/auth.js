@@ -81,7 +81,7 @@ router.post('/login',
       const refresh = signRefresh(u)
       setAuthCookies(res, access, refresh)
       console.log('[Login] User logged in successfully:', { id: u.id, username: u.username })
-      res.json({ id: u.id, username: u.username, role: u.role, year: u.year, major: u.major })
+      res.json({ id: u.id, username: u.username, role: u.role, year: u.year, major: u.major, accessToken: access })
     } catch (e) { next(e) }
   }
 )
@@ -132,6 +132,18 @@ router.post('/logout', (req, res) => {
 /** Me – ดูข้อมูลผู้ใช้จาก access_token ถ้ามี */
 router.get('/me', async (req, res) => {
   try {
+    // 1. If mockAuth or other middleware already authenticated the user
+    if (req.user) {
+      return res.json({
+        id: req.user.id,
+        username: req.user.username,
+        role: req.user.role,
+        year: req.user.year,
+        major: req.user.major
+      })
+    }
+
+    // 2. Check cookies
     const token = req.cookies?.access_token
     if (!token) return res.json(null)
     const p = jwt.verify(token, process.env.JWT_ACCESS_SECRET)

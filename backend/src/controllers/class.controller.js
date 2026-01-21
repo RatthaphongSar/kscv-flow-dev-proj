@@ -268,7 +268,7 @@ export const updateAssignment = async (req, res) => {
     }
 
     const { assignmentId } = req.params;
-    const { id: userId, role } = req.user || {};
+    const { role } = req.user || {};
 
     if (role !== 'TEACHER') {
       return res.status(403).json({ error: 'Only teachers can update assignments' });
@@ -289,7 +289,7 @@ export const updateAssignment = async (req, res) => {
 export const deleteAssignment = async (req, res) => {
   try {
     const { assignmentId, classId } = req.params;
-    const { id: userId, role } = req.user || {};
+    const { role } = req.user || {};
 
     if (role !== 'TEACHER') {
       return res.status(403).json({ error: 'Only teachers can delete assignments' });
@@ -560,7 +560,7 @@ export const updateClassSchedule = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { classId, scheduleId } = req.params;
+    const { scheduleId } = req.params;
     const { role } = req.user || {};
 
     if (role !== 'TEACHER') {
@@ -593,7 +593,7 @@ export const deleteClassSchedule = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { classId, scheduleId } = req.params;
+    const { scheduleId } = req.params;
     const { role } = req.user || {};
 
     if (role !== 'TEACHER') {
@@ -656,7 +656,7 @@ export const updateClassAssignmentPlan = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { classId, planId } = req.params;
+    const { planId } = req.params;
     const { role } = req.user || {};
 
     if (role !== 'TEACHER') {
@@ -689,7 +689,7 @@ export const deleteClassAssignmentPlan = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { classId, planId } = req.params;
+    const { planId } = req.params;
     const { role } = req.user || {};
 
     if (role !== 'TEACHER') {
@@ -873,9 +873,6 @@ export const deleteClassExam = async (req, res) => {
 
 export const uploadAssignmentFiles = async (req, res) => {
   try {
-    const { classId, assignmentId } = req.params;
-    const { id: userId } = req.user || {};
-
     // Check if files were uploaded
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: 'No files provided' });
@@ -963,7 +960,7 @@ export const updateAttendanceSession = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { classId, sessionId } = req.params;
+    const { sessionId } = req.params;
     const { role } = req.user || {};
 
     if (role !== 'TEACHER') {
@@ -984,7 +981,7 @@ export const updateAttendanceSession = async (req, res) => {
 
 export const deleteAttendanceSession = async (req, res) => {
   try {
-    const { classId, sessionId } = req.params;
+    const { sessionId } = req.params;
     const { role } = req.user || {};
 
     if (role !== 'TEACHER') {

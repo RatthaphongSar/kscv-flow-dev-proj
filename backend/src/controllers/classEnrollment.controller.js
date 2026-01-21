@@ -43,7 +43,7 @@ export const enrollMultipleStudents = async (req, res) => {
 
     const { classId } = req.params;
     const { studentIds } = req.body;
-    const { id: teacherId, role } = req.user || {};
+    const { role } = req.user || {};
 
     if (role !== 'TEACHER') {
       return res.status(403).json({

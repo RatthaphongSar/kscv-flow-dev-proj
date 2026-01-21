@@ -27,7 +27,6 @@ const ALLOWED_MIME_TYPES = {
 
 // ===== Size limits (bytes) =====
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
-const MAX_TOTAL_SIZE = 50 * 1024 * 1024 // 50MB for all files combined
 
 // ===== Setup upload directory =====
 const uploadDir = path.join(__dirname, '../../uploads')
@@ -47,7 +46,7 @@ const storage = multer.diskStorage({
     const ext = path.extname(file.originalname)
     // Sanitize filename: remove special chars and limit length
     const sanitizedName = path.basename(file.originalname, ext)
-      .replace(/[^a-zA-Z0-9_\-]/g, '_') // Replace non-ASCII with underscore
+      .replace(/[^a-zA-Z0-9_-]/g, '_') // Replace non-ASCII with underscore
       .slice(0, 50) // Limit to 50 chars
     const filename = `${timestamp}_${roomId}_${sanitizedName}_${Math.random().toString(36).slice(2, 9)}${ext}`
     cb(null, filename)

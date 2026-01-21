@@ -49,7 +49,7 @@ async function main() {
     console.log('👨‍🎓 Seeding 15 STUDENTS...')
     for (const student of STUDENTS) {
       try {
-        const user = await prisma.user.upsert({
+        await prisma.user.upsert({
           where: { id: student.id },
           update: {
             username: student.username,
@@ -79,7 +79,7 @@ async function main() {
     console.log('👨‍🏫 Seeding 5 TEACHERS...')
     for (const teacher of TEACHERS) {
       try {
-        const user = await prisma.user.upsert({
+        await prisma.user.upsert({
           where: { id: teacher.id },
           update: {
             username: teacher.username,

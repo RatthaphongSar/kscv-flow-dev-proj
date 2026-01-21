@@ -75,11 +75,12 @@ export default function TeacherAssignmentGrading({
     try {
       setGrading(true);
       setError(null);
-      await classApi.gradeSubmission(selectedSubmission.id, {
+      await classApi.gradeSubmission(
+        assignment.id,
+        selectedSubmission.student.id,
         grade,
-        feedback,
-        status: 'graded',
-      });
+        feedback
+      );
 
       // Update local state
       setSubmissions(
@@ -105,7 +106,11 @@ export default function TeacherAssignmentGrading({
 
     try {
       setGrading(true);
-      await classApi.requestResubmission(selectedSubmission.id, feedback);
+      await classApi.requestResubmission(
+        assignment.id,
+        selectedSubmission.student.id,
+        feedback
+      );
       setSubmissions(
         submissions.map(s =>
           s.id === selectedSubmission.id

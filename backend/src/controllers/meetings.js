@@ -122,7 +122,7 @@ export const updateMeeting = async (req, res) => {
     }
 
     const { id } = req.params;
-    const { id: teacherId, role } = req.user || {};
+    const { id: teacherId } = req.user || {};
     const updateData = req.body;
 
     const meeting = await MeetingService.updateMeeting(id, teacherId, updateData);

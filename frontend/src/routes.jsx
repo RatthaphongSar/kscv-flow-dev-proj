@@ -14,10 +14,11 @@ import Settings from './pages/Settings.jsx'
 import Organization from './pages/Organization.jsx'
 import ChatPage from './pages/Chat'            // use TypeScript Chat page (Chat.tsx)
 import Class from './pages/Class.jsx'
+import Meeting from './pages/Meeting.jsx'
 import { MeetingImproved } from './pages/MeetingImproved.jsx'
 import CreateMeeting from './pages/CreateMeeting.jsx'
 import MeetingRoom from './pages/MeetingRoom.jsx'
-import VideoCall from './pages/VideoCall.tsx'
+import VideoCall from './pages/VideoCall.jsx'
 import Checkline from './pages/Checkline.jsx'
 import Profile from './pages/Profile.jsx'
 import Login from './pages/Login.jsx'
@@ -30,7 +31,7 @@ export default function AppRoutes() {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/announcements" element={<Announcements />} />
+      <Route path="/announcements" element={<Protected><Announcements /></Protected>} />
       <Route path="/assignment" element={<Assignment />} />
       <Route path="/grades" element={<GradesTranscript />} />
       <Route path="/exam" element={<Exam />} />
@@ -46,9 +47,9 @@ export default function AppRoutes() {
       
       <Route path="/chat" element={<Protected><ChatPage /></Protected>} />
       <Route path="/class" element={<Protected><Class /></Protected>} />
-      <Route path="/meeting" element={<Protected><MeetingImproved /></Protected>} />
+      <Route path="/meeting" element={<Protected><Meeting /></Protected>} />
       <Route path="/create-meeting" element={<Protected><CreateMeeting /></Protected>} />
-      <Route path="/meeting/:meetingId" element={<Protected><MeetingRoom /></Protected>} />
+      <Route path="/meeting/:meetingId" element={<Protected><VideoCall /></Protected>} />
       <Route path="/video-call/:meetingId" element={<Protected><VideoCall /></Protected>} />
       <Route path="/checkline" element={<Protected><Checkline /></Protected>} />
       <Route path="/profile" element={<Protected><Profile /></Protected>} />

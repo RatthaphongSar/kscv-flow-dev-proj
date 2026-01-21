@@ -98,10 +98,6 @@ function removePresence(userId, socketId) {
   if (set.size === 0) userSockets.delete(userId)
 }
 
-function isOnline(userId) {
-  return userSockets.has(userId)
-}
-
 /**
  * ติดตั้ง Socket.IO ให้พร้อมใช้งาน
  */

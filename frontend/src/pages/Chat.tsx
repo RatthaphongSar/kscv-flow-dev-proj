@@ -1,9 +1,5 @@
-import ChatLayoutPage from '@/components/chat/ChatLayout';
+import ChatPage from './Chat.jsx'
 
-export default function ChatPage(){
-  return (
-    <div className="flex flex-col h-full w-full">
-      <ChatLayoutPage />
-    </div>
-  );
+export default function ChatPageWrapper() {
+  return <ChatPage />
 }

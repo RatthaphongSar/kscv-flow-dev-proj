@@ -10,6 +10,10 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    port: 5173,
+    strictPort: true,
+  },
   build: {
     // Production optimizations
     minify: 'terser',
@@ -53,8 +57,4 @@ export default defineConfig({
     chunkSizeWarningLimit: 600, // Warn if chunk > 600kb
     reportCompressedSize: true,
   },
-  server: { 
-    port: 5173,
-    strictPort: true // บังคับใช้พอร์ต 5173 เท่านั้น
-  }
 })

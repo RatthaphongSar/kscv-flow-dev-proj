@@ -1,4 +1,5 @@
 import { prisma } from '../db.js';
+import * as videoService from './videoConferencing.js';
 
 /**
  * Create a new meeting
@@ -200,6 +201,17 @@ export const startMeeting = async (meetingId, teacherId) => {
     throw new Error(`Cannot start a ${meeting.status} meeting`);
   }
 
+  // Start video session if online
+  let videoSession = null;
+  if (meeting.type === 'online') {
+    try {
+      videoSession = await videoService.startVideoSession(meetingId);
+    } catch (err) {
+      console.error('Failed to start video session:', err);
+      // Continue anyway? Or fail? Let's log and continue but maybe without session ID it will fail later.
+    }
+  }
+
   const updated = await prisma.meeting.update({
     where: { id: meetingId },
     data: { status: 'active' },
@@ -210,7 +222,7 @@ export const startMeeting = async (meetingId, teacherId) => {
     },
   });
 
-  return updated;
+  return { ...updated, videoSession };
 };
 
 /**

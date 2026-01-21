@@ -10,6 +10,13 @@ export interface Message {
   timestamp: number;
   status: MessageStatus;
   edited?: boolean;
+  roomId?: string;
+  file?: {
+    name: string;
+    url: string;
+    type: string;
+    size: number;
+  };
 }
 
 export interface User {

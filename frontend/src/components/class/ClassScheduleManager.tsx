@@ -14,6 +14,7 @@ interface ScheduleItem {
   startTime: string; // HH:mm
   endTime: string;
   room?: string;
+  type?: string;
 }
 
 interface AssignmentPlan {

@@ -13,7 +13,7 @@ async function main() {
 
   // Update teacher-001 password
   const newPassword = await bcrypt.hash('password123', 10)
-  const updated = await prisma.user.update({
+  await prisma.user.update({
     where: { username: 'teacher-001' },
     data: { passwordHash: newPassword }
   })
@@ -21,7 +21,7 @@ async function main() {
 
   // Update student-123 password
   const studentPassword = await bcrypt.hash('password123', 10)
-  const student = await prisma.user.update({
+  await prisma.user.update({
     where: { username: 'student-123' },
     data: { passwordHash: studentPassword }
   })

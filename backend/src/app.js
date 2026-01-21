@@ -5,7 +5,6 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import rateLimit from 'express-rate-limit'
 import compression from 'compression'
-import dotenv from 'dotenv'
 import swaggerUi from 'swagger-ui-express'
 import YAML from 'yamljs'
 import cookieParser from 'cookie-parser'
@@ -85,7 +84,7 @@ export const createApp = () => {
 
   // Root welcome
   app.get('/', (_req, res) => {
-    res.json({ service: 'KVC API', version: '0.1.0', health: '/health', docs: '/docs', env: process.env.NODE_ENV })
+    res.json({ service: 'KSVC Connect API', version: '0.1.0', health: '/health', docs: '/docs', env: process.env.NODE_ENV })
   })
 
   app.get('/health', (_req, res) => {
@@ -138,7 +137,8 @@ export const registerPostHandlers = (app) => {
   })
 
   // Error handler สุดท้าย
-  app.use((err, _req, res, _next) => {
+  app.use((err, _req, res, next) => {
+    void next
     console.error(err)
     res.status(err.status || 500).json({ error: err.message || 'Server Error' })
   })

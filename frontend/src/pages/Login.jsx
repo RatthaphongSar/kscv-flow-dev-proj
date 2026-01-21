@@ -96,7 +96,7 @@ export default function Login() {
           </h1>
           <p className="text-xs text-gray-400 mt-1">
             เข้าสู่ระบบพอร์ทัล{" "}
-            <span className="text-violet-400 font-semibold">KVC</span>
+            <span className="text-violet-400 font-semibold">KSVC Connect</span>
             &nbsp;รองรับเฉพาะบัญชีที่สร้างจากระบบภายใน
           </p>
 

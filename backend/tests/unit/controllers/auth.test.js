@@ -5,7 +5,7 @@
  */
 
 describe('Auth Controller', () => {
-  let mockReq, mockRes, mockNext;
+  let mockReq, mockRes;
 
   beforeEach(() => {
     mockReq = {
@@ -19,7 +19,6 @@ describe('Auth Controller', () => {
       cookie: jest.fn().mockReturnThis(),
       clearCookie: jest.fn().mockReturnThis()
     };
-    mockNext = jest.fn();
   });
 
   describe('Login', () => {

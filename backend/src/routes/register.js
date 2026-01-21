@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import * as ctrl from '../controllers/register.js';
-import { body, param, query } from 'express-validator';
+import { body } from 'express-validator';
 const router = Router();
 
 // Register Services request ticket

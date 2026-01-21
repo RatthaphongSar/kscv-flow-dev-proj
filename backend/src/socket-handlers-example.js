@@ -9,7 +9,6 @@
  * 4. Broadcasting events to other users
  */
 
-const { Server } = require('socket.io')
 const db = require('../db') // Your database connection
 
 // ============================================

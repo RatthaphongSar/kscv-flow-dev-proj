@@ -114,7 +114,7 @@ export const createNote = async (req, res, next) => {
 export const updateNote = async (req, res, next) => {
   try {
     const { roomId, noteId } = req.params
-    const updates = req.body
+    const { title, content } = req.body
     const currentUser = req.user
 
     if (!currentUser || !currentUser.id) {
@@ -521,7 +521,7 @@ export const getReadReceipts = async (req, res, next) => {
  */
 export const getMessageReaders = async (req, res, next) => {
   try {
-    const { messageId } = req.params
+    const { roomId, messageId } = req.params
     const currentUser = req.user
 
     if (!currentUser || !currentUser.id) {

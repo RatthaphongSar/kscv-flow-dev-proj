@@ -142,8 +142,6 @@ export const getRegistrations = async (req, res, next) => {
       return res.status(401).json({ error: 'Unauthorized' })
     }
 
-    const userRole = req.user?.role
-
     // Get enrollments
     const enrollments = await prisma.enrollment.findMany({
       where: { studentId: userId },
