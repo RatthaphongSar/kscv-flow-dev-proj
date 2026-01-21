@@ -1,20 +1,6 @@
 // frontend/src/pages/Dashboard.jsx
 import { useState, useEffect } from 'react'
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts'
-import {
   ArrowRight,
   Info,
   UserCheck,
@@ -81,6 +67,8 @@ export default function Dashboard() {
     title: '',
     content: null,
   })
+  const maxAssignmentValue = Math.max(...assignmentTrend.map((item) => item.value), 1)
+  const maxActivityValue = Math.max(...activityStats.map((item) => item.value), 1)
 
   // Load data from API on mount
   useEffect(() => {
@@ -283,19 +271,18 @@ export default function Dashboard() {
         {/* Attendance Trend Chart */}
         <div className="rounded-xl border border-[#1f2937] bg-[#020617] p-4">
           <h2 className="text-sm font-semibold mb-2">Weekly Attendance Trend</h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={attendanceTrend}
-                onClick={(state) => state.activePayload && onLineClick(state.activePayload[0].payload)}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {attendanceTrend.map((item) => (
+              <button
+                key={item.day}
+                type="button"
+                onClick={() => onLineClick(item)}
+                className="rounded-lg border border-[#1f2937] bg-[#0b1220] px-3 py-2 text-left hover:bg-slate-900"
               >
-                <CartesianGrid stroke="#1f2937" />
-                <XAxis dataKey="day" tick={{ fill: '#9ca3af', fontSize: 11 }} />
-                <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} />
-                <Tooltip contentStyle={{ background: '#020617', border: '1px solid #4b5563' }} />
-                <Line type="monotone" dataKey="value" stroke="#8b5cf6" strokeWidth={3} />
-              </LineChart>
-            </ResponsiveContainer>
+                <div className="text-[11px] text-gray-400">{item.day}</div>
+                <div className="text-lg font-semibold text-violet-400">{item.value}%</div>
+              </button>
+            ))}
           </div>
         </div>
 
@@ -305,45 +292,58 @@ export default function Dashboard() {
           {/* Assignments Bar Chart */}
           <div className="rounded-xl border border-[#1f2937] bg-[#020617] p-4">
             <h2 className="text-sm font-semibold mb-2">Assignments Status</h2>
-            <div className="h-60">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={assignmentTrend}
-                  onClick={(e) => onBarClick(e.activePayload?.[0]?.payload)}
+            <div className="space-y-3">
+              {assignmentTrend.map((item, idx) => (
+                <button
+                  key={item.name}
+                  type="button"
+                  onClick={() => onBarClick({ activeLabel: item.name, value: item.value })}
+                  className="w-full text-left rounded-lg border border-[#1f2937] bg-[#0b1220] px-3 py-2 hover:bg-slate-900"
                 >
-                  <CartesianGrid stroke="#1f2937" />
-                  <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 11 }} />
-                  <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} />
-                  <Tooltip contentStyle={{ background: '#020617', border: '1px solid #4b5563' }} />
-                  <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                    {assignmentTrend.map((_, idx) => (
-                      <Cell key={idx} fill={COLORS[idx]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+                  <div className="flex items-center justify-between text-xs text-gray-300">
+                    <span>{item.name}</span>
+                    <span>{item.value}</span>
+                  </div>
+                  <div className="mt-2 h-2 rounded-full bg-slate-800">
+                    <div
+                      className="h-2 rounded-full"
+                      style={{
+                        width: `${Math.round((item.value / maxAssignmentValue) * 100)}%`,
+                        backgroundColor: COLORS[idx],
+                      }}
+                    />
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
 
           {/* Activities Pie Chart */}
           <div className="rounded-xl border border-[#1f2937] bg-[#020617] p-4">
             <h2 className="text-sm font-semibold mb-2">Activities Distribution</h2>
-            <div className="h-60">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={activityStats}
-                    dataKey="value"
-                    outerRadius={80}
-                    innerRadius={40}
-                    onClick={onPieClick}
-                  >
-                    {activityStats.map((_, idx) => (
-                      <Cell key={idx} fill={COLORS[idx]} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
+            <div className="space-y-3">
+              {activityStats.map((item, idx) => (
+                <button
+                  key={item.name}
+                  type="button"
+                  onClick={() => onPieClick(item)}
+                  className="w-full text-left rounded-lg border border-[#1f2937] bg-[#0b1220] px-3 py-2 hover:bg-slate-900"
+                >
+                  <div className="flex items-center justify-between text-xs text-gray-300">
+                    <span>{item.name}</span>
+                    <span>{item.value}</span>
+                  </div>
+                  <div className="mt-2 h-2 rounded-full bg-slate-800">
+                    <div
+                      className="h-2 rounded-full"
+                      style={{
+                        width: `${Math.round((item.value / maxActivityValue) * 100)}%`,
+                        backgroundColor: COLORS[idx],
+                      }}
+                    />
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
         </div>

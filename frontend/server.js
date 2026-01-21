@@ -25,7 +25,7 @@ const __dirname = path.dirname(__filename);
 
 // Get port from command line or use default
 const PORT = process.argv[2] ? parseInt(process.argv[2]) : 3000;
-const HOST = '0.0.0.0'; // Listen on all interfaces for Docker
+const HOST = '0.0.0.0';
 
 // Paths
 const certDir = path.join(__dirname, '..', 'backend', 'certs');
@@ -33,7 +33,7 @@ const distDir = path.join(__dirname, 'dist');
 const publicDir = path.join(__dirname, 'dist');
 
 // Backend API URL - support both Docker internal and local access
-const BACKEND_API_URL = process.env.BACKEND_API_URL || 'http://backend:4001';
+const BACKEND_API_URL = process.env.BACKEND_API_URL || 'https://localhost:4001';
 
 // Check if dist folder exists
 if (!fs.existsSync(distDir)) {
@@ -47,6 +47,20 @@ const app = express();
 
 // Enable compression
 app.use(compression());
+
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end();
+});
+
+app.get('/__build', (req, res) => {
+  try {
+    const stats = fs.statSync(path.join(distDir, 'index.html'));
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.json({ mtime: stats.mtimeMs });
+  } catch (err) {
+    res.status(500).json({ error: 'build_not_found' });
+  }
+});
 
 // Middleware: Serve static files with cache headers
 app.use(express.static(distDir, {
@@ -67,6 +81,7 @@ app.use(express.static(distDir, {
 app.use('/api', createProxyMiddleware({
   target: BACKEND_API_URL, // Backend API port
   changeOrigin: true,
+  secure: false,
   logLevel: 'info',
   onProxyRes: (proxyRes) => {
     proxyRes.headers['Access-Control-Allow-Origin'] = '*';
@@ -133,7 +148,7 @@ server.listen(PORT, HOST, () => {
   console.log('║                                                        ║');
   console.log('║  📁 Serving: dist/ (built production files)            ║');
   console.log('║  🔄 Hot Reload: Edit src/ → npm run build → Refresh   ║');
-  console.log('║  🔗 API: http://localhost:4001 (if backend running)    ║');
+  console.log(`║  🔗 API: ${BACKEND_API_URL}`.padEnd(57) + '║');
   console.log('║                                                        ║');
   console.log('║  Commands:                                             ║');
   console.log('║  • npm run build  - Build for production               ║');

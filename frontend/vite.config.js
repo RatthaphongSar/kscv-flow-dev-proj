@@ -8,6 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      recharts: 'recharts/es6',
     },
   },
   server: {
@@ -18,6 +19,9 @@ export default defineConfig({
     // Production optimizations
     minify: 'terser',
     sourcemap: true, // Enable sourcemap for debugging
+    commonjsOptions: {
+      include: [/recharts/, /node_modules/],
+    },
     terserOptions: {
       compress: {
         drop_console: true,
