@@ -217,16 +217,17 @@ export default function Home() {
   }
 
   return (
-    <div className="w-full bg-[#020617] text-gray-100 px-3 sm:px-4 py-4">
-      <div className="w-full flex flex-col gap-3 sm:gap-5">
+    <div className="w-full bg-[#020617] text-gray-100 px-3 sm:px-6 lg:px-8 py-6">
+      <div className="w-full flex flex-col gap-4 sm:gap-6">
         
         {/* ===== WELCOME GREETING ===== */}
-        <div className="rounded-2xl border border-[#1f2937] bg-gradient-to-r from-violet-600/20 to-indigo-600/20 p-3 sm:p-4">
-          <h1 className="text-sm font-semibold text-gray-100">หน้าหลัก</h1>
-          <p className="text-xs sm:text-sm text-gray-200">
+        <div className="rounded-2xl border border-[#1f2937] bg-gradient-to-br from-violet-500/10 via-[#020617] to-indigo-500/10 p-4 sm:p-5">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-violet-300/80">Dashboard</p>
+          <h1 className="text-base sm:text-lg font-semibold text-gray-100 mt-1">หน้าหลัก</h1>
+          <p className="text-xs sm:text-sm text-gray-200 mt-1">
             สวัสดี{user?.fullname ? `, ${user.fullname}` : ''} 👋
           </p>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-gray-400 mt-2">
             {isStudent
               ? 'ยินดีต้อนรับกลับมายังพอร์ทัลนักศึกษา' 
               : isTeacher
@@ -245,7 +246,7 @@ export default function Home() {
         {isStudent && (
           <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {/* Classes Today */}
-            <div className="rounded-xl border border-[#1f2937] bg-[#020617] p-3">
+            <div className="rounded-2xl border border-[#1f2937] bg-[#0b1220] p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Calendar size={14} className="text-violet-400" />
                 <h3 className="text-xs font-semibold">ชั้นเรียนวันนี้</h3>
@@ -255,7 +256,7 @@ export default function Home() {
             </div>
 
             {/* Attendance */}
-            <div className="rounded-xl border border-[#1f2937] bg-[#020617] p-3">
+            <div className="rounded-2xl border border-[#1f2937] bg-[#0b1220] p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Clock size={14} className="text-emerald-400" />
                 <h3 className="text-xs font-semibold">การเช็คชื่อ</h3>
@@ -265,7 +266,7 @@ export default function Home() {
             </div>
 
             {/* Assignments */}
-            <div className="rounded-xl border border-[#1f2937] bg-[#020617] p-3">
+            <div className="rounded-2xl border border-[#1f2937] bg-[#0b1220] p-4">
               <div className="flex items-center gap-2 mb-2">
                 <BookOpen size={14} className="text-amber-400" />
                 <h3 className="text-xs font-semibold">งานที่มอบหมาย</h3>
@@ -279,7 +280,7 @@ export default function Home() {
         {/* ===== HERO + SLIDER / MAP ===== */}
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {/* Hero Left */}
-          <div className="relative overflow-hidden rounded-2xl border border-[#1f2937] bg-gradient-to-br from-[#020617] via-[#020617] to-[#111827] md:col-span-2 lg:col-span-2">
+          <div className="relative overflow-hidden rounded-2xl border border-[#1f2937] bg-gradient-to-br from-[#0b1220] via-[#020617] to-[#0b1220] md:col-span-2 lg:col-span-2">
             {/* BG SVG light effects */}
             <svg
               className="absolute -right-24 -top-24 w-[420px] h-[420px] opacity-40"
@@ -300,17 +301,17 @@ export default function Home() {
               ))}
             </svg>
 
-            <div className="relative z-10 px-4 sm:px-6 md:px-8 py-4 sm:py-6 md:py-8 space-y-4 sm:space-y-5">
+            <div className="relative z-10 px-5 sm:px-7 md:px-9 py-6 sm:py-7 md:py-9 space-y-5 sm:space-y-6">
               <div>
-                <p className="uppercase tracking-widest text-violet-300 text-[9px] sm:text-[10px] mb-1">
+                <p className="uppercase tracking-[0.35em] text-violet-300/80 text-[9px] sm:text-[10px] mb-2">
                   Kalasin Vocational College
                 </p>
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight">
+                <h1 className="text-2xl sm:text-3xl md:text-[40px] font-semibold leading-tight text-gray-100">
                   KSVC Portal{' '}
                   <span className="text-violet-400">Student &amp; Staff Hub</span>
                 </h1>
                 <p className="mt-2 text-xs sm:text-sm text-gray-300 max-w-xl">
-                  ศูนย์กลางข่าวสาร ตารางเรียน การลา งานที่มอบหมาย
+                  ศูนย์กลางข่าวสาร ตารางเรียน การลา งานที่มอบหมาย และกิจกรรมสำคัญ
                 </p>
               </div>
 
@@ -327,10 +328,10 @@ export default function Home() {
                     size={18}
                   />
                   <input
-                    className="w-full bg-[#020617] border border-[#1f2937] rounded-full pl-10 pr-28 py-2.5 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                    className="w-full bg-[#0b1220] border border-[#1f2937] rounded-full pl-10 pr-28 py-2.5 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                     placeholder="ค้นหาหลักสูตร / ข่าวสาร / กิจกรรม"
                   />
-                  <button className="absolute right-1 top-1 bg-violet-600 hover:bg-violet-500 border border-violet-500 text-white px-4 py-1.5 rounded-full text-xs font-medium">
+                  <button className="absolute right-1 top-1 bg-violet-600/90 hover:bg-violet-500 border border-violet-500 text-white px-4 py-1.5 rounded-full text-xs font-medium">
                     ค้นหา
                   </button>
                 </div>
@@ -340,13 +341,13 @@ export default function Home() {
               <div className="flex flex-wrap gap-3 pt-1">
                 <a
                   href="/register"
-                  className="bg-violet-600 hover:bg-violet-500 text-white px-4 py-2 rounded-full text-xs font-medium border border-violet-500"
+                  className="bg-violet-600/90 hover:bg-violet-500 text-white px-4 py-2 rounded-full text-xs font-medium border border-violet-500"
                 >
                   สมัครบริการนักศึกษา
                 </a>
                 <a
                   href="/announcements"
-                  className="px-4 py-2 rounded-full border border-gray-600 text-xs text-gray-100 hover:bg-gray-800 flex items-center gap-1"
+                  className="px-4 py-2 rounded-full border border-[#374151] text-xs text-gray-100 hover:bg-slate-900 flex items-center gap-1"
                 >
                   ดูข่าวประกาศทั้งหมด <ChevronRight size={14} />
                 </a>
@@ -357,7 +358,7 @@ export default function Home() {
           {/* ขวา: ข่าวเด่น + แผนที่ */}
           <div className="flex flex-col gap-3">
             {/* Slider Card - Feature coming soon */}
-            <div className="w-full rounded-2xl border border-[#1f2937] bg-[#020617] p-4">
+            <div className="w-full rounded-2xl border border-[#1f2937] bg-[#0b1220] p-4">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-sm font-semibold text-gray-100">
                   ข่าวเด่นวันนี้
@@ -365,14 +366,14 @@ export default function Home() {
               </div>
 
               {announcements && announcements.length > 0 ? (
-                <div className="mt-1 h-28 md:h-32 rounded-xl border border-[#111827] bg-[#020617] overflow-hidden">
+                  <div className="mt-1 h-28 md:h-32 rounded-xl border border-[#111827] bg-[#0b1220] overflow-hidden">
                   {/* Placeholder for featured news */}
                   <div className="flex items-center justify-center h-full">
                     <p className="text-[11px] text-gray-500">ข่าวประกาศล่าสุดจะแสดงที่นี่</p>
                   </div>
                 </div>
               ) : (
-                <div className="mt-1 h-28 md:h-32 rounded-xl border border-[#111827] bg-[#020617] flex items-center justify-center">
+                <div className="mt-1 h-28 md:h-32 rounded-xl border border-[#111827] bg-[#0b1220] flex items-center justify-center">
                   <p className="text-[11px] text-gray-500">
                     ยังไม่มีข่าวประกาศในขณะนี้
                   </p>
@@ -386,7 +387,7 @@ export default function Home() {
 
         {/* ===== IMPORTANT ALERTS ===== */}
         {isStudent && (
-          <div className="rounded-2xl border border-amber-600/50 bg-amber-600/10 p-4 flex gap-3">
+          <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 flex gap-3">
             <AlertCircle size={16} className="text-amber-400 mt-0.5 shrink-0" />
             <div>
               <p className="text-sm font-semibold text-amber-200">การลาจากการเรียน</p>
@@ -426,16 +427,16 @@ export default function Home() {
             </div>
 
             {/* Announcements Feed */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               {announcements.length === 0 ? (
-                <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4 text-center">
+                <div className="rounded-2xl border border-[#1f2937] bg-[#0b1220] p-5 text-center">
                   <p className="text-[11px] text-gray-500">ยังไม่มีประกาศข่าวสาร</p>
                 </div>
               ) : (
                 announcements.map((announcement) => (
                   <div
                     key={announcement.id}
-                    className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4 hover:border-[#374151] transition"
+                    className="rounded-2xl border border-[#1f2937] bg-[#0b1220] p-4 hover:border-violet-500/40 transition"
                   >
                     {/* Header */}
                     <div className="flex items-start justify-between gap-3 mb-2">
@@ -460,7 +461,7 @@ export default function Home() {
                     </div>
 
                     {/* Content */}
-                    <p className="text-xs text-gray-200 leading-relaxed mb-2">
+                    <p className="text-xs text-gray-200 leading-relaxed mb-3">
                       {announcement.excerpt || announcement.content}
                     </p>
 
@@ -469,7 +470,7 @@ export default function Home() {
                       <img
                         src={announcement.image}
                         alt={announcement.title}
-                        className="w-full h-32 object-cover rounded-lg border border-[#111827] mb-2"
+                        className="w-full h-36 object-cover rounded-xl border border-[#111827] mb-3"
                       />
                     )}
 
@@ -486,7 +487,7 @@ export default function Home() {
           {/* SIDEBAR */}
           <aside className="space-y-3">
             {/* Upcoming Schedule */}
-            <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4">
+            <div className="rounded-2xl border border-[#1f2937] bg-[#0b1220] p-4">
               <button
                 onClick={() => setSidebarCollapsed(s => ({ ...s, schedule: !s.schedule }))}
                 className="w-full flex items-center justify-between mb-2 hover:opacity-80 transition-opacity"
@@ -507,7 +508,7 @@ export default function Home() {
                   ) : (
                     <div className="space-y-2">
                       {classes.slice(0, 3).map((cls, idx) => (
-                        <div key={idx} className="flex items-start gap-2 p-2 rounded-lg border border-[#111827] bg-[#020617]">
+                        <div key={idx} className="flex items-start gap-2 p-2 rounded-xl border border-[#111827] bg-[#0f172a]">
                           <div className="w-10 h-10 rounded bg-violet-600/20 flex items-center justify-center text-[11px] font-semibold text-violet-300">
                             {idx + 1}
                           </div>
@@ -529,7 +530,7 @@ export default function Home() {
             </div>
 
             {/* About */}
-            <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4">
+            <div className="rounded-2xl border border-[#1f2937] bg-[#0b1220] p-4">
               <button
                 onClick={() => setSidebarCollapsed(s => ({ ...s, about: !s.about }))}
                 className="w-full flex items-center justify-between mb-1 hover:opacity-80 transition-opacity"

@@ -63,14 +63,14 @@ export default function ChatWindow({
   }
 
   return (
-    <main className="flex-1 flex flex-col min-h-0 bg-[#0f172a]">
+    <main className="flex-1 flex flex-col min-h-0 bg-[#0b1220]">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-[#1f2937] bg-[#0f172a] shrink-0">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-[#0b1220] shrink-0">
         <div className="flex items-center gap-3 flex-1">
           <UserAvatar name={title} size="sm" />
           <div>
             <h1 className="text-sm font-semibold text-gray-100">{title}</h1>
-            <p className="text-xs text-gray-500">{subtitle}</p>
+            <p className="text-xs text-slate-400">{subtitle}</p>
           </div>
         </div>
 
@@ -80,8 +80,8 @@ export default function ChatWindow({
             {isTeacher && (
               <button
                 onClick={() => setShowAddStudents(true)}
-                className="px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs
-                           transition-colors duration-200"
+                className="px-3 py-1.5 rounded-md bg-gradient-to-br from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs
+                           transition-colors duration-200 shadow-sm"
                 title="เพิ่มนักเรียนเข้าห้อง"
               >
                 ➕ เพิ่มสมาชิก
@@ -102,7 +102,7 @@ export default function ChatWindow({
 
       {/* Panel tabs (แชท / ไฟล์ / โน้ต / สมาชิก) */}
       {activeRoom && (
-        <div className="bg-[#0f172a] shrink-0">
+        <div className="bg-[#0b1220] shrink-0">
           <ChatPanelTabs value={activeTab} onChange={setActiveTab} isTeacher={isTeacher} />
         </div>
       )}
@@ -135,28 +135,28 @@ export default function ChatWindow({
           )}
         </>
       ) : (
-        <div className="flex-1 min-h-0 flex items-center justify-center text-sm text-gray-500">
+        <div className="flex-1 min-h-0 flex items-center justify-center text-sm text-slate-400">
           เลือกห้องจากด้านซ้ายเพื่อเริ่มสนทนา
         </div>
       )}
 
       {/* Input */}
       {activeRoom && activeTab === 'chat' && (
-        <div className="border-t border-[#1f2937] bg-[#0f172a] px-4 py-4 shrink-0">
+        <div className="border-t border-white/5 bg-[#0b1220] px-4 py-4 shrink-0">
           {sendError && (
             <div className="mb-3 px-3 py-2 bg-red-900/30 border border-red-600/50 rounded-md text-xs text-red-300">
               ⚠️ {sendError}
             </div>
           )}
           {replyingTo && (
-            <div className="mb-3 p-3 bg-[#1e293b] border-l-2 border-blue-500 rounded flex justify-between items-start text-xs">
+            <div className="mb-3 p-3 bg-white/5 border border-white/10 rounded-xl flex justify-between items-start text-xs">
               <div>
-                <div className="text-gray-400">ตอบกลับ {replyingTo.username}</div>
-                <div className="text-gray-300 truncate">{replyingTo.content}</div>
+                <div className="text-slate-400">ตอบกลับ {replyingTo.username}</div>
+                <div className="text-slate-200 truncate">{replyingTo.content}</div>
               </div>
               <button
                 onClick={onCancelReply}
-                className="text-gray-400 hover:text-gray-200 ml-2"
+                className="text-slate-400 hover:text-slate-200 ml-2"
               >
                 ✕
               </button>

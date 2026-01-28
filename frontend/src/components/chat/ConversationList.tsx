@@ -13,6 +13,7 @@ interface ConversationListProps {
   onSelectRoom: (room: Room) => void
   pinnedRooms?: Array<{ roomId: string }>
   onTogglePin?: (roomId: string) => void
+  unreadCounts?: Record<string, number>
 }
 
 export default function ConversationList({
@@ -21,6 +22,7 @@ export default function ConversationList({
   onSelectRoom,
   pinnedRooms = [],
   onTogglePin,
+  unreadCounts,
 }: ConversationListProps) {
   const { getUnreadCount } = useUnreadCounts()
 
@@ -36,7 +38,10 @@ export default function ConversationList({
     <div className="flex-1 min-h-0 overflow-y-auto px-2 py-3 space-y-1 bg-[#111827]">
       {rooms.map((room) => {
         const isActive = activeRoom?.id === room.id
-        const unreadCount = getUnreadCount(room.id)
+        const unreadCount =
+          typeof unreadCounts?.[room.id] === 'number'
+            ? unreadCounts[room.id]
+            : getUnreadCount(room.id)
         const isPinned = pinnedRooms.some(p => p.roomId === room.id)
 
         return (

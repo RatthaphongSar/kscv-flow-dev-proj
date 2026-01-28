@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { MoreVertical, Reply, Pencil, Trash2 } from 'lucide-react'
 import UserAvatar from './UserAvatar'
 
 interface MessageFile {
@@ -28,7 +29,7 @@ interface MessageBubbleProps {
   content: string
   time: string
   type?: 'text' | 'image' | 'file'
-  file?: MessageFile
+  files?: MessageFile[]
   edited?: boolean
   replyTo?: { user: { username: string }; content: string } | null
   readCount?: number
@@ -36,7 +37,6 @@ interface MessageBubbleProps {
   onDelete?: (messageId: string) => void
   onEdit?: (messageId: string, newContent: string) => void
   onReply?: (messageId: string) => void
-  onCopy?: (content: string) => void
 }
 
 export default function MessageBubble({
@@ -46,7 +46,7 @@ export default function MessageBubble({
   content,
   time,
   type = 'text',
-  file,
+  files = [],
   edited = false,
   replyTo,
   readCount,
@@ -54,12 +54,11 @@ export default function MessageBubble({
   onDelete,
   onEdit,
   onReply,
-  onCopy,
 }: MessageBubbleProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(content)
-  const [imageViewerOpen, setImageViewerOpen] = useState(false)
+  const [activeImage, setActiveImage] = useState<MessageFile | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
   // Calculate image dimensions based on orientation
@@ -74,12 +73,6 @@ export default function MessageBubble({
     } else {
       return { maxWidth: '160px', maxHeight: '320px' } // max-w-40, max-h-80
     }
-  }
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(content)
-    onCopy?.(content)
-    setShowMenu(false)
   }
 
   const handleEdit = () => {
@@ -111,6 +104,9 @@ export default function MessageBubble({
     setShowMenu(false)
   }
 
+  const imageFiles = files.filter((f) => f.mimeType?.startsWith('image/'))
+  const otherFiles = files.filter((f) => !f.mimeType?.startsWith('image/'))
+
   return (
     <div
       className={`flex ${isOwn ? 'justify-end' : 'justify-start'} group relative mb-2`}
@@ -141,20 +137,20 @@ export default function MessageBubble({
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
-                className="px-3 py-2 rounded-lg bg-[#111827] text-gray-100 text-sm border border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-400 resize-none"
+                className="px-3 py-2 rounded-xl bg-white/5 text-slate-100 text-sm border border-violet-500/60 focus:outline-none focus:ring-1 focus:ring-violet-400 resize-none"
                 rows={3}
                 autoFocus
               />
               <div className="flex gap-2">
                 <button
                   onClick={handleSaveEdit}
-                  className="px-2 py-1 text-xs bg-violet-600 hover:bg-violet-500 text-white rounded transition-colors"
+                  className="px-3 py-1 text-xs bg-gradient-to-br from-violet-500 to-indigo-600 text-white rounded-lg hover:from-violet-400 hover:to-indigo-500 transition-colors"
                 >
                   บันทึก
                 </button>
                 <button
                   onClick={handleCancelEdit}
-                  className="px-2 py-1 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded transition-colors"
+                  className="px-3 py-1 text-xs bg-white/5 hover:bg-white/10 text-slate-200 rounded-lg transition-colors"
                 >
                   ยกเลิก
                 </button>
@@ -211,11 +207,11 @@ export default function MessageBubble({
             </div>
           ) : (
             <div
-              className={`px-3 py-2 rounded-2xl text-sm leading-relaxed break-words relative
+              className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed break-words relative border
               ${
                 isOwn
-                  ? 'bg-violet-600 text-white'
-                  : 'bg-[#111827] text-gray-100'
+                  ? 'bg-gradient-to-br from-violet-600 to-indigo-700 text-white border-white/10 shadow-[0_12px_28px_rgba(76,29,149,0.35)]'
+                  : 'bg-white/5 text-slate-100 border-white/10 shadow-[0_10px_24px_rgba(2,6,23,0.35)]'
               }`}
             >
               {/* Reply Context */}
@@ -240,40 +236,50 @@ export default function MessageBubble({
                     <span className="text-[9px] opacity-70 ml-1">(แก้ไข)</span>
                   )}
 
-                  {/* File Attachment (images or documents) */}
-                  {file && file.mimeType && (
-                    file.mimeType.startsWith('image/') ? (
-                      // Render image
-                      <div className="mt-2 relative group">
-                        <img
-                          src={file.url}
-                          alt={file.fileName}
-                          onClick={() => setImageViewerOpen(true)}
-                          className="rounded-lg object-cover cursor-pointer hover:opacity-90 transition-opacity max-w-xs max-h-80"
-                        />
-                      </div>
-                    ) : (
-                      // Render document download link
-                      <a
-                        href={file.url}
-                        download={file.fileName}
-                        className="mt-2 flex items-center gap-2 p-2 bg-opacity-20 bg-blue-400 rounded-lg hover:bg-opacity-30 transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M8 16.5a1 1 0 11-2 0 1 1 0 012 0zM15 7a2 2 0 11-4 0 2 2 0 014 0z" />
-                          <path d="M2.458 12C.732 10.943 0 10.298 0 9.5 0 8.119 1.343 7 3 7h12c1.657 0 3 1.119 3 2.5 0 .798.732 1.443 2.458 2.5M11 19H5a3 3 0 01-3-3V7a3 3 0 013-3h6m0 0h6a3 3 0 013 3v9a3 3 0 01-3 3h-6m0-13v6m0 0v6" />
-                        </svg>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-xs font-medium truncate">{file.fileName}</div>
-                          {(file.sizeBytes || file.fileSize) && (
-                            <div className="text-xs opacity-75">{formatFileSize(file.sizeBytes || file.fileSize || 0)}</div>
-                          )}
+                  {/* File Attachments */}
+                  {(imageFiles.length > 0 || otherFiles.length > 0) && (
+                    <div className="mt-2 space-y-2">
+                      {imageFiles.length > 0 && (
+                        <div className={`grid gap-2 ${imageFiles.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                          {imageFiles.map((img) => (
+                            <button
+                              key={img.id}
+                              type="button"
+                              onClick={() => setActiveImage(img)}
+                              className="relative group"
+                            >
+                              <img
+                                src={img.url}
+                                alt={img.fileName}
+                                className="rounded-lg object-cover cursor-pointer hover:opacity-90 transition-opacity max-w-xs max-h-80"
+                              />
+                            </button>
+                          ))}
                         </div>
-                        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                      </a>
-                    )
+                      )}
+                      {otherFiles.map((doc) => (
+                        <a
+                          key={doc.id}
+                          href={doc.url}
+                          download={doc.fileName}
+                          className="flex items-center gap-2 p-2 bg-opacity-20 bg-blue-400 rounded-lg hover:bg-opacity-30 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M8 16.5a1 1 0 11-2 0 1 1 0 012 0zM15 7a2 2 0 11-4 0 2 2 0 014 0z" />
+                            <path d="M2.458 12C.732 10.943 0 10.298 0 9.5 0 8.119 1.343 7 3 7h12c1.657 0 3 1.119 3 2.5 0 .798.732 1.443 2.458 2.5M11 19H5a3 3 0 01-3-3V7a3 3 0 013-3h6m0 0h6a3 3 0 013 3v9a3 3 0 01-3 3h-6m0-13v6m0 0v6" />
+                          </svg>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-medium truncate">{doc.fileName}</div>
+                            {(doc.sizeBytes || doc.fileSize) && (
+                              <div className="text-xs opacity-75">{formatFileSize(doc.sizeBytes || doc.fileSize || 0)}</div>
+                            )}
+                          </div>
+                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                        </a>
+                      ))}
+                    </div>
                   )}
 
                   <div
@@ -298,67 +304,47 @@ export default function MessageBubble({
                 <div className="relative flex-shrink-0">
                   <button
                     onClick={() => setShowMenu(!showMenu)}
-                    className={`p-0.5 rounded transition-opacity ${
-                      isOwn ? 'text-violet-100 hover:opacity-75' : 'text-gray-400 hover:opacity-75'
+                    className={`p-1 rounded-full transition-all ${
+                      isOwn
+                        ? 'text-violet-100 hover:text-white hover:bg-white/10'
+                        : 'text-slate-300 hover:text-white hover:bg-white/10'
                     }`}
                     title="เพิ่มเติม"
                   >
-                    <svg
-                      className="w-3.5 h-3.5"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle cx="12" cy="5" r="1.5" />
-                      <circle cx="12" cy="12" r="1.5" />
-                      <circle cx="12" cy="19" r="1.5" />
-                    </svg>
+                    <MoreVertical size={14} />
                   </button>
 
-                  {/* Action Menu Dropdown */}
                   {showMenu && (
                     <div
                       ref={menuRef}
-                      className="absolute right-0 top-6 bg-[#1f2937] border border-[#374151] rounded-lg shadow-xl z-50 py-1 min-w-max"
+                      className="absolute right-0 top-7 bg-[#0b1220]/95 border border-white/10 rounded-xl shadow-2xl z-50 py-1 min-w-[160px] backdrop-blur"
                       onMouseLeave={() => setShowMenu(false)}
                     >
-                      {/* Reply - Show for all messages */}
                       <button
                         onClick={handleReply}
-                        className="w-full px-3 py-1.5 text-left text-xs text-gray-200 hover:bg-[#374151] transition-colors flex items-center gap-2 whitespace-nowrap"
+                        className="w-full px-3 py-2 text-left text-xs text-slate-200 hover:bg-white/5 transition-colors flex items-center gap-2"
                       >
-                        <span>↩</span>
+                        <Reply size={14} />
                         ตอบกลับ
                       </button>
-
-                      {/* Edit - Show only for own messages */}
                       {isOwn && (
                         <>
                           <button
                             onClick={handleEdit}
-                            className="w-full px-3 py-1.5 text-left text-xs text-gray-200 hover:bg-[#374151] transition-colors flex items-center gap-2 whitespace-nowrap"
+                            className="w-full px-3 py-2 text-left text-xs text-slate-200 hover:bg-white/5 transition-colors flex items-center gap-2"
                           >
-                            <span>✎</span>
+                            <Pencil size={14} />
                             แก้ไข
                           </button>
                           <button
                             onClick={handleDelete}
-                            className="w-full px-3 py-1.5 text-left text-xs text-red-400 hover:bg-red-900/20 transition-colors flex items-center gap-2 whitespace-nowrap"
+                            className="w-full px-3 py-2 text-left text-xs text-red-300 hover:bg-red-500/10 transition-colors flex items-center gap-2"
                           >
-                            <span>⊠</span>
-                            ลบ
+                            <Trash2 size={14} />
+                            ลบข้อความ
                           </button>
-                          <div className="border-t border-[#374151]" />
                         </>
                       )}
-
-                      {/* Copy - Show for all messages */}
-                      <button
-                        onClick={handleCopy}
-                        className="w-full px-3 py-1.5 text-left text-xs text-gray-200 hover:bg-[#374151] transition-colors flex items-center gap-2 whitespace-nowrap"
-                      >
-                        <span>◫</span>
-                        คัดลอก
-                      </button>
                     </div>
                   )}
                 </div>
@@ -369,20 +355,20 @@ export default function MessageBubble({
       </div>
 
       {/* Image Viewer Modal (for images in text messages or image-type messages) */}
-      {imageViewerOpen && file?.mimeType?.startsWith('image/') && (
+      {activeImage && (
         <>
           <div
             className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center"
-            onClick={() => setImageViewerOpen(false)}
+            onClick={() => setActiveImage(null)}
           >
             <div className="relative max-w-4xl max-h-[90vh] p-4">
               <img
-                src={file.url}
-                alt={file.fileName}
+                src={activeImage.url}
+                alt={activeImage.fileName}
                 className="max-w-full max-h-full object-contain rounded-lg"
               />
               <button
-                onClick={() => setImageViewerOpen(false)}
+                onClick={() => setActiveImage(null)}
                 className="absolute top-2 right-2 p-2 bg-black/50 hover:bg-black/70 text-white rounded-lg transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

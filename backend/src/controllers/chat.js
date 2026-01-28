@@ -177,7 +177,7 @@ export const listMessages = async (req, res, next) => {
         replyTo: {
           include: { user: true }
         },
-        file: true
+        files: true
       },
     })
     res.json(msgs)
@@ -232,8 +232,8 @@ export const sendMessage = async (req, res, next) => {
     // Determine message type
     let messageType = 'text'
     if (files.length > 0) {
-      const firstFile = files[0]
-      messageType = firstFile.mimetype.startsWith('image/') ? 'image' : 'file'
+      const allImages = files.every((f) => f.mimetype?.startsWith('image/'))
+      messageType = allImages ? 'image' : 'file'
     }
 
     // Create message
@@ -252,7 +252,7 @@ export const sendMessage = async (req, res, next) => {
         replyTo: {
           include: { user: { select: { id: true, username: true } } }
         },
-        file: true,
+        files: true,
         readReceipts: { select: { userId: true } }
       },
     })
@@ -260,25 +260,21 @@ export const sendMessage = async (req, res, next) => {
     // Process files if any
     if (files && files.length > 0) {
       try {
-        const file = files[0] // multer stores as array
-        
-        // Create file record in database
-        const chatFile = await prisma.chatFile.create({
-          data: {
-            fileName: file.originalname,
-            mimeType: file.mimetype,
-            sizeBytes: file.size,
-            url: `/uploads/${file.filename}`,
-            room: { connect: { id: roomId } },
-            uploader: { connect: { id: userId } }
-          }
-        })
-
-        // Link file to message
-        await prisma.message.update({
-          where: { id: message.id },
-          data: { fileId: chatFile.id }
-        })
+        await Promise.all(
+          files.map((file) =>
+            prisma.chatFile.create({
+              data: {
+                fileName: file.originalname,
+                mimeType: file.mimetype,
+                sizeBytes: file.size,
+                url: `/uploads/${file.filename}`,
+                room: { connect: { id: roomId } },
+                uploader: { connect: { id: userId } },
+                message: { connect: { id: message.id } },
+              },
+            }),
+          ),
+        )
 
       } catch (fileErr) {
         console.error('[sendMessage] File processing error:', fileErr)
@@ -294,7 +290,7 @@ export const sendMessage = async (req, res, next) => {
         replyTo: {
           include: { user: { select: { id: true, username: true } } }
         },
-        file: true,
+        files: true,
         readReceipts: { select: { userId: true } }
       }
     })
@@ -804,35 +800,74 @@ export const replyToMessage = async (req, res, next) => {
       return res.status(400).json({ error: 'Content is required' })
     }
 
-    // Import service
-    const { replyMessage } = await import('../services/messageService.js')
-
     try {
-      let fileId = null
+      const originalMessage = await prisma.message.findUnique({
+        where: { id: messageId },
+      })
 
-      // Process file if attached
-      if (files.length > 0) {
-        const file = files[0]
-        const chatFile = await prisma.chatFile.create({
-          data: {
-            fileName: file.originalname,
-            mimeType: file.mimetype,
-            sizeBytes: file.size,
-            url: `/uploads/${file.filename}`,
-            room: { connect: { id: roomId } },
-            uploader: { connect: { id: userId } },
-          },
-        })
-        fileId = chatFile.id
+      if (!originalMessage) {
+        return res.status(404).json({ error: 'Message to reply to not found' })
       }
 
-      const reply = await replyMessage(roomId, userId, content, messageId, fileId)
+      if (originalMessage.roomId !== roomId) {
+        return res.status(400).json({ error: 'Cannot reply to message from different room' })
+      }
+
+      let messageType = 'text'
+      if (files.length > 0) {
+        const allImages = files.every((f) => f.mimetype?.startsWith('image/'))
+        messageType = allImages ? 'image' : 'file'
+      }
+
+      const reply = await prisma.message.create({
+        data: {
+          content: content.trim(),
+          type: messageType,
+          userId,
+          roomId,
+          replyToId: messageId,
+        },
+        include: {
+          user: { select: { id: true, username: true } },
+          replyTo: { include: { user: { select: { id: true, username: true } } } },
+          files: true,
+          readReceipts: { select: { userId: true } },
+        },
+      })
+
+      if (files.length > 0) {
+        await Promise.all(
+          files.map((file) =>
+            prisma.chatFile.create({
+              data: {
+                fileName: file.originalname,
+                mimeType: file.mimetype,
+                sizeBytes: file.size,
+                url: `/uploads/${file.filename}`,
+                room: { connect: { id: roomId } },
+                uploader: { connect: { id: userId } },
+                message: { connect: { id: reply.id } },
+              },
+            }),
+          ),
+        )
+      }
+
+      const replyWithFiles = await prisma.message.findUnique({
+        where: { id: reply.id },
+        include: {
+          user: { select: { id: true, username: true } },
+          replyTo: { include: { user: { select: { id: true, username: true } } } },
+          files: true,
+          readReceipts: { select: { userId: true } },
+        },
+      })
 
       // Emit socket event
       const io = getIO()
-      io.to(roomId).emit('messageReplied', reply)
+      io.to(roomId).emit('messageReplied', replyWithFiles)
 
-      return res.status(201).json(reply)
+      return res.status(201).json(replyWithFiles)
     } catch (err) {
       if (err.message.includes('not found') || err.message.includes('Cannot reply')) {
         return res.status(404).json({ error: err.message })

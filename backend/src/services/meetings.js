@@ -273,9 +273,9 @@ export const joinMeeting = async (meetingId, studentId) => {
   // Check if student is enrolled in the class
   const enrollment = await prisma.enrollment.findUnique({
     where: {
-      studentId_classId: {
-        studentId,
+      classId_studentId: {
         classId: meeting.classId,
+        studentId,
       },
     },
   });

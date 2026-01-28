@@ -49,7 +49,7 @@ export default function AppRoutes() {
       <Route path="/class" element={<Protected><Class /></Protected>} />
       <Route path="/meeting" element={<Protected><Meeting /></Protected>} />
       <Route path="/create-meeting" element={<Protected><CreateMeeting /></Protected>} />
-      <Route path="/meeting/:meetingId" element={<Protected><VideoCall /></Protected>} />
+      <Route path="/meeting/:meetingId" element={<Protected><MeetingRoom /></Protected>} />
       <Route path="/video-call/:meetingId" element={<Protected><VideoCall /></Protected>} />
       <Route path="/checkline" element={<Protected><Checkline /></Protected>} />
       <Route path="/profile" element={<Protected><Profile /></Protected>} />

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { useRoomMembers, RoomMember } from '../../hooks/useRoomMembers'
 import { AddMemberModal } from './AddMemberModal'
+import UserAvatar from './UserAvatar'
 
 interface MembersPanelProps {
   roomId: string
@@ -21,6 +22,7 @@ export const MembersPanel: React.FC<MembersPanelProps> = ({
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [removingId, setRemovingId] = useState<string | null>(null)
+  const [selectedMember, setSelectedMember] = useState<RoomMember | null>(null)
 
   // Filter and sort members
   const filteredMembers = useMemo(() => {
@@ -41,6 +43,19 @@ export const MembersPanel: React.FC<MembersPanelProps> = ({
   const getRoleLabel = (role: string) => {
     return role === 'TEACHER' ? 'อาจารย์' : 'นักศึกษา'
   }
+
+  const handleOpenProfile = (member: RoomMember) => {
+    if (!members.some((m) => m.id === member.id)) return
+    setSelectedMember(member)
+  }
+
+  const handleCloseProfile = () => {
+    setSelectedMember(null)
+  }
+
+  const isSameRoom = selectedMember
+    ? members.some((m) => m.id === selectedMember.id)
+    : false
 
   const handleRemove = async (userId: string) => {
     if (!confirm('ยืนยันการลบสมาชิก?')) return
@@ -104,19 +119,26 @@ export const MembersPanel: React.FC<MembersPanelProps> = ({
               className="p-3 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700/50 transition-colors"
             >
               <div className="flex items-center justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm text-slate-100">
-                    {member.username}
+                <button
+                  type="button"
+                  onClick={() => handleOpenProfile(member)}
+                  className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                >
+                  <UserAvatar name={member.username} size="sm" />
+                  <div className="min-w-0">
+                    <div className="font-medium text-sm text-slate-100">
+                      {member.username}
+                    </div>
+                    <div className="text-xs text-slate-400 mt-1">
+                      <span className="inline-block px-1.5 py-0.5 rounded bg-slate-700 mr-2">
+                        {getRoleLabel(member.role)}
+                      </span>
+                      {member.email && (
+                        <span className="text-slate-500">{member.email}</span>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-xs text-slate-400 mt-1">
-                    <span className="inline-block px-1.5 py-0.5 rounded bg-slate-700 mr-2">
-                      {getRoleLabel(member.role)}
-                    </span>
-                    {member.email && (
-                      <span className="text-slate-500">{member.email}</span>
-                    )}
-                  </div>
-                </div>
+                </button>
 
                 {/* Remove button - teacher only, don't show for self */}
                 {isTeacher && member.id !== currentUserId && (
@@ -155,6 +177,55 @@ export const MembersPanel: React.FC<MembersPanelProps> = ({
         onClose={() => setIsAddModalOpen(false)}
         roomId={roomId}
       />
+
+      {selectedMember && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/60 z-40"
+            onClick={handleCloseProfile}
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <div className="pointer-events-auto bg-slate-900 rounded-xl border border-slate-700 shadow-2xl max-w-sm w-full">
+              <div className="px-5 py-4 border-b border-slate-700 flex items-center justify-between">
+                <div className="text-slate-100 font-semibold">โปรไฟล์ผู้ใช้</div>
+                <button
+                  onClick={handleCloseProfile}
+                  className="text-slate-400 hover:text-slate-200 text-xl"
+                  aria-label="ปิด"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="px-5 py-4">
+                <div className="flex items-center gap-3">
+                  <UserAvatar name={selectedMember.username} size="md" />
+                  <div className="min-w-0">
+                    <div className="text-slate-100 font-medium truncate">
+                      {selectedMember.username}
+                    </div>
+                    <div className="text-xs text-slate-400">
+                      {getRoleLabel(selectedMember.role)}
+                    </div>
+                  </div>
+                </div>
+                {selectedMember.email && (
+                  <div className="mt-3 text-xs text-slate-400">
+                    {selectedMember.email}
+                  </div>
+                )}
+                <div className="mt-3 text-xs text-slate-400">
+                  {isSameRoom ? 'อยู่ห้องแชทร่วมกัน' : 'ไม่ได้อยู่ห้องเดียวกัน'}
+                </div>
+                {isSameRoom && (
+                  <div className="mt-3 text-xs text-amber-300">
+                    ไม่มีระบบแชทส่วนตัว
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

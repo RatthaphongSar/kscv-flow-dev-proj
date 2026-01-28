@@ -17,7 +17,7 @@ export async function api(path, options = {}) {
     method = 'GET',
     headers = {},
     body,
-    timeout = 15000, // 15s
+    timeout = 30000, // 30s
     retryOn401 = true, // ให้รีเฟรชและรีทราย
     signal: externalSignal,
     ...rest

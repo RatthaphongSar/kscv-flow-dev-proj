@@ -62,7 +62,7 @@ export default function ChatConversation({
   }
 
   return (
-    <div className="flex-1 min-h-0 overflow-hidden flex flex-col bg-[#0f172a] relative w-full">
+    <div className="flex-1 min-h-0 overflow-hidden flex flex-col bg-[#0b1220] relative w-full">
       {/* Pinned messages section */}
       {_roomId && (
         <PinnedSection
@@ -79,7 +79,7 @@ export default function ChatConversation({
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex-1 min-h-0 overflow-y-auto w-full px-6 py-4"
+        className="flex-1 min-h-0 overflow-y-auto w-full px-6 py-5"
       >
         {/* Messages */}
         <div className="w-full space-y-3">
@@ -97,15 +97,11 @@ export default function ChatConversation({
 
             // Determine message type and file info
             let type: 'text' | 'image' | 'file' = 'text'
-            let file = null
+            const files = m?.files || []
 
-            if (m?.file) {
-              file = m.file
-              if (file.mimeType?.startsWith('image/')) {
-                type = 'image'
-              } else {
-                type = 'file'
-              }
+            if (files.length > 0) {
+              const allImages = files.every((f) => f.mimeType?.startsWith('image/'))
+              type = allImages ? 'image' : 'file'
             }
 
             return (
@@ -117,7 +113,7 @@ export default function ChatConversation({
                   content={content}
                   time={time || ''}
                   type={type}
-                  file={file}
+                  files={files}
                   edited={m?.edited || false}
                   replyTo={m?.replyTo || null}
                   onDelete={onDeleteMessage}
@@ -135,7 +131,7 @@ export default function ChatConversation({
         <button
           type="button"
           onClick={handleJumpToBottom}
-          className="absolute bottom-4 right-6 rounded-full bg-violet-600 hover:bg-violet-500 text-white text-xs px-3 py-1.5 shadow-lg z-10 transition-all"
+          className="absolute bottom-4 right-6 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-1.5 shadow-lg z-10 transition-all backdrop-blur"
         >
           ⬇️ ข้อความล่าสุด
         </button>

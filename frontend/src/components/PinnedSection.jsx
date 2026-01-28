@@ -91,9 +91,9 @@ export default function PinnedSection({
                     <p className="text-sm text-gray-700 truncate">
                       {pin.message?.content || '[ไฟล์แนบ]'}
                     </p>
-                    {pin.message?.file && (
+                    {pin.message?.files?.length > 0 && (
                       <div className="text-xs text-gray-600 mt-1">
-                        📎 {pin.message.file.fileName}
+                        📎 {pin.message.files[0].fileName}
                       </div>
                     )}
                   </div>

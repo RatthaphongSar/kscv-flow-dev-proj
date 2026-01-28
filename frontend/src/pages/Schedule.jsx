@@ -9,6 +9,8 @@ export default function Schedule() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [viewMode, setViewMode] = useState("weekly")
+  const taskCount = schedule.filter((item) => item.task && item.task.trim().length > 0).length
+  const dayCount = new Set(schedule.map((item) => item.dayOfWeek ?? item.day)).size
 
   useEffect(() => {
     fetchSchedule()
@@ -42,39 +44,76 @@ export default function Schedule() {
       title="Schedule"
       subtitle="ตารางเรียนประจำสัปดาห์"
     >
-      <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-4 text-xs" data-testid="schedule-view">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <CalendarDays size={16} className="text-sky-400" />
-            <span className="text-sm font-semibold">
-              {viewMode === "weekly" ? "Weekly View" : "Monthly View"}
+      <div className="space-y-4" data-testid="schedule-view">
+        <div className="rounded-3xl border border-white/10 bg-[#0b1220]/80 backdrop-blur-xl p-5 shadow-[0_30px_90px_-70px_rgba(0,0,0,0.95)]">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center">
+                <CalendarDays size={18} className="text-violet-300" />
+              </div>
+              <div>
+                <div className="text-[11px] text-slate-400">ภาพรวมตารางเรียน</div>
+                <div className="text-base font-semibold text-gray-100">
+                  {viewMode === "weekly" ? "Weekly View" : "Monthly View"}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 p-1">
+              <button
+                type="button"
+                data-testid="schedule-toggle"
+                onClick={() => setViewMode("weekly")}
+                className={`px-4 py-1.5 rounded-full text-[11px] transition ${
+                  viewMode === "weekly"
+                    ? "bg-violet-500/25 text-violet-200"
+                    : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                Weekly
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("monthly")}
+                className={`px-4 py-1.5 rounded-full text-[11px] transition ${
+                  viewMode === "monthly"
+                    ? "bg-sky-500/25 text-sky-200"
+                    : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                Monthly
+              </button>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2 text-[11px]">
+            <span className="px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-gray-300">
+              ทั้งหมด {schedule.length} คาบ
+            </span>
+            <span className="px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-200">
+              มีงาน {taskCount} รายการ
+            </span>
+            <span className="px-3 py-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 text-sky-200">
+              ใช้ {dayCount || 0} วัน
             </span>
           </div>
-          <button
-            type="button"
-            data-testid="schedule-toggle"
-            onClick={() => setViewMode(viewMode === "weekly" ? "monthly" : "weekly")}
-            className="text-[11px] px-3 py-1 rounded-full border border-[#374151] text-gray-300 hover:bg-slate-800"
-          >
-            {viewMode === "weekly" ? "Monthly" : "Weekly"}
-          </button>
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-12 gap-2">
-            <Loader size={20} className="animate-spin text-sky-400" />
-            <span className="text-gray-400">โหลดตารางเรียน...</span>
+          <div className="rounded-3xl border border-white/10 bg-[#0b1220]/70 backdrop-blur-xl p-10 text-center">
+            <div className="flex items-center justify-center gap-2">
+              <Loader size={20} className="animate-spin text-violet-300" />
+              <span className="text-gray-300">โหลดตารางเรียน...</span>
+            </div>
           </div>
         ) : error ? (
-          <div className="rounded-lg border border-red-500/30 bg-red-900/20 p-4 text-center text-red-300">
+          <div className="rounded-2xl border border-red-500/30 bg-red-900/20 p-4 text-center text-red-300">
             {error}
           </div>
         ) : schedule.length === 0 ? (
-          <div className="rounded-lg border border-yellow-500/30 bg-yellow-900/20 p-4 text-center text-yellow-300">
+          <div className="rounded-2xl border border-yellow-500/30 bg-yellow-900/20 p-4 text-center text-yellow-300">
             ยังไม่มีตารางเรียน
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {schedule.map((s, idx) => {
               const hasTask = s.task && s.task.trim().length > 0
               const dayLabel = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
@@ -84,32 +123,30 @@ export default function Schedule() {
               return (
                 <div
                   key={idx}
-                  className="rounded-xl border border-[#1f2937] bg-[#020617] px-3 py-3 flex flex-col gap-2"
+                  className="group rounded-2xl border border-white/10 bg-gradient-to-br from-[#0b1220] via-[#020617] to-[#020617] p-4 shadow-[0_20px_60px_-50px_rgba(0,0,0,0.9)] transition hover:border-violet-500/30 hover:-translate-y-0.5"
                 >
-                  {/* แถวบน: วันที่ + เวลา */}
-                  <div className="flex items-center justify-between">
-                    <div className="text-[11px] text-gray-400">{dayLabel}</div>
-                    <div className="text-[11px] text-sky-300">{s.time}</div>
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-gray-400">{dayLabel}</span>
+                    <span className="px-2 py-0.5 rounded-full border border-sky-500/30 bg-sky-500/10 text-sky-200">
+                      {s.time}
+                    </span>
                   </div>
 
-                  {/* รายวิชา */}
-                  <div>
+                  <div className="mt-3">
                     <div className="text-[11px] text-gray-400">
                       {s.course} · ห้อง {s.room}
                     </div>
-                    <div className="text-sm text-gray-100 font-semibold">
+                    <div className="text-sm text-gray-100 font-semibold mt-1">
                       {s.subject}
                     </div>
                   </div>
 
-                  {/* ผู้สอน */}
-                  <div className="flex items-center gap-1.5 text-[11px] text-gray-300">
+                  <div className="mt-3 flex items-center gap-1.5 text-[11px] text-gray-300">
                     <User size={12} className="text-violet-300" />
                     <span>ผู้สอน: {s.teacher}</span>
                   </div>
 
-                  {/* Task / งานที่ต้องทำ */}
-                  <div className="mt-1 rounded-lg border border-[#1f2937] bg-slate-900/40 px-2.5 py-2">
+                  <div className="mt-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-1.5 text-[11px] text-gray-300">
                         <ClipboardList size={12} className="text-emerald-300" />

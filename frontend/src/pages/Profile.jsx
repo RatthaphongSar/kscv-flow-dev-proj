@@ -89,45 +89,46 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="h-[calc(100vh-112px)] w-full bg-[#020617] text-gray-100 px-4 py-4">
+    <div className="h-[calc(100vh-112px)] w-full text-gray-100 px-4 py-6 bg-[#020617] bg-[radial-gradient(1100px_circle_at_15%_0%,rgba(99,102,241,0.12),transparent_55%),radial-gradient(900px_circle_at_85%_20%,rgba(14,165,233,0.08),transparent_50%)]">
       <div className="max-w-4xl mx-auto space-y-6">
 
-        <h1 className="text-xl font-semibold">Profile</h1>
-        <p className="text-xs text-gray-400">จัดการข้อมูลส่วนตัวและการตั้งค่าบัญชี</p>
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Profile</h1>
+          <p className="text-xs text-gray-400">จัดการข้อมูลส่วนตัวและการตั้งค่าบัญชี</p>
+        </div>
 
-        {/* MAIN CARD */}
-        <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-6 flex flex-col md:flex-row gap-8">
+        <div className="rounded-3xl border border-white/10 bg-[#0b1220]/70 p-6 backdrop-blur-xl shadow-[0_30px_80px_-60px_rgba(0,0,0,0.8)] flex flex-col md:flex-row gap-8">
 
-          {/* LEFT: AVATAR */}
           <div className="flex flex-col items-center md:w-1/3">
-            <div className="relative group">
-              <img
-                src={preview || "/default-avatar.png"}
-                className="w-32 h-32 rounded-full object-cover border border-[#1f2937]"
-              />
+            <div className="relative">
+              <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-violet-500/30 via-sky-400/20 to-transparent blur-lg" />
+              <div className="relative rounded-full p-1 bg-gradient-to-br from-white/10 via-white/5 to-transparent">
+                <img
+                  src={preview || "/default-avatar.png"}
+                  className="w-32 h-32 rounded-full object-cover border border-white/10"
+                />
+              </div>
 
               {editing && (
-                <label className="absolute bottom-1 right-1 bg-violet-600 p-2 rounded-full cursor-pointer hover:bg-violet-500">
+                <label className="absolute bottom-1 right-1 bg-[#111827] border border-white/10 p-2 rounded-full cursor-pointer hover:border-violet-400/50 hover:bg-[#0b1220] transition">
                   <Camera size={16} />
                   <input type="file" className="hidden" onChange={handleImageUpload} />
                 </label>
               )}
             </div>
 
-            <p className="mt-3 text-gray-300 font-medium">{form.fullname}</p>
-            <p className="text-gray-500 text-sm">@{form.username}</p>
+            <p className="mt-4 text-gray-100 font-semibold">{form.fullname}</p>
+            <p className="text-gray-400 text-sm">@{form.username}</p>
 
-            {/* SHARE BUTTON */}
             <button
               onClick={() => setShowShare(true)}
-              className="mt-4 flex items-center gap-2 text-xs px-3 py-1.5 border border-[#1f2937] rounded-lg hover:bg-slate-800"
+              className="mt-4 flex items-center gap-2 text-xs px-3.5 py-2 rounded-full border border-white/10 bg-white/5 hover:border-violet-400/50 hover:bg-white/10 transition"
             >
               <Share2 size={14} /> Share Profile
             </button>
 
           </div>
 
-          {/* RIGHT: INFO */}
           <div className="flex-1 space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
@@ -175,15 +176,15 @@ export default function ProfilePage() {
             {/* ACTION BUTTONS */}
             <div className="flex gap-3 mt-4">
               {!editing ? (
-                <button className="px-4 py-2 bg-violet-600 hover:bg-violet-700 rounded-lg text-sm" onClick={() => setEditing(true)}>
+                <button className="px-4 py-2 rounded-full text-sm bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-[0_12px_30px_-20px_rgba(99,102,241,0.8)] transition" onClick={() => setEditing(true)}>
                   Edit Profile
                 </button>
               ) : (
                 <>
-                  <button className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm" onClick={saveProfile}>
+                  <button className="px-4 py-2 rounded-full text-sm bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 transition" onClick={saveProfile}>
                     Save
                   </button>
-                  <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm" onClick={cancelEdit}>
+                  <button className="px-4 py-2 rounded-full text-sm bg-white/5 border border-white/10 hover:border-white/30 hover:bg-white/10 transition" onClick={cancelEdit}>
                     Cancel
                   </button>
                 </>
@@ -194,9 +195,9 @@ export default function ProfilePage() {
 
         {/* ADVISOR INFORMATION (for students) */}
         {user?.role === 'student' && (
-          <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-6">
-            <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
-              <Briefcase size={16} className="text-violet-400" />
+          <div className="rounded-3xl border border-white/10 bg-[#0b1220]/70 p-6 backdrop-blur-xl shadow-[0_24px_70px_-60px_rgba(0,0,0,0.8)]">
+            <h2 className="text-sm font-semibold mb-4 flex items-center gap-2 text-gray-100">
+              <Briefcase size={16} className="text-violet-300" />
               ครูที่ปรึกษา (Advisor)
             </h2>
             
@@ -221,17 +222,16 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* SECURITY SETTINGS */}
-        <div className="rounded-2xl border border-[#1f2937] bg-[#020617] p-6 space-y-4">
-          <h2 className="text-sm font-semibold">Security Settings</h2>
+        <div className="rounded-3xl border border-white/10 bg-[#0b1220]/70 p-6 space-y-4 backdrop-blur-xl shadow-[0_24px_70px_-60px_rgba(0,0,0,0.8)]">
+          <h2 className="text-sm font-semibold text-gray-100">Security Settings</h2>
 
-          <button className="w-full flex items-center justify-between p-4 bg-[#0f172a] border border-[#1f2937] rounded-lg hover:bg-[#1e293b]">
-            <span className="flex items-center gap-3 text-sm"><Lock size={18} /> Change Password</span>
+          <button className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-white/10 bg-white/5 hover:border-violet-400/40 hover:bg-white/10 transition">
+            <span className="flex items-center gap-3 text-sm text-gray-200"><Lock size={18} /> Change Password</span>
           </button>
 
           <button
             onClick={logout}
-            className="w-full flex items-center justify-between p-4 bg-red-600/20 border border-red-700 rounded-lg text-red-400 hover:bg-red-600/30"
+            className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-red-500/40 bg-red-500/10 text-red-300 hover:bg-red-500/20 hover:border-red-400/60 transition"
           >
             <span className="flex items-center gap-3 text-sm"><LogOut size={18} /> Logout</span>
           </button>
@@ -257,24 +257,25 @@ export default function ProfilePage() {
 function ShareModal({ profileURL, copyProfileURL, copyContactInfo, close }) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="rounded-2xl bg-[#0b1220]/90 border border-white/10 p-6 w-full max-w-sm space-y-4 backdrop-blur-xl shadow-[0_30px_80px_-60px_rgba(0,0,0,0.9)]">
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold text-gray-100">Share Your Profile</h3>
+          <p className="text-[11px] text-gray-400">ส่งลิงก์โปรไฟล์ให้เพื่อนหรืออาจารย์ดูข้อมูลของคุณ</p>
+        </div>
 
-      <div className="rounded-xl bg-[#0f172a] border border-[#1f2937] p-6 w-full max-w-sm space-y-4">
-        <h3 className="text-sm font-semibold">Share Your Profile</h3>
-        <p className="text-[11px] text-gray-400">ส่งลิงก์โปรไฟล์ให้เพื่อนหรืออาจารย์ดูข้อมูลของคุณ</p>
-
-        <div className="rounded-lg border border-[#1f2937] bg-[#020617] px-3 py-2 text-xs break-all">
+        <div className="rounded-xl border border-white/10 bg-[#020617] px-3 py-2 text-xs break-all text-gray-300">
           {profileURL}
         </div>
 
-        <button onClick={copyProfileURL} className="w-full flex items-center gap-2 justify-center px-3 py-2 bg-violet-600 rounded-lg text-xs hover:bg-violet-500">
+        <button onClick={copyProfileURL} className="w-full flex items-center gap-2 justify-center px-3 py-2 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-xs hover:from-violet-500 hover:to-indigo-500 transition">
           <Copy size={14} /> Copy Profile Link
         </button>
 
-        <button onClick={copyContactInfo} className="w-full flex items-center gap-2 justify-center px-3 py-2 bg-slate-700 rounded-lg text-xs hover:bg-slate-600">
+        <button onClick={copyContactInfo} className="w-full flex items-center gap-2 justify-center px-3 py-2 rounded-full border border-white/10 bg-white/5 text-xs hover:bg-white/10 hover:border-white/30 transition">
           <User size={14} /> Copy Contact Info
         </button>
 
-        <button onClick={close} className="w-full px-3 py-2 text-xs rounded-lg border border-gray-600 hover:bg-gray-700">
+        <button onClick={close} className="w-full px-3 py-2 text-xs rounded-full border border-white/10 hover:border-white/30 hover:bg-white/10 transition">
           Close
         </button>
       </div>
@@ -284,11 +285,11 @@ function ShareModal({ profileURL, copyProfileURL, copyContactInfo, close }) {
 
 function ProfileField({ icon: Icon, label, children }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1 rounded-xl border border-white/10 bg-[#0b1220]/80 px-3 py-2">
       <span className="text-[11px] text-gray-400 flex items-center gap-1">
         <Icon size={13} /> {label}
       </span>
-      <span className="text-sm text-gray-200">{children}</span>
+      <span className="text-sm text-gray-100">{children}</span>
     </div>
   )
 }
@@ -299,7 +300,7 @@ function InputField({ name, value, onChange }) {
       name={name}
       value={value}
       onChange={onChange}
-      className="bg-[#0f172a] border border-[#1f2937] rounded-lg px-3 py-2 w-full text-sm focus:ring-1 focus:ring-violet-600 outline-none"
+      className="bg-[#0f172a] border border-white/10 rounded-lg px-3 py-2 w-full text-sm text-gray-100 focus:ring-1 focus:ring-violet-500 outline-none"
     />
   )
 }

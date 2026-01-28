@@ -55,7 +55,7 @@ export const pinMessage = async (messageId, roomId, userId) => {
       message: {
         include: {
           user: true,
-          file: true,
+          files: true,
           replyTo: {
             include: { user: true },
           },
@@ -110,7 +110,7 @@ export const getPinnedMessages = async (roomId) => {
       message: {
         include: {
           user: true,
-          file: true,
+          files: true,
           replyTo: {
             include: { user: true },
           },

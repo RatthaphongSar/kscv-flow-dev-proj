@@ -95,10 +95,11 @@ export default function ChatMessageItem({
   }
 
   const handleDownloadFile = () => {
-    if (message.file) {
+    const files = message.files || []
+    if (files.length > 0) {
       const link = document.createElement('a')
-      link.href = message.file.url
-      link.download = message.file.fileName
+      link.href = files[0].url
+      link.download = files[0].fileName
       link.click()
     }
     setShowMenu(false)
@@ -171,26 +172,30 @@ export default function ChatMessageItem({
           )}
 
           {/* File attachment */}
-          {message.file && (
-            <div className="mt-2 p-2 bg-gray-100 rounded-lg flex items-center gap-2 max-w-xs">
-              {message.file.mimeType?.startsWith('image/') ? (
-                <img
-                  src={message.file.url}
-                  alt={message.file.fileName}
-                  className="max-w-xs max-h-64 rounded-lg cursor-pointer"
-                  onClick={() => window.open(message.file.url)}
-                />
-              ) : (
-                <>
-                  <Download size={16} className="text-gray-600" />
-                  <span className="text-xs text-gray-600 truncate">
-                    {message.file.fileName}
-                  </span>
-                  <span className="text-xs text-gray-500 ml-auto">
-                    {(message.file.sizeBytes / 1024).toFixed(1)} KB
-                  </span>
-                </>
-              )}
+          {message.files?.length > 0 && (
+            <div className="mt-2 space-y-2">
+              {message.files.map((file) => (
+                <div key={file.id} className="p-2 bg-gray-100 rounded-lg flex items-center gap-2 max-w-xs">
+                  {file.mimeType?.startsWith('image/') ? (
+                    <img
+                      src={file.url}
+                      alt={file.fileName}
+                      className="max-w-xs max-h-64 rounded-lg cursor-pointer"
+                      onClick={() => window.open(file.url)}
+                    />
+                  ) : (
+                    <>
+                      <Download size={16} className="text-gray-600" />
+                      <span className="text-xs text-gray-600 truncate">
+                        {file.fileName}
+                      </span>
+                      <span className="text-xs text-gray-500 ml-auto">
+                        {(file.sizeBytes / 1024).toFixed(1)} KB
+                      </span>
+                    </>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -217,7 +222,7 @@ export default function ChatMessageItem({
               onReply={handleReplyClick}
               onPin={handlePinClick}
               onCopy={handleCopyText}
-              onDownload={message.file ? handleDownloadFile : null}
+              onDownload={message.files?.length ? handleDownloadFile : null}
             />
           )}
         </div>

@@ -118,28 +118,32 @@ class ChatFileService {
         data: messageData,
         include: {
           user: { select: { id: true, username: true } },
-          file: true,
+          files: true,
           readReceipts: { select: { userId: true } }
         }
       })
       
-      // If files provided, create records (assuming first file is attachment)
-      let attachmentFile = null
       if (files && files.length > 0) {
-        const fileRecord = await this.createFileRecord(roomId, userId, files[0])
-        
-        // Link file to message
-        await prisma.message.update({
-          where: { id: message.id },
-          data: { file: { connect: { id: fileRecord.id } } }
-        })
-        
-        attachmentFile = fileRecord
+        await Promise.all(
+          files.map((file) =>
+            prisma.chatFile.create({
+              data: {
+                fileName: file.originalname,
+                mimeType: file.mimetype,
+                sizeBytes: file.size,
+                url: `/uploads/${file.filename}`,
+                room: { connect: { id: roomId } },
+                uploader: { connect: { id: userId } },
+                message: { connect: { id: message.id } },
+              },
+            }),
+          ),
+        )
       }
       
       return {
         ...message,
-        file: attachmentFile
+        files: message.files
       }
     } catch (err) {
       console.error('[ChatFileService] createMessageWithFiles error:', err)

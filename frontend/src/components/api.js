@@ -3,7 +3,7 @@ export const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:4000/
 import { react } from '@vitejs/plugin-react';
 
 // ---------- Config ----------
-const DEFAULT_TIMEOUT = 12000 // ms
+const DEFAULT_TIMEOUT = 30000 // ms
 const RETRIES = 2             // retry สำหรับ GET/HEAD เท่านั้น
 const CACHE_TTL = 30_000      // 30s
 const cache = new Map()       // key -> { ts, data, etag }

@@ -41,6 +41,7 @@ model User {
   assignmentSubmissions AssignmentSubmission[]
 
   studentAttendances Attendance[] @relation("StudentAttendance")
+  studentAssemblyAttendances AssemblyAttendance[] @relation("StudentAssemblyAttendance")
 
   gradeRecords   GradeRecord[] @relation("StudentGrades")
   studentExamGrades Grade[] @relation("StudentExamGrades")
@@ -117,9 +118,10 @@ model Message {
   replyToId    String?
   repliedBy    Message[] @relation("MessageReply")
 
-  // File/Image attachment
+  // File/Image attachments
+  files     ChatFile[] @relation("MessageFiles")
   file      ChatFile? @relation("MessageFile", fields: [fileId], references: [id])
-  fileId    String? @unique
+  fileId    String?   @unique
 
   // Read receipts for this message
   readReceipts MessageRead[]
@@ -221,6 +223,7 @@ model Attendance {
   date      DateTime
   status    String   @default("absent") // present, absent, late, excuse
   remark    String?
+  checkinAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -236,6 +239,25 @@ model Attendance {
   @@index([classId, date])
   @@index([studentId])
   @@index([sessionId])
+}
+
+model AssemblyAttendance {
+  id        String   @id @default(cuid())
+  date      DateTime
+  status    String   @default("absent") // present, late, absent
+  remark    String?
+  checkinAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student   User   @relation("StudentAssemblyAttendance", fields: [studentId], references: [id], onDelete: Cascade)
+  studentId String
+  class     Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classId   String
+
+  @@unique([studentId, classId, date])
+  @@index([classId, date])
+  @@index([studentId])
 }
 
 model AttendanceSession {
@@ -562,6 +584,7 @@ model Class {
   joinRequests    JoinRequest[] @relation("ClassJoinRequests")
   assignments     Assignment[]
   attendances     Attendance[]
+  assemblyAttendances AssemblyAttendance[]
   attendanceSessions AttendanceSession[]
   exams           Exam[]
   meetings        Meeting[]
@@ -812,7 +835,9 @@ model ChatFile {
   uploaderId String
 
   // Message reference if file was uploaded as attachment
-  messageAttachment Message? @relation("MessageFile")
+  message   Message? @relation("MessageFiles", fields: [messageId], references: [id])
+  messageId String?
+  legacyMessage Message? @relation("MessageFile")
 
   @@index([roomId, createdAt])
   @@index([uploaderId])

@@ -21,7 +21,7 @@ export class ChatRoomService {
     })
 
     if (!room) {
-      throw new Error('Room not found')
+      return { success: true, roomId, alreadyDeleted: true }
     }
 
     // Check if user is a member
@@ -77,10 +77,10 @@ export class ChatRoomService {
       throw new Error('Not a member of this room')
     }
 
-    // Delete room (cascade delete will handle messages, notes, files, etc.)
-    await this.prisma.room.delete({
-      where: { id: roomId }
-    })
+    await this.prisma.$transaction([
+      this.prisma.roomMember.deleteMany({ where: { roomId } }),
+      this.prisma.room.delete({ where: { id: roomId } })
+    ])
 
     return { success: true, roomId }
   }

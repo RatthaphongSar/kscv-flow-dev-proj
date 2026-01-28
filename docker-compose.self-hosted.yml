@@ -41,12 +41,12 @@ services:
     networks:
       - kvc-network
 
-  # Backend API
+  # KSVC Backend API
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: kvc-backend
+    container_name: ksvc-backend
     depends_on:
       postgres:
         condition: service_healthy
@@ -79,50 +79,36 @@ services:
     ports:
       - "4001:4001"
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://backend:4001/api/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://backend:4001/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
     restart: unless-stopped
     networks:
-      - kvc-network
+      - ksvc-network
     logging:
       driver: "json-file"
       options:
         max-size: "50m"
         max-file: "10"
 
-  # Frontend (Node server serving built React app)
+  # KSVC Frontend (Node server serving built React app)
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: kvc-frontend
+    container_name: ksvc-frontend
     depends_on:
       - backend
     environment:
-      NODE_ENV: production
+      VITE_API_BASE: ${VITE_API_BASE:-http://backend:4001/api}
       PORT: 3000
-      BACKEND_API_URL: http://backend:4001
-    volumes:
-      - ./frontend/dist:/app/dist:ro
     ports:
-      - "3000:3000"
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://frontend:3000/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+      - "80:3000"
     restart: unless-stopped
     networks:
-      - kvc-network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "10"
+      - ksvc-network
 
   # Nginx Reverse Proxy (entry point)
   nginx:

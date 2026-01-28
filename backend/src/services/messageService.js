@@ -10,7 +10,7 @@ export const deleteMessageForUser = async (messageId, userId) => {
   // Find the message
   const message = await prisma.message.findUnique({
     where: { id: messageId },
-    include: { author: true },
+    include: { user: true },
   });
 
   if (!message) {
@@ -18,7 +18,7 @@ export const deleteMessageForUser = async (messageId, userId) => {
   }
 
   // Check authorization - only author or admin can delete
-  if (message.authorId !== userId) {
+  if (message.userId !== userId) {
     throw new Error('Unauthorized: Only message author can delete');
   }
 
@@ -53,7 +53,7 @@ export const deleteMessageForEveryone = async (messageId, userId) => {
   // Find the message
   const message = await prisma.message.findUnique({
     where: { id: messageId },
-    include: { author: true, room: true },
+    include: { user: true, room: true },
   });
 
   if (!message) {
@@ -66,7 +66,7 @@ export const deleteMessageForEveryone = async (messageId, userId) => {
     include: { createdBy: true },
   });
 
-  const isAuthor = message.authorId === userId;
+  const isAuthor = message.userId === userId;
   const isRoomAdmin = room.createdBy.id === userId;
 
   if (!isAuthor && !isRoomAdmin) {
@@ -106,7 +106,7 @@ export const editMessage = async (messageId, userId, newContent) => {
   }
 
   // Check authorization - only author can edit
-  if (message.authorId !== userId) {
+  if (message.userId !== userId) {
     throw new Error('Unauthorized: Only message author can edit');
   }
 
@@ -123,10 +123,10 @@ export const editMessage = async (messageId, userId, newContent) => {
       editedAt: new Date(),
     },
     include: {
-      author: true,
-      file: true,
+      user: true,
+      files: true,
       replyTo: {
-        include: { author: true },
+        include: { user: true },
       },
     },
   });
@@ -140,10 +140,9 @@ export const editMessage = async (messageId, userId, newContent) => {
  * @param {string} userId - User ID (author of reply)
  * @param {string} content - Reply content
  * @param {string} replyToId - ID of message being replied to
- * @param {string} fileId - Optional file ID
  * @returns {Promise<Object>} Created reply message
  */
-export const replyMessage = async (roomId, userId, content, replyToId, fileId = null) => {
+export const replyMessage = async (roomId, userId, content, replyToId) => {
   if (!content || content.trim() === '') {
     throw new Error('Message content cannot be empty');
   }
@@ -151,7 +150,7 @@ export const replyMessage = async (roomId, userId, content, replyToId, fileId = 
   // Verify the original message exists and is in the same room
   const originalMessage = await prisma.message.findUnique({
     where: { id: replyToId },
-    include: { author: true },
+    include: { user: true },
   });
 
   if (!originalMessage) {
@@ -166,16 +165,15 @@ export const replyMessage = async (roomId, userId, content, replyToId, fileId = 
   const replyMessage = await prisma.message.create({
     data: {
       content: content.trim(),
-      authorId: userId,
+      userId,
       roomId,
       replyToId,
-      fileId: fileId || null,
     },
     include: {
-      author: true,
-      file: true,
+      user: true,
+      files: true,
       replyTo: {
-        include: { author: true },
+        include: { user: true },
       },
     },
   });
@@ -193,10 +191,10 @@ export const getMessage = async (messageId, userId) => {
   const message = await prisma.message.findUnique({
     where: { id: messageId },
     include: {
-      author: true,
-      file: true,
+      user: true,
+      files: true,
       replyTo: {
-        include: { author: true },
+        include: { user: true },
       },
       deletedForUsers: true,
       pinnedIn: true,
@@ -245,10 +243,10 @@ export const getRoomMessages = async (roomId, userId, limit = 50, offset = 0) =>
       ],
     },
     include: {
-      author: true,
-      file: true,
+      user: true,
+      files: true,
       replyTo: {
-        include: { author: true },
+        include: { user: true },
       },
       pinnedIn: true,
       readReceipts: true,
@@ -270,7 +268,7 @@ export const getMessageHistory = async (messageId) => {
   const message = await prisma.message.findUnique({
     where: { id: messageId },
     include: {
-      author: true,
+      user: true,
     },
   });
 
@@ -284,6 +282,6 @@ export const getMessageHistory = async (messageId) => {
     createdAt: message.createdAt,
     editedAt: message.editedAt,
     edited: message.editedAt !== null,
-    author: message.author,
+    user: message.user,
   };
 };

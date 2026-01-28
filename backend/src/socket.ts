@@ -56,18 +56,20 @@ export function initializeSocketIO(httpServer: HttpServer) {
             roomId: message.roomId,
             status: 'sent',
             ...(message.file && {
-              file: {
+              files: {
                 create: {
-                  name: message.file.name,
+                  fileName: message.file.name,
                   url: message.file.url,
-                  type: message.file.type,
-                  size: message.file.size,
+                  mimeType: message.file.type,
+                  sizeBytes: message.file.size,
+                  room: { connect: { id: message.roomId } },
+                  uploader: { connect: { id: userId } },
                 },
-              },
+              }
             }),
           },
           include: {
-            file: true,
+            files: true,
           },
         });
 

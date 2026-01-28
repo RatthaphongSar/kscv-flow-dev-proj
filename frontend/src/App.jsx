@@ -33,10 +33,12 @@ function NavItem({ to, icon: Icon, label, badge, onClick }) {
       to={to}
       onClick={onClick}
       data-testid="nav-item"
-      className={`relative flex items-center gap-2 px-3 py-2 rounded-lg transition
-        ${active ? 'bg-violet-600 text-white' : 'text-gray-300 hover:bg-slate-800'}`}
+      className={`relative flex items-center gap-2 px-3.5 py-2 rounded-full border text-[13px] tracking-tight transition
+        ${active ? 'border-violet-400/60 bg-white/10 text-gray-100 shadow-[0_8px_30px_-16px_rgba(139,92,246,0.6)]' : 'border-transparent text-gray-400 hover:text-gray-200 hover:bg-white/5 hover:border-white/10'}`}
     >
-      <Icon size={18} />
+      <span className={`w-7 h-7 rounded-full flex items-center justify-center transition ${active ? 'bg-violet-500/20 text-violet-200' : 'bg-white/5 text-gray-300'}`}>
+        <Icon size={16} />
+      </span>
       <span className="text-sm">{label}</span>
 
       {badge && (
@@ -76,49 +78,52 @@ export default function App() {
     <div className="h-screen flex flex-col bg-[#020617] text-gray-100 overflow-hidden">
 
       {/* ============ TOPBAR ============ */}
-      <header className="shrink-0 bg-[#020617] border-b border-[#1f2937]">
+      <header className="shrink-0 bg-[#020617] border-b border-white/10">
         <div className="w-full flex justify-center">
-          <div className="w-full max-w-[1400px] flex items-center gap-3 p-3">
+          <div className="w-full max-w-[1400px] flex items-center gap-3 px-3 py-3">
             <button
-              className="p-2 rounded-lg hover:bg-slate-800"
+              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition"
               onClick={() => setOpen(true)}
               data-testid="sidebar-toggle"
             >
               <Menu className="text-gray-200" />
             </button>
 
-            <Link to="/" className="flex items-center gap-2 text-violet-400 font-bold">
-              <div className="w-8 h-8 rounded-lg overflow-hidden">
+            <Link to="/" className="flex items-center gap-2 text-violet-300 font-semibold tracking-wide">
+              <div className="w-9 h-9 rounded-xl overflow-hidden border border-white/10 bg-white/5">
                 <img src="/kvc-logo.png" alt="KVC logo" className="w-full h-full object-contain scale-150" />
               </div>
-              <span className="hidden sm:inline text-sm">Kalasin Vocational College</span>
+              <span className="hidden sm:inline text-sm text-gray-200">Kalasin Vocational College</span>
             </Link>
 
             <div className="ml-auto flex items-center gap-3">
               <div className="relative hidden sm:block">
-                <Search size={18} className="absolute left-2 top-2.5 text-slate-400" />
+                <Search size={16} className="absolute left-3 top-2.5 text-slate-400" />
                 <input
-                  className="bg-[#020617] border border-[#374151] text-sm text-gray-100 pl-8 pr-3 py-2 rounded-lg"
+                  className="bg-white/5 border border-white/10 text-sm text-gray-100 pl-9 pr-3 py-2 rounded-full focus:outline-none focus:border-violet-400/50 transition"
                   placeholder="Search..."
                 />
               </div>
 
               {user ? (
-                <Link to="/profile" className="flex items-center gap-2 px-2 py-1.5 rounded-xl border border-[#374151] hover:bg-slate-800">
-                  <div className="w-9 h-9 rounded-full bg-violet-600 text-white flex items-center justify-center overflow-hidden">
-                    {avatarUrl ? (
-                      <img src={avatarUrl} className="w-full h-full object-cover" />
-                    ) : (
-                      avatarLetter
-                    )}
+                <Link to="/profile" className="flex items-center gap-2 px-2.5 py-1.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 hover:border-violet-400/40 transition shadow-[0_16px_40px_-30px_rgba(15,23,42,0.9)]">
+                  <div className="relative">
+                    <div className="absolute -inset-0.5 rounded-full bg-gradient-to-br from-violet-500/40 via-sky-400/30 to-transparent blur-sm" />
+                    <div className="relative w-9 h-9 rounded-full bg-[#111827] text-white flex items-center justify-center overflow-hidden border border-white/10">
+                      {avatarUrl ? (
+                        <img src={avatarUrl} className="w-full h-full object-cover" />
+                      ) : (
+                        avatarLetter
+                      )}
+                    </div>
                   </div>
                   <div className="hidden sm:flex flex-col items-start">
-                    <span className="text-xs font-medium">{user.fullname || user.username}</span>
+                    <span className="text-xs font-semibold text-gray-100">{user.fullname || user.username}</span>
                     <span className="text-[11px] text-gray-400">@{user.username}</span>
                   </div>
                 </Link>
               ) : (
-                <Link to="/login" className="px-3 py-2 rounded-lg border border-[#374151] hover:bg-slate-800 flex items-center gap-2 text-sm">
+                <Link to="/login" className="px-3 py-2 rounded-full border border-white/10 hover:bg-white/10 flex items-center gap-2 text-sm transition">
                   <LogIn size={18} />
                   <span className="hidden sm:block">Login</span>
                 </Link>
@@ -135,14 +140,14 @@ export default function App() {
       />
 
       <aside
-        className={`fixed inset-y-0 left-0 w-72 bg-[#020617] border-r border-[#1f2937] z-50 transform transition-transform ${
+        className={`fixed inset-y-0 left-0 w-72 bg-[#0b1220]/90 border-r border-white/10 backdrop-blur-xl shadow-[0_30px_80px_-60px_rgba(0,0,0,0.9)] z-50 transform transition-transform ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
         data-testid="sidebar"
       >
-        <div className="flex items-center justify-between p-4 border-b border-[#1f2937]">
-          <span className="font-bold text-violet-400">Navigation</span>
-          <button className="p-2 rounded-lg hover:bg-slate-800" onClick={() => setOpen(false)}>
+        <div className="flex items-center justify-between p-4 border-b border-white/10">
+          <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Navigation</span>
+          <button className="p-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition" onClick={() => setOpen(false)}>
             <X className="text-gray-200" />
           </button>
         </div>
@@ -164,15 +169,17 @@ export default function App() {
       </aside>
 
       {/* ============ PRIMARY NAV ============ */}
-      <div className="w-full bg-[#020617] border-b border-[#1f2937] shrink-0">
+      <div className="w-full bg-[#020617] border-b border-white/10 shrink-0">
         <div className="w-full flex justify-center overflow-x-auto">
-          <div className="w-full max-w-[1400px] flex justify-around md:justify-start md:gap-2 px-3 py-2" data-testid="main-nav">
-            <NavItem to="/" icon={Home} label="Home" />
-            <NavItem to="/chat" icon={MessageSquare} label="Chat" />
-            <NavItem to="/class" icon={GraduationCap} label="Class" />
-            <NavItem to="/meeting" icon={Calendar} label="Meeting" />
-            <NavItem to="/checkline" icon={Calendar} label="Checkline" />
-            <NavItem to="/profile" icon={User} label="Profile" />
+          <div className="w-full max-w-[1400px] px-3 py-3" data-testid="main-nav">
+            <div className="flex flex-wrap justify-center md:justify-start gap-2 rounded-2xl border border-white/10 bg-[#0b1220]/70 backdrop-blur-xl px-3 py-2 shadow-[0_24px_70px_-60px_rgba(0,0,0,0.8)]">
+              <NavItem to="/" icon={Home} label="Home" />
+              <NavItem to="/chat" icon={MessageSquare} label="Chat" />
+              <NavItem to="/class" icon={GraduationCap} label="Class" />
+              <NavItem to="/meeting" icon={Calendar} label="Meeting" />
+              <NavItem to="/checkline" icon={Calendar} label="Checkline" />
+              <NavItem to="/profile" icon={User} label="Profile" />
+            </div>
           </div>
         </div>
       </div>

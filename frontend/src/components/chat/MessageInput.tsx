@@ -53,9 +53,9 @@ export default function MessageInput({
       {/* ช่องพิมพ์ */}
       <div className="flex-1">
         <input
-          className="w-full bg-[#1e293b] border border-[#334155] rounded-lg px-4 py-2.5 text-sm
-                     text-gray-100 placeholder:text-gray-500
-                     focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm
+                     text-slate-100 placeholder:text-slate-500
+                     focus:outline-none focus:ring-1 focus:ring-violet-400 focus:border-violet-400
                      disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           placeholder="พิมพ์ข้อความ... (Enter ส่ง)"
           value={text}
@@ -80,8 +80,8 @@ export default function MessageInput({
       <button
         type="button"
         onClick={handleAttachClick}
-        className="h-9 w-9 flex items-center justify-center rounded-md bg-[#1e293b] border border-[#334155]
-                   text-gray-300 hover:bg-[#334155] hover:border-[#475569] transition-colors
+        className="h-9 w-9 flex items-center justify-center rounded-lg bg-white/5 border border-white/10
+                   text-slate-300 hover:bg-white/10 hover:border-white/20 transition-colors
                    disabled:opacity-50 disabled:cursor-not-allowed"
         title="แนบไฟล์"
         disabled={isLoading}
@@ -106,8 +106,8 @@ export default function MessageInput({
       <button
         type="submit"
         disabled={disabled}
-        className="w-9 h-9 rounded-lg bg-blue-600 text-white flex items-center justify-center
-                   hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed 
+        className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center
+                   hover:from-violet-400 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed 
                    transition-colors duration-200 font-semibold"
         title="ส่งข้อความ (Enter)"
       >

@@ -25,6 +25,8 @@ export default function ChatPage() {
   const [sendLoading, setSendLoading] = useState(false)
   const [sendError, setSendError] = useState('')
   const [selectedFiles, setSelectedFiles] = useState([])
+  const [unreadCounts, setUnreadCounts] = useState({})
+  const [notifications, setNotifications] = useState([])
 
   // typing indicator
   const [typingMap, setTypingMap] = useState({}) // { userId: { username, last } }
@@ -48,10 +50,7 @@ export default function ChatPage() {
       socket.removeEventListener(event, handler)
     }
   }
-
-  // -----------------------------
   // โหลดห้องของ user
-  // -----------------------------
   useEffect(() => {
     if (!user) {
       setRooms([])
@@ -106,6 +105,35 @@ export default function ChatPage() {
     }
   }, [socket])
 
+  useEffect(() => {
+    if (!rooms.length) return
+    setUnreadCounts((prev) => {
+      if (Object.keys(prev).length > 0) return prev
+      const next = {}
+      rooms.forEach((room) => {
+        if (typeof room.unreadCount === 'number') {
+          next[room.id] = room.unreadCount
+        }
+      })
+      return next
+    })
+  }, [rooms])
+
+  const totalUnread = Object.values(unreadCounts).reduce(
+    (sum, count) => sum + (typeof count === 'number' ? count : 0),
+    0,
+  )
+
+  const pushNotification = useCallback((payload) => {
+    setNotifications((prev) => {
+      const next = [payload, ...prev]
+      return next.slice(0, 3)
+    })
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((n) => n.id !== payload.id))
+    }, 5000)
+  }, [])
+
   // -----------------------------
   // โหลดข้อความเก่าของห้อง + join/leave room
   // -----------------------------
@@ -137,19 +165,75 @@ export default function ChatPage() {
     socket.emit?.('joinRoom', { roomId: activeRoom.id })
 
     const handleNewMessage = (msg) => {
-      if (msg.roomId && msg.roomId !== activeRoom.id) return
-      setMessages((prev) => [...prev, msg])
+      const normalized = {
+        ...msg,
+        files: msg.files || (msg.file ? [msg.file] : []),
+      }
+      if (!normalized.roomId) return
+      const isActiveRoom = normalized.roomId === activeRoom.id
+      if (isActiveRoom) {
+        setMessages((prev) => {
+          if (normalized?.id && prev.some((m) => m.id === normalized.id)) return prev
+          return [...prev, normalized]
+        })
+        return
+      }
+
+      const previewText =
+        normalized.content?.trim() ||
+        normalized.text?.trim() ||
+        (normalized.files?.length ? 'ส่งไฟล์' : 'ข้อความใหม่')
+
+      setUnreadCounts((prev) => {
+        const next = { ...prev }
+        next[normalized.roomId] = (next[normalized.roomId] || 0) + 1
+        return next
+      })
+
+      setRooms((prev) =>
+        prev.map((room) =>
+          room.id === normalized.roomId
+            ? {
+                ...room,
+                unreadCount: (room.unreadCount || 0) + 1,
+                lastMessagePreview: previewText,
+                lastMessageAt: normalized.createdAt || new Date().toISOString(),
+              }
+            : room,
+        ),
+      )
+
+      const roomName =
+        rooms.find((room) => room.id === normalized.roomId)?.name ||
+        'ห้องแชท'
+
+      pushNotification({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        roomId: normalized.roomId,
+        roomName,
+        content: previewText,
+        createdAt: normalized.createdAt || new Date().toISOString(),
+      })
     }
 
     const handleTyping = (payload) => {
       if (!activeRoom) return
-      if (payload.roomId !== activeRoom.id) return
-      if (payload.userId === user?.id) return
+      const roomId = payload?.roomId
+      if (roomId && roomId !== activeRoom.id) return
+      const userId =
+        payload?.userId ||
+        payload?.user?.id ||
+        payload?.user?.userId
+      if (!userId || userId === user?.id) return
+      const username =
+        payload?.username ||
+        payload?.user?.username ||
+        'User'
 
       setTypingMap((prev) => ({
         ...prev,
-        [payload.userId]: {
-          username: payload.username || 'User',
+        [userId]: {
+          username,
           last: Date.now(),
         },
       }))
@@ -165,7 +249,7 @@ export default function ChatPage() {
       safeOff('chatMessage', handleNewMessage)
       safeOff('typing', handleTyping)
     }
-  }, [socket, activeRoom, user])
+  }, [socket, activeRoom, user, rooms, pushNotification])
 
   // Clear typing ที่หมดเวลา
   useEffect(() => {
@@ -223,20 +307,17 @@ export default function ChatPage() {
     try {
       console.log('📤 Sending message:', { roomId: activeRoom.id, userId: user.id, content: trimmed, hasFiles, fileCount: selectedFiles.length })
       
-      let formData = null
       let newMessage = null
 
-      // ถ้ามีไฟล์ ส่งเป็น multipart/form-data
       if (hasFiles) {
-        formData = new FormData()
+        const formData = new FormData()
         if (trimmed) formData.append('content', trimmed)
         if (replyToId) formData.append('replyToId', replyToId)
-        selectedFiles.forEach((f, idx) => {
+        selectedFiles.forEach((f) => {
           formData.append('files', f.file)
         })
         newMessage = await ChatAPI.sendMessage(activeRoom.id, user.id, trimmed, replyToId, formData)
       } else {
-        // ส่งข้อความธรรมดา (ไม่มีไฟล์)
         newMessage = await ChatAPI.sendMessage(
           activeRoom.id,
           user.id,
@@ -247,37 +328,37 @@ export default function ChatPage() {
 
       console.log('✅ Message sent:', newMessage)
 
-      // Determine message type
       let messageType = 'text'
-      if (newMessage.file?.mimeType?.startsWith('image/')) {
-        messageType = 'image'
-      } else if (newMessage.file) {
-        messageType = 'file'
+      if (newMessage?.files?.length > 0) {
+        const allImages = newMessage.files.every((file) => file.mimeType?.startsWith('image/'))
+        messageType = allImages ? 'image' : 'file'
       }
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          ...newMessage,
-          roomId: activeRoom.id,
-          userId: user.id,
-          user: { username: user.username },
-          content: trimmed || '',
-          createdAt: new Date().toISOString(),
-          replyToId,
-          file: newMessage.file || null,
-          type: messageType,
-        },
-      ])
+      const normalizedMessage = {
+        ...newMessage,
+        roomId: activeRoom.id,
+        userId: user.id,
+        user: { username: user.username },
+        content: newMessage?.content || '',
+        createdAt: newMessage?.createdAt || new Date().toISOString(),
+        replyToId,
+        files: newMessage?.files || [],
+        type: messageType,
+      }
+
+      setMessages((prev) => {
+        if (normalizedMessage?.id && prev.some((m) => m.id === normalizedMessage.id)) return prev
+        return [...prev, normalizedMessage]
+      })
 
       socket.emit?.('chatMessage', {
         roomId: activeRoom.id,
         userId: user.id,
-        text: trimmed || '[File uploaded]',
+        text: normalizedMessage.content || '[File uploaded]',
       })
 
       setText('')
-      setSelectedFiles([])
+      handleClearFiles()
       setReplyingTo(null)
       setTypingMap((prev) => {
         const next = { ...prev }
@@ -510,13 +591,21 @@ export default function ChatPage() {
 
   // -----------------------------
   // Render
+  const handleSelectRoom = (room) => {
+    setActiveRoom(room)
+    setUnreadCounts((prev) => ({ ...prev, [room.id]: 0 }))
+    setRooms((prev) =>
+      prev.map((r) => (r.id === room.id ? { ...r, unreadCount: 0 } : r)),
+    )
+  }
+
   return (
     <ChatLayout
       rooms={rooms}
       roomsLoading={roomsLoading}
       roomsError={roomsError}
       activeRoom={activeRoom}
-      onSelectRoom={setActiveRoom}
+      onSelectRoom={handleSelectRoom}
       messages={messages}
       loadingMessages={loadingMessages}
       text={text}
@@ -540,6 +629,12 @@ export default function ChatPage() {
       onAttachFiles={handleAttachFiles}
       onRemoveFile={handleRemoveFile}
       onClearFiles={handleClearFiles}
+      unreadCounts={unreadCounts}
+      totalUnread={totalUnread}
+      notifications={notifications}
+      onDismissNotification={(id) =>
+        setNotifications((prev) => prev.filter((n) => n.id !== id))
+      }
     />
   )
 }

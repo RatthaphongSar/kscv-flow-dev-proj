@@ -11,7 +11,9 @@
     "start:prod": "npm run build && node server.js 443",
     "start:8080": "npm run build && node server.js 8080",
     "server": "node server.js 3000",
-    "server:watch": "npm run build && node server.js 3000 && npm run dev"
+    "server:watch": "npm run build && node server.js 3000 && npm run dev",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

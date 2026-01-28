@@ -28,6 +28,7 @@ const HTTP_PORT  = Number(process.env.PORT || 4000)
 const HTTPS_ON   = String(process.env.HTTPS || '').toLowerCase() === '1'
 const CERT_PATH  = process.env.HTTPS_CERT || process.env.HTTPS_CERT_PATH
 const KEY_PATH   = process.env.HTTPS_KEY || process.env.HTTPS_KEY_PATH
+const HOST = process.env.HOST || '0.0.0.0'
 
 function resolveIfRelative(p) {
   if (!p) return undefined
@@ -49,26 +50,26 @@ if (HTTPS_ON) {
     // ✅ attach socket.io
     initSocket(server)
 
-    server.listen(httpsPort, () => {
+    server.listen(httpsPort, HOST, () => {
       console.log(`[Assistant] mounted at /api/assistant`)
-      console.log(`HTTPS listening on https://localhost:${httpsPort}`)
+      console.log(`HTTPS listening on https://${HOST}:${httpsPort}`)
     })
   } catch (e) {
     console.error('HTTPS failed to start:', e.message)
     console.error('Falling back to HTTP...')
     const server = http.createServer(app)
     initSocket(server) // ✅ attach socket.io ให้กรณี HTTP ด้วย
-    server.listen(HTTP_PORT, () => {
+    server.listen(HTTP_PORT, HOST, () => {
       console.log(`[Assistant] mounted at /api/assistant`)
-      console.log(`HTTP listening on http://localhost:${HTTP_PORT}`)
+      console.log(`HTTP listening on http://${HOST}:${HTTP_PORT}`)
     })
   }
 } else {
   const server = http.createServer(app)
   initSocket(server) // ✅
-  server.listen(HTTP_PORT, () => {
+  server.listen(HTTP_PORT, HOST, () => {
     console.log(`[Assistant] mounted at /api/assistant`)
-    console.log(`HTTP listening on http://localhost:${HTTP_PORT}`)
+    console.log(`HTTP listening on http://${HOST}:${HTTP_PORT}`)
   })
 }
 

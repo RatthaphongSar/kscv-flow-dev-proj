@@ -128,9 +128,16 @@ export function initSocket(httpServer) {
     })
 
     // typing indicators - support both simple and namespaced events
-    socket.on('typing', ({ roomId, user } = {}) => {
+    socket.on('typing', (payload = {}) => {
+      const roomId = payload.roomId
       if (!roomId) return
-      socket.to(roomId).emit('typing', { user })
+      const userId = payload.userId || payload.user?.id || payload.user?.userId
+      const username = payload.username || payload.user?.username
+      socket.to(roomId).emit('typing', {
+        roomId,
+        userId,
+        username,
+      })
     })
     socket.on('stopTyping', ({ roomId, user } = {}) => {
       if (!roomId) return
