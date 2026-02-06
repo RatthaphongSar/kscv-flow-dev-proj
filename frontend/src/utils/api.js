@@ -76,11 +76,13 @@ export async function api(path, options = {}) {
           })
           .catch((e) => {
             refreshPromise = null;
+            localStorage.removeItem('user');
+            localStorage.removeItem('access_token');
             throw e;
           });
       }
-      await refreshPromise;         // รอให้รีเฟรชเสร็จ
-      res = await doFetch();        // retry คำขอเดิม
+      await refreshPromise;
+      res = await doFetch();
     }
 
     clearTimeout(id);

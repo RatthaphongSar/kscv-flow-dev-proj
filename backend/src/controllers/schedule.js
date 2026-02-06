@@ -53,7 +53,7 @@ export const createSchedule = async (req, res, next) => {
 export const mySchedule = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({
-      where: { id: req.user?.sub },
+      where: { id: req.user?.id },
       select: { classId: true }
     })
 

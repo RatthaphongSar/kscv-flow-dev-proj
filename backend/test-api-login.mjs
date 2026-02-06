@@ -29,6 +29,6 @@ req.on('error', (e) => {
   process.exit(1)
 })
 
-const body = JSON.stringify({ username: 'teacher', password: 'password123' })
+const body = JSON.stringify({ username: 'somchai', password: 'password123' })
 req.write(body)
 req.end()

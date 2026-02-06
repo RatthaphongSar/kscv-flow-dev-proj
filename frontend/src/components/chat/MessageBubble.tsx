@@ -62,10 +62,10 @@ export default function MessageBubble({
   const menuRef = useRef<HTMLDivElement>(null)
 
   // Calculate image dimensions based on orientation
-  const getImageDimensions = () => {
-    if (!file?.width || !file?.height) return { maxWidth: '320px', maxHeight: '224px' }
+  const getImageDimensions = (targetFile?: MessageFile) => {
+    if (!targetFile?.width || !targetFile?.height) return { maxWidth: '320px', maxHeight: '224px' }
     
-    const aspectRatio = file.width / file.height
+    const aspectRatio = targetFile.width / targetFile.height
     const isLandscape = aspectRatio > 1
     
     if (isLandscape) {
@@ -106,6 +106,7 @@ export default function MessageBubble({
 
   const imageFiles = files.filter((f) => f.mimeType?.startsWith('image/'))
   const otherFiles = files.filter((f) => !f.mimeType?.startsWith('image/'))
+  const primaryImage = imageFiles[0]
 
   return (
     <div
@@ -156,21 +157,21 @@ export default function MessageBubble({
                 </button>
               </div>
             </div>
-          ) : type === 'image' && file ? (
+          ) : type === 'image' && primaryImage ? (
             // Image message
             <div className="relative group">
               <img
-                src={file.url}
-                alt={file.fileName}
-                onClick={() => setImageViewerOpen(true)}
+                src={primaryImage.url}
+                alt={primaryImage.fileName}
+                onClick={() => setActiveImage(primaryImage)}
                 className="rounded-2xl object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                style={getImageDimensions()}
+                style={getImageDimensions(primaryImage)}
               />
               {/* Image filename tooltip */}
               <div className={`text-[10px] mt-1 ${
                 isOwn ? 'text-violet-100 text-right' : 'text-gray-400'
               }`}>
-                {file.fileName}
+                {primaryImage.fileName}
               </div>
               {/* Timestamp */}
               <div className={`text-[10px] mt-0.5 ${
@@ -178,32 +179,6 @@ export default function MessageBubble({
               }`}>
                 {time}
               </div>
-              
-              {/* Image viewer modal */}
-              {imageViewerOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center"
-                    onClick={() => setImageViewerOpen(false)}
-                  >
-                    <div className="relative max-w-4xl max-h-[90vh] p-4">
-                      <img
-                        src={file.url}
-                        alt={file.fileName}
-                        className="max-w-full max-h-full object-contain rounded-lg"
-                      />
-                      <button
-                        onClick={() => setImageViewerOpen(false)}
-                        className="absolute top-2 right-2 p-2 bg-black/50 hover:bg-black/70 text-white rounded-lg transition-colors"
-                      >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
             </div>
           ) : (
             <div

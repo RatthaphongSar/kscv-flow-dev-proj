@@ -41,7 +41,7 @@ export const createAssignment = async (req, res, next) => {
         description, 
         dueDate: new Date(dueDate), 
         classId, 
-        teacherId: req.user?.sub || req.body.teacherId
+        teacherId: req.user?.id || req.body.teacherId
       },
       include: { teacher: { select: { id: true, username: true } } }
     })
@@ -67,13 +67,13 @@ export const submitAssignment = async (req, res, next) => {
       where: { 
         assignmentId_studentId: { 
           assignmentId, 
-          studentId: studentId || req.user?.sub 
+          studentId: studentId || req.user?.id 
         } 
       },
       update: { submissionUrl, submissionText, submittedAt: new Date() },
       create: { 
         assignmentId, 
-        studentId: studentId || req.user?.sub, 
+        studentId: studentId || req.user?.id, 
         submissionUrl, 
         submissionText
       },

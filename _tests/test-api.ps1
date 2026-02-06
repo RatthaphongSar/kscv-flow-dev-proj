@@ -34,8 +34,12 @@ function Test-Endpoint {
             $params.Body = ($Body | ConvertTo-Json)
         }
         
-        $response = Invoke-WebRequest @params -SkipHttpErrorCheck
-        $statusCode = $response.StatusCode
+        if ($PSVersionTable.PSVersion.Major -lt 6) {
+            $params.UseBasicParsing = $true
+        }
+        $params.ErrorAction = "Stop"
+        $response = Invoke-WebRequest @params
+        $statusCode = [int]$response.StatusCode
         
         if ($statusCode -ge 200 -and $statusCode -lt 300) {
             Write-Host "✅ PASS: $Name ($statusCode)" -ForegroundColor Green
@@ -49,10 +53,44 @@ function Test-Endpoint {
             return $null
         }
     } catch {
-        Write-Host "❌ ERROR: $Name - $_" -ForegroundColor Red
+        $statusCode = $null
+        $errorContent = $null
+        $webResponse = $_.Exception.Response
+        if ($webResponse) {
+            $statusCode = [int]$webResponse.StatusCode
+            try {
+                $stream = $webResponse.GetResponseStream()
+                if ($stream) {
+                    $reader = New-Object System.IO.StreamReader($stream)
+                    $errorContent = $reader.ReadToEnd()
+                    $reader.Close()
+                }
+            } catch {
+            }
+        }
+        if ($statusCode) {
+            Write-Host "❌ FAIL: $Name ($statusCode)" -ForegroundColor Red
+            if ($errorContent) {
+                Write-Host "Response: $errorContent" -ForegroundColor Red
+            }
+        } else {
+            Write-Host "❌ ERROR: $Name - $_" -ForegroundColor Red
+        }
         $script:failed++
         return $null
     }
+}
+
+function Get-AccessToken {
+    param([object]$Result)
+    if (-not $Result) { return $null }
+    if ($Result.accessToken) { return $Result.accessToken }
+    if ($Result.access_token) { return $Result.access_token }
+    if ($Result.data) {
+        if ($Result.data.accessToken) { return $Result.data.accessToken }
+        if ($Result.data.access_token) { return $Result.data.access_token }
+    }
+    return $null
 }
 
 Write-Host "`n========== KVC API TEST SUITE ==========" -ForegroundColor Yellow
@@ -68,9 +106,10 @@ $studentLogin = Test-Endpoint "Login - Student" "POST" "/auth/login" @{} @{
     password = $STUDENT_PASS
 }
 
-if ($studentLogin.access_token) {
-    $studentToken = "Bearer $($studentLogin.access_token)"
-    Write-Host "✓ Student token: $($studentLogin.access_token.Substring(0,20))..." -ForegroundColor Green
+$studentAccessToken = Get-AccessToken $studentLogin
+if ($studentAccessToken) {
+    $studentToken = "Bearer $studentAccessToken"
+    Write-Host "✓ Student token: $($studentAccessToken.Substring(0,20))..." -ForegroundColor Green
 } else {
     Write-Host "✗ Failed to get student token" -ForegroundColor Red
     exit 1
@@ -82,9 +121,10 @@ $teacherLogin = Test-Endpoint "Login - Teacher" "POST" "/auth/login" @{} @{
     password = $TEACHER_PASS
 }
 
-if ($teacherLogin.access_token) {
-    $teacherToken = "Bearer $($teacherLogin.access_token)"
-    Write-Host "✓ Teacher token: $($teacherLogin.access_token.Substring(0,20))..." -ForegroundColor Green
+$teacherAccessToken = Get-AccessToken $teacherLogin
+if ($teacherAccessToken) {
+    $teacherToken = "Bearer $teacherAccessToken"
+    Write-Host "✓ Teacher token: $($teacherAccessToken.Substring(0,20))..." -ForegroundColor Green
 }
 
 # Get Current User

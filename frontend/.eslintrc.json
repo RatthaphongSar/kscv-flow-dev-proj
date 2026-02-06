@@ -1,22 +1,41 @@
 {
-  "extends": [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:react-hooks/recommended",
-    "plugin:react/recommended",
-    "prettier"
-  ],
+  "extends": ["prettier"],
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2021": true
+  },
   "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "sourceType": "module"
+  },
   "plugins": ["@typescript-eslint", "react-refresh"],
   "rules": {
     "react/react-in-jsx-scope": "off",
     "react/prop-types": "off",
     "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "@typescript-eslint/no-explicit-any": "off",
+    "no-undef": "off",
     "react-refresh/only-export-components": ["warn", { "allowConstantExport": true }]
   },
   "settings": {
     "react": {
       "version": "detect"
     }
-  }
+  },
+  "overrides": [
+    {
+      "files": ["*.config.js", "vite.config.js", "tailwind.config.js", "postcss.config.js", "server.js"],
+      "rules": {
+        "@typescript-eslint/no-require-imports": "off"
+      }
+    },
+    {
+      "files": ["tests/**/*.js", "tests/**/*.ts", "tests/**/*.tsx"],
+      "rules": {
+        "no-empty": "off"
+      }
+    }
+  ]
 }

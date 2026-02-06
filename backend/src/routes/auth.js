@@ -11,16 +11,18 @@ router.use(cookieParser())
 
 const ACCESS_TTL  = process.env.ACCESS_TOKEN_TTL  || '15m'
 const REFRESH_TTL = process.env.REFRESH_TOKEN_TTL || '30d'
+const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'dev_jwt_access_secret'
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'dev_jwt_refresh_secret'
 
 function signAccess(u) {
   return jwt.sign(
     { sub: u.id, role: u.role, username: u.username, year: u.year, major: u.major },
-    process.env.JWT_ACCESS_SECRET,
+    JWT_ACCESS_SECRET,
     { expiresIn: ACCESS_TTL }
   )
 }
 function signRefresh(u) {
-  return jwt.sign({ sub: u.id }, process.env.JWT_REFRESH_SECRET, { expiresIn: REFRESH_TTL })
+  return jwt.sign({ sub: u.id }, JWT_REFRESH_SECRET, { expiresIn: REFRESH_TTL })
 }
 function setAuthCookies(res, access, refresh) {
   const isProd = process.env.NODE_ENV === 'production'
@@ -100,7 +102,7 @@ router.post('/refresh', async (req, res) => {
     // Verify refresh token
     let payload
     try {
-      payload = jwt.verify(rt, process.env.JWT_REFRESH_SECRET)
+      payload = jwt.verify(rt, JWT_REFRESH_SECRET)
     } catch (err) {
       console.error('[Refresh] JWT verification failed:', err.message)
       return res.status(401).json({ error: 'Invalid refresh token' })
@@ -146,7 +148,7 @@ router.get('/me', async (req, res) => {
     // 2. Check cookies
     const token = req.cookies?.access_token
     if (!token) return res.json(null)
-    const p = jwt.verify(token, process.env.JWT_ACCESS_SECRET)
+    const p = jwt.verify(token, JWT_ACCESS_SECRET)
     const u = await prisma.user.findUnique({ where: { id: p.sub } })
     if (!u) return res.json(null)
     res.json({ id:u.id, username:u.username, role:u.role, year:u.year, major:u.major })

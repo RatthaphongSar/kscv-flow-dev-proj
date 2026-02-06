@@ -36,13 +36,27 @@ export const createApp = () => {
     crossOriginResourcePolicy: { policy: 'cross-origin' } 
   }))
 
-  // CORS allowlist
-  const corsOrigins = parseCorsOrigins(process.env.CORS_ORIGIN)
-  app.use(cors({
+  const defaultDevOrigins = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000'
+  ]
+  let corsOrigins = parseCorsOrigins(process.env.CORS_ORIGIN)
+  if (!isProduction) {
+    if (corsOrigins === '*') {
+      corsOrigins = defaultDevOrigins
+    } else if (Array.isArray(corsOrigins)) {
+      corsOrigins = Array.from(new Set([...corsOrigins, ...defaultDevOrigins]))
+    }
+  }
+  const corsOptions = {
     origin: corsOrigins === '*' ? true : corsOrigins,
     credentials: true,
-    maxAge: 86400 // preflight cache 24h
-  }))
+    maxAge: 86400
+  }
+  app.use(cors(corsOptions))
+  app.options('*', cors(corsOptions))
 
   // ประสิทธิภาพ network
   app.use(compression({
@@ -88,6 +102,9 @@ export const createApp = () => {
   })
 
   app.get('/health', (_req, res) => {
+    res.json({ ok: true, timestamp: new Date().toISOString(), uptime: process.uptime() })
+  })
+  app.get('/api/health', (_req, res) => {
     res.json({ ok: true, timestamp: new Date().toISOString(), uptime: process.uptime() })
   })
 

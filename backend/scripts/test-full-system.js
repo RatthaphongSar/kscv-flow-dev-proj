@@ -4,11 +4,11 @@ import { io } from 'socket.io-client';
 // Ignore self-signed certs
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-const BASE_URL = 'https://localhost:4001';
+const BASE_URL = process.env.BASE_URL || 'http://localhost:4001';
 const API_URL = `${BASE_URL}/api`;
 
 async function test() {
-  console.log('--- Starting Full System Test (HTTPS) ---');
+  console.log(`--- Starting Full System Test (${BASE_URL.startsWith('https') ? 'HTTPS' : 'HTTP'}) ---`);
 
   try {
     // 1. Login as Teacher

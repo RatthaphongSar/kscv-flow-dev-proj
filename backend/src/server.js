@@ -1,12 +1,10 @@
 // backend/src/server.js
-import dotenv from 'dotenv'
-dotenv.config()
-
 import fs from 'fs'
 import path from 'path'
 import https from 'https'
 import http from 'http'
 import { fileURLToPath } from 'url'
+import dotenv from 'dotenv'
 
 import { createApp, registerPostHandlers } from './app.js'
 import { mountAssistant } from './assistant.module.js'
@@ -15,6 +13,8 @@ import { initSocket } from './socket.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
+dotenv.config({ path: path.join(__dirname, '..', '..', '.env.local'), override: true })
+dotenv.config()
 
 const app = createApp()
 // NOTE: chat router already mounted under /api/chat in routes/index.js

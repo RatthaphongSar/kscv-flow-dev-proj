@@ -5,7 +5,7 @@ async function main() {
     const classes = await prisma.class.findMany()
     console.log('Classes:', JSON.stringify(classes, null, 2))
     
-    const enrollments = await prisma.classEnrollment.findMany()
+    const enrollments = await prisma.enrollment.findMany()
     console.log('Enrollments:', JSON.stringify(enrollments, null, 2))
   } catch (e) {
     console.error('Error:', e.message)

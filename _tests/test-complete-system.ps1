@@ -8,8 +8,8 @@
 
 param(
     [string]$Backend = "http://localhost:4001",
-    [string]$Username = "testuser",
-    [string]$Password = "Test@1234",
+    [string]$Username = "somchai",
+    [string]$Password = "password123",
     [switch]$Verbose
 )
 
@@ -59,7 +59,7 @@ function Write-TestInfo {
 function Test-Connection {
     param([string]$Url)
     try {
-        $response = Invoke-WebRequest -Uri $Url -Method GET -TimeoutSec 5 -SkipHttpErrorCheck
+        $response = Invoke-WebRequest -Uri $Url -Method GET -TimeoutSec 5 -UseBasicParsing -ErrorAction Stop
         return $response.StatusCode -eq 200
     }
     catch {
@@ -81,12 +81,12 @@ function Invoke-API {
         Uri             = $Url
         Method          = $Method
         ContentType     = "application/json"
-        SkipHttpErrorCheck = $true
         TimeoutSec      = 10
+        ErrorAction     = "Stop"
     }
     
     # Add default headers
-    if (-not $SkipAuth -and $Global:AccessToken) {
+    if (-not $SkipAuth -and $Global:AccessToken -and -not $Headers.ContainsKey("Authorization")) {
         $Headers["Authorization"] = "Bearer $($Global:AccessToken)"
     }
     
@@ -100,7 +100,7 @@ function Invoke-API {
     }
     
     try {
-        $response = Invoke-WebRequest @Params
+        $response = Invoke-WebRequest @Params -UseBasicParsing
         if ($Verbose) { Write-Host "  Response: $($response.StatusCode)" }
         
         $content = $null
@@ -115,10 +115,30 @@ function Invoke-API {
         }
     }
     catch {
+        $statusCode = $null
+        $content = $null
+        $webResponse = $_.Exception.Response
+        if ($webResponse) {
+            try {
+                $statusCode = [int]$webResponse.StatusCode
+            } catch {
+                $statusCode = $null
+            }
+            try {
+                $reader = New-Object System.IO.StreamReader($webResponse.GetResponseStream())
+                $raw = $reader.ReadToEnd()
+                $reader.Close()
+                if ($raw) {
+                    $content = $raw | ConvertFrom-Json
+                }
+            } catch {
+                $content = $null
+            }
+        }
         Write-TestFail "API Call Failed" $_.Exception.Message
         return @{
-            StatusCode = $null
-            Content    = $null
+            StatusCode = $statusCode
+            Content    = $content
             Success    = $false
         }
     }
@@ -221,15 +241,18 @@ function Test-ClassSystem {
     $classesResponse = Invoke-API -Method GET -Endpoint "/api/classes"
     
     if ($classesResponse.Success) {
-        $classCount = if ($classesResponse.Content -is [array]) { 
-            $classesResponse.Content.Count 
+        $classItems = $classesResponse.Content
+        if ($classItems -and $classItems.data) { $classItems = $classItems.data }
+        if ($classItems -and $classItems.classes) { $classItems = $classItems.classes }
+        $classCount = if ($classItems -is [array]) { 
+            $classItems.Count 
         } else { 
-            1 
+            if ($classItems) { 1 } else { 0 }
         }
         Write-TestPass "Classes fetched (Count: $classCount) - Status: $($classesResponse.StatusCode)"
         
-        if ($classesResponse.Content -and $classesResponse.Content.Count -gt 0) {
-            $firstClass = $classesResponse.Content[0]
+        if ($classItems -and $classItems.Count -gt 0) {
+            $firstClass = $classItems[0]
             $Global:TestClassId = $firstClass.id
             Write-TestInfo "First class: $($firstClass.code) - $($firstClass.name)"
         }
@@ -385,10 +408,13 @@ function Test-Database {
     $classesResponse = Invoke-API -Method GET -Endpoint "/api/classes"
     
     if ($classesResponse.Success) {
-        $classCount = if ($classesResponse.Content -is [array]) { 
-            $classesResponse.Content.Count 
+        $classItems = $classesResponse.Content
+        if ($classItems -and $classItems.data) { $classItems = $classItems.data }
+        if ($classItems -and $classItems.classes) { $classItems = $classItems.classes }
+        $classCount = if ($classItems -is [array]) { 
+            $classItems.Count 
         } else { 
-            1 
+            if ($classItems) { 1 } else { 0 }
         }
         
         if ($classCount -gt 0) {
@@ -399,8 +425,8 @@ function Test-Database {
     }
     
     # Verify data structure
-    if ($classesResponse.Content -and $classesResponse.Content[0]) {
-        $sample = $classesResponse.Content[0]
+    if ($classItems -and $classItems[0]) {
+        $sample = $classItems[0]
         $requiredFields = @("id", "code", "name", "teacherId")
         $missingFields = @()
         

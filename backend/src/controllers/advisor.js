@@ -8,7 +8,7 @@ export const advisorContact = async (req, res, next) => {
   try {
     // Find advisor for student's class
     const user = await prisma.user.findUnique({
-      where: { id: req.user?.sub },
+      where: { id: req.user?.id },
       select: { classId: true }
     })
 

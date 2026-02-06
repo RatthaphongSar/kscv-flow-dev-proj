@@ -70,17 +70,10 @@ export function AuthProvider({ children }) {
         })
         .catch((err) => {
           console.warn('Dev auto-login failed:', err.message)
-          // Fallback to mock user
           if (mounted) {
-            const mockUser = {
-              id: 'teacher-001',
-              username: 'teacher-demo',
-              email: 'teacher@university.edu',
-              role: 'TEACHER',
-            }
-            setUser(mockUser)
-            localStorage.setItem('user', JSON.stringify(mockUser))
-            localStorage.setItem('access_token', 'mock-teacher-token')
+            localStorage.removeItem('user')
+            localStorage.removeItem('access_token')
+            setUser(null)
           }
         })
         .finally(() => {
@@ -97,8 +90,6 @@ export function AuthProvider({ children }) {
       return
     }
 
-    const resolveMockRole = () => localStorage.getItem('mockRole') || roleFromToken || 'TEACHER'
-
     // Try to load from API
     AuthAPI.me()
       .then((u) => {
@@ -106,30 +97,16 @@ export function AuthProvider({ children }) {
           setUser(u)
           localStorage.setItem('user', JSON.stringify(u))
         } else if (mounted) {
-          const mockRole = resolveMockRole()
-          const mockUser = {
-            id: mockRole === 'TEACHER' ? 'teacher-001' : 'student-001',
-            username: mockRole === 'TEACHER' ? 'teacher' : 'student1',
-            email: mockRole === 'TEACHER' ? 'teacher@university.edu' : 'student1@university.edu',
-            role: mockRole,
-          }
-          setUser(mockUser)
-          localStorage.setItem('user', JSON.stringify(mockUser))
-          localStorage.setItem('access_token', `mock-${mockRole.toLowerCase()}-token`)
+          localStorage.removeItem('user')
+          localStorage.removeItem('access_token')
+          setUser(null)
         }
       })
       .catch(() => {
         if (mounted) {
-          const mockRole = resolveMockRole()
-          const mockUser = {
-            id: mockRole === 'TEACHER' ? 'teacher-001' : 'student-001',
-            username: mockRole === 'TEACHER' ? 'teacher' : 'student1',
-            email: mockRole === 'TEACHER' ? 'teacher@university.edu' : 'student1@university.edu',
-            role: mockRole,
-          }
-          setUser(mockUser)
-          localStorage.setItem('user', JSON.stringify(mockUser))
-          localStorage.setItem('access_token', `mock-${mockRole.toLowerCase()}-token`)
+          localStorage.removeItem('user')
+          localStorage.removeItem('access_token')
+          setUser(null)
         }
       })
       .finally(() => {
@@ -151,25 +128,9 @@ export function AuthProvider({ children }) {
       setUser(userData)
       return userData
     } catch (err) {
-      const isDev = import.meta.env.MODE === 'development'
-      if (isDev && err?.status === 401) {
-        const normalized = (username || '').toLowerCase()
-        const role = normalized.includes('admin')
-          ? 'ADMIN'
-          : normalized.includes('student')
-            ? 'STUDENT'
-            : 'TEACHER'
-        const mockUser = {
-          id: role === 'ADMIN' ? 'admin-001' : role === 'STUDENT' ? 'student-001' : 'teacher-001',
-          username: normalized || (role === 'STUDENT' ? 'student1' : role === 'ADMIN' ? 'admin' : 'teacher'),
-          email: role === 'STUDENT' ? 'student1@university.edu' : role === 'ADMIN' ? 'admin@university.edu' : 'teacher@university.edu',
-          role,
-        }
-        setUser(mockUser)
-        localStorage.setItem('user', JSON.stringify(mockUser))
-        localStorage.setItem('access_token', `mock-${role.toLowerCase()}-token`)
-        return mockUser
-      }
+      localStorage.removeItem('user')
+      localStorage.removeItem('access_token')
+      setUser(null)
       throw err
     }
   }

@@ -32,7 +32,7 @@ export const enrollClub = async (req, res, next) => {
     const member = await prisma.clubMember.create({
       data: {
         clubId,
-        userId: req.user?.sub,
+        userId: req.user?.id,
         role: role || 'member'
       },
       include: { club: { select: { name: true } }, user: { select: { username: true } } }
@@ -54,7 +54,7 @@ export const enrollClub = async (req, res, next) => {
 export const myClubs = async (req, res, next) => {
   try {
     const clubs = await prisma.clubMember.findMany({
-      where: { userId: req.user?.sub },
+      where: { userId: req.user?.id },
       include: { club: { include: { activities: { take: 3 } } } },
       orderBy: { club: { name: 'asc' } }
     })
