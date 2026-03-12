@@ -5,10 +5,12 @@ import PageShell from '../components/PageShell'
 import CustomSelect from '../components/CustomSelect'
 import { Calendar, Clock, Users, AlertCircle, Loader } from 'lucide-react'
 import classApi from '../api/classApi'
+import { useI18n } from '../context/I18nContext'
 
 export default function CreateMeeting() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { t } = useI18n()
 
   const [classes, setClasses] = useState([])
   const [loading, setLoading] = useState(true)
@@ -104,7 +106,7 @@ export default function CreateMeeting() {
       <PageShell title="Create Meeting" subtitle="สร้างการประชุมใหม่">
         <div className="flex items-center justify-center py-20">
           <Loader className="animate-spin mr-2 text-primary" size={24} />
-          <span className="text-foreground">Loading...</span>
+          <span className="text-foreground">{t('common.loading')}</span>
         </div>
       </PageShell>
     )

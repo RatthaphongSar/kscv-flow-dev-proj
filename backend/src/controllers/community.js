@@ -21,63 +21,53 @@ export const listCommunities = async (req, res, next) => {
       return res.status(404).json({ error: 'User not found' })
     }
 
-    // Get or create communities for this year/major combo
-    // Year rooms: 1, 2, 3, 4
-    // Major rooms: Engineering, Agriculture, etc.
     const communities = []
+
+    // Helper: find-or-create community and auto-join user
+    async function ensureCommunity(name, description) {
+      let community = await prisma.community.findUnique({ where: { name } })
+      if (!community) {
+        community = await prisma.community.create({
+          data: { name, description }
+        })
+      }
+      // Auto-join user if not already a member
+      const existing = await prisma.communityMember.findUnique({
+        where: { communityId_userId: { communityId: community.id, userId } }
+      })
+      if (!existing) {
+        await prisma.communityMember.create({
+          data: { communityId: community.id, userId, role: 'member' }
+        })
+      }
+      return community
+    }
 
     // Year-based community
     if (user.year) {
-      const yearCommunity = await prisma.chatRoom.upsert({
-        where: {
-          slug: `year-${user.year}`
-        },
-        update: {},
-        create: {
-          name: `Year ${user.year}`,
-          slug: `year-${user.year}`,
-          description: `Community for Year ${user.year} students`,
-          isAuto: true,
-          createdBy: userId
-        }
-      })
-      communities.push({ ...yearCommunity, type: 'year' })
+      const c = await ensureCommunity(
+        `Year ${user.year}`,
+        `Community for Year ${user.year} students`
+      )
+      communities.push({ ...c, type: 'year' })
     }
 
     // Major-based community
     if (user.major) {
-      const majorCommunity = await prisma.chatRoom.upsert({
-        where: {
-          slug: `major-${user.major.toLowerCase().replace(/\s+/g, '-')}`
-        },
-        update: {},
-        create: {
-          name: `${user.major} Program`,
-          slug: `major-${user.major.toLowerCase().replace(/\s+/g, '-')}`,
-          description: `Community for ${user.major} students`,
-          isAuto: true,
-          createdBy: userId
-        }
-      })
-      communities.push({ ...majorCommunity, type: 'major' })
+      const c = await ensureCommunity(
+        `${user.major} Program`,
+        `Community for ${user.major} students`
+      )
+      communities.push({ ...c, type: 'major' })
     }
 
     // Year + Major combo
     if (user.year && user.major) {
-      const comboCommunity = await prisma.chatRoom.upsert({
-        where: {
-          slug: `year${user.year}-${user.major.toLowerCase().replace(/\s+/g, '-')}`
-        },
-        update: {},
-        create: {
-          name: `Year ${user.year} - ${user.major}`,
-          slug: `year${user.year}-${user.major.toLowerCase().replace(/\s+/g, '-')}`,
-          description: `Community for Year ${user.year} ${user.major} students`,
-          isAuto: true,
-          createdBy: userId
-        }
-      })
-      communities.push({ ...comboCommunity, type: 'combo' })
+      const c = await ensureCommunity(
+        `Year ${user.year} - ${user.major}`,
+        `Community for Year ${user.year} ${user.major} students`
+      )
+      communities.push({ ...c, type: 'combo' })
     }
 
     res.status(200).json({ communities })

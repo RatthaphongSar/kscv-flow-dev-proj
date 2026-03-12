@@ -14,7 +14,13 @@ interface ChatSidebarTabsProps {
   onChange: (next: ChatFilter) => void
 }
 
+import { useTheme } from '../ThemeProvider'
+
 export default function ChatSidebarTabs({ value, onChange }: ChatSidebarTabsProps) {
+  const { theme } = useTheme()
+  const prefersLight = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: light)').matches
+  const isLight = theme === 'light' || (theme === 'system' && prefersLight)
+
   const tabs: { id: ChatFilter; label: string }[] = [
     { id: 'all', label: 'ทั้งหมด' },
     { id: 'pinned', label: 'ปักหมุด' },
@@ -30,7 +36,7 @@ export default function ChatSidebarTabs({ value, onChange }: ChatSidebarTabsProp
           className={`px-3 py-1.5 text-xs rounded-full transition-all duration-200 ${
             value === tab.id
               ? 'bg-violet-600 text-white font-medium'
-              : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              : isLight ? 'bg-slate-100 text-slate-600 hover:bg-slate-200' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
           }`}
         >
           {tab.label}

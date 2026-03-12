@@ -1,4 +1,5 @@
 import { prisma } from "../db.js"
+import { parsePagination, buildOrderBy } from '../utils/query.js'
 
 /**
  * Advisor contact info
@@ -33,12 +34,31 @@ export const advisorContact = async (req, res, next) => {
  */
 export const listAdvisors = async (req, res, next) => {
   try {
-    const advisors = await prisma.advisor.findMany({
-      include: { user: { select: { id: true, username: true, email: true } } },
-      orderBy: { user: { username: 'asc' } }
-    })
+    const pagination = parsePagination(req.query, { defaultPageSize: 20, maxPageSize: 100 })
+    const orderBy = buildOrderBy(req.query, ['email', 'createdAt'], 'createdAt', 'desc')
+    const q = String(req.query.q || '').trim()
+    const where = q
+      ? {
+          OR: [
+            { email: { contains: q, mode: 'insensitive' } },
+            { user: { username: { contains: q, mode: 'insensitive' } } },
+            { user: { fullname: { contains: q, mode: 'insensitive' } } }
+          ]
+        }
+      : {}
 
-    res.json(advisors)
+    const [total, advisors] = await prisma.$transaction([
+      prisma.advisor.count({ where }),
+      prisma.advisor.findMany({
+        where,
+        include: { user: { select: { id: true, username: true, fullname: true, email: true } } },
+        orderBy,
+        skip: pagination.skip,
+        take: pagination.take
+      })
+    ])
+
+    res.json({ data: advisors, pagination: { ...pagination, total } })
   } catch (err) {
     next(err)
   }

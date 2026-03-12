@@ -18,6 +18,7 @@ export function authRequired(req, res, next) {
           
           req.user = {
             id,
+            sub: id,
             username: role === 'TEACHER' ? 'teacher' : 'student1',
             role,
             year: 1,

@@ -1,5 +1,6 @@
 // backend/src/controllers/users.js
 import { prisma } from '../db.js'
+import { parsePagination, buildOrderBy, buildSearch } from '../utils/query.js'
 import bcrypt from 'bcryptjs'
 
 /**
@@ -62,7 +63,7 @@ export const getMe = async (req, res, next) => {
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: req.user.sub },
+      where: { id: req.user.id },
       select: {
         id: true,
         username: true,
@@ -94,7 +95,7 @@ export const getProfile = async (req, res, next) => {
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: req.user.sub },
+      where: { id: req.user.id },
       select: {
         id: true,
         username: true,
@@ -171,7 +172,7 @@ export const updateProfile = async (req, res, next) => {
     if (typeof address === 'string') data.address = address
 
     const updated = await prisma.user.update({
-      where: { id: req.user.sub },
+      where: { id: req.user.id },
       data,
       select: {
         id: true,
@@ -213,7 +214,7 @@ export const updateMe = async (req, res, next) => {
     if (typeof major === 'string') data.major = major
 
     const updated = await prisma.user.update({
-      where: { id: req.user.sub },
+      where: { id: req.user.id },
       data,
       select: {
         id: true,
@@ -242,6 +243,9 @@ export const listUsers = async (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized' })
     }
+    if (!['TEACHER', 'ADMIN'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Forbidden' })
+    }
 
     const { role, year, major } = req.query
     const where = {}
@@ -250,20 +254,38 @@ export const listUsers = async (req, res, next) => {
     if (year) where.year = Number(year)
     if (major) where.major = String(major)
 
-    const users = await prisma.user.findMany({
-      where,
-      select: {
-        id: true,
-        username: true,
-        displayName: true,
-        role: true,
-        year: true,
-        major: true,
-      },
-      orderBy: { username: 'asc' },
-    })
+    const search = buildSearch(req.query, ['username', 'fullname', 'email'])
+    if (search) where.OR = search.OR
 
-    return res.json(users)
+    const pagination = parsePagination(req.query, { defaultPageSize: 30, maxPageSize: 100 })
+    const orderBy = buildOrderBy(req.query, ['username', 'role', 'year', 'major', 'createdAt'], 'username', 'asc')
+
+    const [total, users] = await prisma.$transaction([
+      prisma.user.count({ where }),
+      prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          username: true,
+          fullname: true,
+          email: true,
+          role: true,
+          year: true,
+          major: true,
+        },
+        orderBy,
+        skip: pagination.skip,
+        take: pagination.take,
+      })
+    ])
+
+    return res.json({
+      data: users.map((u) => ({
+        ...u,
+        displayName: u.fullname || u.username
+      })),
+      pagination: { ...pagination, total }
+    })
   } catch (err) {
     console.error('listUsers error:', err)
     return next(err)

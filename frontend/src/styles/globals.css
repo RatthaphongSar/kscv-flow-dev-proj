@@ -80,4 +80,78 @@
     font-family: var(--font-sans);
     @apply bg-background text-foreground h-full m-0 p-0;
   }
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+  }
+}
+
+@layer base {
+  .light .bg-\[\#020617\] {
+    background-color: hsl(var(--background));
+  }
+  .light .bg-\[\#0b1220\] {
+    background-color: hsl(var(--card));
+  }
+  .light .bg-\[\#0b1220\]\/70 {
+    background-color: hsl(var(--card));
+  }
+  .light .bg-\[\#0b1220\]\/80 {
+    background-color: hsl(var(--card));
+  }
+  .light .bg-\[\#0f172a\] {
+    background-color: hsl(var(--card));
+  }
+  .light .bg-\[\#111827\] {
+    background-color: hsl(var(--card));
+  }
+  .light .border-white\/10 {
+    border-color: hsl(var(--border));
+  }
+  .light .border-white\/5 {
+    border-color: hsl(var(--border));
+  }
+  .light .border-\[\#1f2937\] {
+    border-color: hsl(var(--border));
+  }
+  .light .border-\[\#374151\] {
+    border-color: hsl(var(--border));
+  }
+  .light .border-\[\#1e293b\] {
+    border-color: hsl(var(--border));
+  }
+  .light .text-gray-100 {
+    color: hsl(var(--foreground));
+  }
+  .light .text-gray-200 {
+    color: hsl(var(--foreground));
+  }
+  .light .text-gray-300 {
+    color: hsl(var(--muted-foreground));
+  }
+  .light .text-gray-400 {
+    color: hsl(var(--muted-foreground));
+  }
+  .light .text-gray-500 {
+    color: hsl(var(--muted-foreground));
+  }
+  .light .text-slate-300 {
+    color: hsl(var(--muted-foreground));
+  }
+  .light .text-slate-400 {
+    color: hsl(var(--muted-foreground));
+  }
+  .light .bg-white\/5 {
+    background-color: hsl(var(--muted));
+  }
+  .light .bg-white\/10 {
+    background-color: hsl(var(--muted));
+  }
 }

@@ -59,23 +59,38 @@ export const createAssignment = async (req, res, next) => {
 export const submitAssignment = async (req, res, next) => {
   try {
     const { id: assignmentId } = req.params
-    const { submissionUrl, submissionText, studentId } = req.body
+    const { fileUrl, content, studentId } = req.body
+    const sid = studentId || req.user?.id
 
     if (!assignmentId) return res.status(400).json({ error: "assignmentId is required" })
+
+    // Check existing submission for submissionCount
+    const existing = await prisma.assignmentSubmission.findUnique({
+      where: { assignmentId_studentId: { assignmentId, studentId: sid } }
+    })
 
     const submission = await prisma.assignmentSubmission.upsert({
       where: { 
         assignmentId_studentId: { 
           assignmentId, 
-          studentId: studentId || req.user?.id 
+          studentId: sid 
         } 
       },
-      update: { submissionUrl, submissionText, submittedAt: new Date() },
+      update: { 
+        fileUrl, 
+        content, 
+        submittedAt: new Date(), 
+        status: 'submitted',
+        submissionCount: (existing?.submissionCount || 0) + 1
+      },
       create: { 
         assignmentId, 
-        studentId: studentId || req.user?.id, 
-        submissionUrl, 
-        submissionText
+        studentId: sid, 
+        fileUrl, 
+        content,
+        status: 'submitted',
+        submittedAt: new Date(),
+        submissionCount: 1
       },
       include: { student: { select: { username: true } } }
     })

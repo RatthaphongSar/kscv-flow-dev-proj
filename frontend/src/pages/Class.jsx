@@ -28,6 +28,7 @@ import PDFExportModal from "../components/class/PDFExportModal";
 import GoogleCalendarModal from "../components/class/GoogleCalendarModal";
 import ErrorAlertModal from "../components/ErrorAlertModal";
 import { classApi } from "../api/classApi";
+import { api } from "../utils/api";
 
 // format date
 function formatDate(d) {
@@ -527,19 +528,10 @@ export default function ClassPage() {
       });
 
       // Upload files to backend
-      const response = await fetch(`/api/classes/${classId}/assignments/${assignmentId}/upload`, {
+      const result = await api(`/classes/${classId}/assignments/${assignmentId}/upload`, {
         method: 'POST',
         body: formData,
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-        },
       });
-
-      if (!response.ok) {
-        throw new Error(`Upload failed with status ${response.status}`);
-      }
-
-      const result = await response.json();
       
       // Update assignment with uploaded file URLs
       if (selectedAssignment) {

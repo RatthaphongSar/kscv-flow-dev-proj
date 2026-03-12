@@ -1,5 +1,6 @@
 // frontend/src/pages/Home.jsx
 import { useState, useEffect } from 'react'
+import { useIsLight } from '../hooks/useIsLight'
 import { useAuth } from '../context/AuthContext'
 import { classApi } from '../api/classApi'
 import { announcementApi } from '../api/announcementApi'
@@ -29,6 +30,7 @@ const fallbackClasses = [
 
 export default function Home() {
   const { user } = useAuth()
+  const isLight = useIsLight()
   const role = user?.role?.toLowerCase()
   const isStudent = role === 'student'
   const isTeacher = role === 'teacher'
@@ -221,7 +223,7 @@ export default function Home() {
       <div className="w-full flex flex-col gap-4 sm:gap-6">
         
         {/* ===== WELCOME GREETING ===== */}
-        <div className="rounded-2xl border border-[#1f2937] bg-gradient-to-br from-violet-500/10 via-[#020617] to-indigo-500/10 p-4 sm:p-5">
+        <div className={`rounded-2xl border p-4 sm:p-5 ${isLight ? 'border-slate-200 bg-gradient-to-br from-violet-50 via-white to-indigo-50' : 'border-[#1f2937] bg-gradient-to-br from-violet-500/10 via-[#020617] to-indigo-500/10'}`}>
           <p className="text-[10px] uppercase tracking-[0.2em] text-violet-300/80">Dashboard</p>
           <h1 className="text-base sm:text-lg font-semibold text-gray-100 mt-1">หน้าหลัก</h1>
           <p className="text-xs sm:text-sm text-gray-200 mt-1">
@@ -280,7 +282,7 @@ export default function Home() {
         {/* ===== HERO + SLIDER / MAP ===== */}
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {/* Hero Left */}
-          <div className="relative overflow-hidden rounded-2xl border border-[#1f2937] bg-gradient-to-br from-[#0b1220] via-[#020617] to-[#0b1220] md:col-span-2 lg:col-span-2">
+          <div className={`relative overflow-hidden rounded-2xl border md:col-span-2 lg:col-span-2 ${isLight ? 'border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-50' : 'border-[#1f2937] bg-gradient-to-br from-[#0b1220] via-[#020617] to-[#0b1220]'}`}>
             {/* BG SVG light effects */}
             <svg
               className="absolute -right-24 -top-24 w-[420px] h-[420px] opacity-40"

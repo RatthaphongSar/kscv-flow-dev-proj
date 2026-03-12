@@ -59,7 +59,7 @@ export const createExam = async (req, res, next) => {
 export const myExams = async (req, res, next) => {
   try {
     const grades = await prisma.grade.findMany({
-      where: { studentId: req.user?.sub },
+      where: { studentId: req.user?.id },
       include: { exam: { include: { class: { select: { name: true } } } } },
       orderBy: { createdAt: 'desc' }
     })

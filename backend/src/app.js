@@ -96,6 +96,10 @@ export const createApp = () => {
     next()
   })
 
+  // Serve uploaded files
+  const uploadsPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'uploads')
+  app.use('/uploads', express.static(uploadsPath))
+
   // Root welcome
   app.get('/', (_req, res) => {
     res.json({ service: 'KSVC Connect API', version: '0.1.0', health: '/health', docs: '/docs', env: process.env.NODE_ENV })

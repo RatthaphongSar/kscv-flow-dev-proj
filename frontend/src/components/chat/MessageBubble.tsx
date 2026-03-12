@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { MoreVertical, Reply, Pencil, Trash2 } from 'lucide-react'
 import UserAvatar from './UserAvatar'
+import { useTheme } from '../ThemeProvider'
 
 interface MessageFile {
   id: string
@@ -26,6 +27,8 @@ interface MessageBubbleProps {
   id: string
   isOwn: boolean
   username: string
+  userId?: string
+  userRole?: string
   content: string
   time: string
   type?: 'text' | 'image' | 'file'
@@ -37,12 +40,15 @@ interface MessageBubbleProps {
   onDelete?: (messageId: string) => void
   onEdit?: (messageId: string, newContent: string) => void
   onReply?: (messageId: string) => void
+  onProfileClick?: (user: { id?: string; username: string; role?: string }) => void
 }
 
 export default function MessageBubble({
   id,
   isOwn,
   username,
+  userId,
+  userRole,
   content,
   time,
   type = 'text',
@@ -54,12 +60,16 @@ export default function MessageBubble({
   onDelete,
   onEdit,
   onReply,
+  onProfileClick,
 }: MessageBubbleProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(content)
   const [activeImage, setActiveImage] = useState<MessageFile | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+  const { theme } = useTheme()
+  const prefersLight = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: light)').matches
+  const isLight = theme === 'light' || (theme === 'system' && prefersLight)
 
   // Calculate image dimensions based on orientation
   const getImageDimensions = (targetFile?: MessageFile) => {
@@ -107,6 +117,7 @@ export default function MessageBubble({
   const imageFiles = files.filter((f) => f.mimeType?.startsWith('image/'))
   const otherFiles = files.filter((f) => !f.mimeType?.startsWith('image/'))
   const primaryImage = imageFiles[0]
+  const handleProfileClick = () => onProfileClick?.({ id: userId, username, role: userRole })
 
   return (
     <div
@@ -114,21 +125,22 @@ export default function MessageBubble({
       onMouseLeave={() => setShowMenu(false)}
     >
       <div
-        className={`flex max-w-2xl gap-2 relative ${
+        className={`flex max-w-[88%] sm:max-w-2xl gap-2 relative ${
           isOwn ? 'flex-row-reverse' : 'flex-row'
         }`}
       >
         {/* Avatar */}
         <div className="mt-1">
-          <UserAvatar name={username} size="sm" />
+          <UserAvatar name={username} size="sm" onClick={handleProfileClick} />
         </div>
 
         {/* Message Content */}
-        <div className="flex flex-col max-w-xl relative">
+        <div className="flex flex-col max-w-[80vw] sm:max-w-xl relative">
           <span
-            className={`text-[11px] mb-1 ${
+            className={`text-[11px] mb-1 ${onProfileClick ? 'cursor-pointer hover:opacity-90 transition' : ''} ${
               isOwn ? 'text-right text-gray-400' : 'text-left text-gray-400'
             }`}
+            onClick={handleProfileClick}
           >
             {username}
           </span>
@@ -138,7 +150,7 @@ export default function MessageBubble({
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
-                className="px-3 py-2 rounded-xl bg-white/5 text-slate-100 text-sm border border-violet-500/60 focus:outline-none focus:ring-1 focus:ring-violet-400 resize-none"
+                className={`px-3 py-2 rounded-xl text-sm border focus:outline-none focus:ring-1 focus:ring-violet-400 resize-none ${isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-white/5 text-slate-100 border-violet-500/60'}`}
                 rows={3}
                 autoFocus
               />
@@ -151,7 +163,7 @@ export default function MessageBubble({
                 </button>
                 <button
                   onClick={handleCancelEdit}
-                  className="px-3 py-1 text-xs bg-white/5 hover:bg-white/10 text-slate-200 rounded-lg transition-colors"
+                  className={`px-3 py-1 text-xs rounded-lg transition-colors ${isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-white/5 hover:bg-white/10 text-slate-200'}`}
                 >
                   ยกเลิก
                 </button>
@@ -182,23 +194,23 @@ export default function MessageBubble({
             </div>
           ) : (
             <div
-              className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed break-words relative border
+              className={`px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-2xl text-[13px] sm:text-sm leading-relaxed break-words relative border
               ${
                 isOwn
                   ? 'bg-gradient-to-br from-violet-600 to-indigo-700 text-white border-white/10 shadow-[0_12px_28px_rgba(76,29,149,0.35)]'
-                  : 'bg-white/5 text-slate-100 border-white/10 shadow-[0_10px_24px_rgba(2,6,23,0.35)]'
+                  : isLight ? 'bg-white text-slate-900 border-slate-200 shadow-sm' : 'bg-white/5 text-slate-100 border-white/10 shadow-[0_10px_24px_rgba(2,6,23,0.35)]'
               }`}
             >
               {/* Reply Context */}
               {replyTo && (
                 <div className={`mb-2 pb-2 border-b text-xs opacity-80 ${
-                  isOwn ? 'border-violet-400' : 'border-[#374151]'
+                  isOwn ? 'border-violet-400' : isLight ? 'border-slate-200' : 'border-[#374151]'
                 }`}>
-                  <div className={isOwn ? 'text-violet-100' : 'text-gray-400'}>
+                  <div className={isOwn ? 'text-violet-100' : isLight ? 'text-slate-500' : 'text-gray-400'}>
                     ↩ ตอบกลับ {replyTo.user.username}
                   </div>
                   <div className={`italic truncate mt-0.5 ${
-                    isOwn ? 'text-violet-50' : 'text-gray-300'
+                    isOwn ? 'text-violet-50' : isLight ? 'text-slate-600' : 'text-gray-300'
                   }`}>
                     "{replyTo.content}"
                   </div>
@@ -292,12 +304,12 @@ export default function MessageBubble({
                   {showMenu && (
                     <div
                       ref={menuRef}
-                      className="absolute right-0 top-7 bg-[#0b1220]/95 border border-white/10 rounded-xl shadow-2xl z-50 py-1 min-w-[160px] backdrop-blur"
+                      className={`absolute ${isOwn ? 'right-0' : 'left-0'} top-7 border rounded-xl shadow-2xl z-50 py-1 min-w-[160px] backdrop-blur ${isLight ? 'bg-white/95 border-slate-200' : 'bg-[#0b1220]/95 border-white/10'}`}
                       onMouseLeave={() => setShowMenu(false)}
                     >
                       <button
                         onClick={handleReply}
-                        className="w-full px-3 py-2 text-left text-xs text-slate-200 hover:bg-white/5 transition-colors flex items-center gap-2"
+                        className={`w-full px-3 py-2 text-left text-xs hover:bg-white/5 transition-colors flex items-center gap-2 ${isLight ? 'text-slate-700 hover:bg-slate-50' : 'text-slate-200 hover:bg-white/5'}`}
                       >
                         <Reply size={14} />
                         ตอบกลับ
@@ -306,7 +318,7 @@ export default function MessageBubble({
                         <>
                           <button
                             onClick={handleEdit}
-                            className="w-full px-3 py-2 text-left text-xs text-slate-200 hover:bg-white/5 transition-colors flex items-center gap-2"
+                            className={`w-full px-3 py-2 text-left text-xs transition-colors flex items-center gap-2 ${isLight ? 'text-slate-700 hover:bg-slate-50' : 'text-slate-200 hover:bg-white/5'}`}
                           >
                             <Pencil size={14} />
                             แก้ไข

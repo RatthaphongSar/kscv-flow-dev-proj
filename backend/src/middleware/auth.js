@@ -1,6 +1,8 @@
 // backend/src/middleware/auth.js
 import jwt from 'jsonwebtoken'
 
+const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'dev_jwt_access_secret'
+
 function getTokenFrom(req) {
   const cookie = req.cookies?.access_token
   if (cookie) return cookie
@@ -24,7 +26,7 @@ export function authRequired(req, res, next) {
     
     let payload
     try {
-      payload = jwt.verify(token, process.env.JWT_ACCESS_SECRET)
+      payload = jwt.verify(token, JWT_ACCESS_SECRET)
     } catch (err) {
       console.warn('[Auth] JWT verification failed:', err.message)
       return res.status(401).json({ error: 'Unauthorized' })
@@ -34,6 +36,7 @@ export function authRequired(req, res, next) {
     // Map 'sub' to 'id' for consistency
     req.user = {
       id: payload.sub,
+      sub: payload.sub,
       username: payload.username,
       role: payload.role,
       year: payload.year,

@@ -1,4 +1,5 @@
 import { prisma } from '../db.js'
+import { parsePagination, buildOrderBy, buildSearch } from '../utils/query.js'
 
 /**
  * GET /announcements
@@ -6,7 +7,7 @@ import { prisma } from '../db.js'
  */
 async function getAnnouncements(req, res) {
   try {
-    const { classId, skip = 0, take = 20 } = req.query
+    const { classId } = req.query
     const userId = req.user?.id
 
     // Build where clause
@@ -25,13 +26,22 @@ async function getAnnouncements(req, res) {
       })
       const classIds = enrollments.map((e) => e.classId)
       if (classIds.length === 0) {
-        return res.json({ data: [], pagination: { skip: 0, take, total: 0 } })
+        return res.json({ data: [], pagination: { skip: 0, take: 0, page: 1, pageSize: 0, total: 0 } })
       }
-      where.classId = { in: classIds }
+      if (classId) {
+        where.classId = classIds.includes(classId) ? classId : '__none__'
+      } else {
+        where.classId = { in: classIds }
+      }
     }
+
+    const search = buildSearch(req.query, ['title', 'content', 'excerpt'])
+    if (search) where.OR = search.OR
 
     // Get total count
     const total = await prisma.announcement.count({ where })
+    const pagination = parsePagination(req.query, { defaultPageSize: 20, maxPageSize: 100 })
+    const orderBy = buildOrderBy(req.query, ['createdAt', 'title', 'category'], 'createdAt', 'desc')
 
     // Get announcements with pagination
     const announcements = await prisma.announcement.findMany({
@@ -61,18 +71,14 @@ async function getAnnouncements(req, res) {
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
-      skip: parseInt(skip) || 0,
-      take: parseInt(take) || 20,
+      orderBy,
+      skip: pagination.skip,
+      take: pagination.take,
     })
 
     return res.json({
       data: announcements,
-      pagination: {
-        skip: parseInt(skip) || 0,
-        take: parseInt(take) || 20,
-        total,
-      },
+      pagination: { ...pagination, total },
     })
   } catch (err) {
     console.error('getAnnouncements error:', err)

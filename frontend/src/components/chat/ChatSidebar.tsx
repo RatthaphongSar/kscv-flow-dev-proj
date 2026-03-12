@@ -3,6 +3,7 @@ import { Bell } from 'lucide-react'
 import ConversationList from './ConversationList'
 import UserAvatar from './UserAvatar'
 import ChatSidebarTabs from './ChatSidebarTabs'
+import { useTheme } from '../ThemeProvider'
 
 type ChatFilter = 'all' | 'pinned' | 'unread'
 
@@ -61,21 +62,24 @@ export default function ChatSidebar({
     setRoomType('class')
     setIsCreateOpen(false)
   }
+  const { theme } = useTheme()
+  const prefersLight = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: light)').matches
+  const isLight = theme === 'light' || (theme === 'system' && prefersLight)
 
   return (
-    <aside className="w-full lg:w-80 lg:shrink-0 h-auto lg:h-full bg-[#0b1220] border-r border-white/5 flex flex-col relative overflow-hidden">
+    <aside className={`w-full lg:w-[320px] xl:w-[340px] lg:shrink-0 h-auto lg:h-full border-r flex flex-col relative overflow-hidden ${isLight ? 'bg-white border-slate-200' : 'bg-[#0b1220] border-white/5'}`}>
       {/* Header */}
-      <div className="px-4 pt-3 pb-2 border-b border-white/5">
+      <div className={`px-3 sm:px-4 pt-3 pb-2 border-b ${isLight ? 'border-slate-200' : 'border-white/5'}`}>
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h2 className="text-sm font-semibold">การแชท</h2>
-            <p className="text-[11px] text-slate-400">
+            <h2 className="text-sm sm:text-base font-semibold">การแชท</h2>
+            <p className={`text-[11px] sm:text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
               รายการสนทนาทั้งหมดของคุณ
             </p>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative">
-              <Bell size={16} className="text-slate-300" />
+              <Bell size={16} className={isLight ? 'text-slate-600' : 'text-slate-300'} />
               {totalUnread > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold flex items-center justify-center">
                   {totalUnread > 99 ? '99+' : totalUnread}
@@ -86,7 +90,7 @@ export default function ChatSidebar({
               <button
                 type="button"
                 onClick={() => setIsCreateOpen(true)}
-                className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 hover:from-violet-400 hover:to-indigo-500 text-white text-lg flex items-center justify-center shadow-sm"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 hover:from-violet-400 hover:to-indigo-500 text-white text-lg flex items-center justify-center shadow-sm"
                 title="สร้างห้องใหม่"
               >
                 +
@@ -101,8 +105,7 @@ export default function ChatSidebar({
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="ค้นหาการแชท"
-            className="w-full rounded-md bg-white/5 border border-white/10 px-3 py-1.5 text-xs
-                       placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-violet-400"
+            className={`w-full rounded-md border px-3 py-1.5 text-[11px] sm:text-xs focus:outline-none focus:ring-1 focus:ring-violet-400 ${isLight ? 'bg-white border-slate-200 placeholder:text-slate-400' : 'bg-white/5 border-white/10 placeholder:text-slate-500'}`}
           />
           <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">
             🔍
@@ -126,7 +129,7 @@ export default function ChatSidebar({
       {/* Modal สร้างห้อง (หน้าต่างเล็ก) */}
       {isCreateOpen && (
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-20">
-          <div className="w-80 h-[70vh] max-h-96 rounded-2xl bg-[#0b1220] border border-white/10 shadow-2xl p-4 flex flex-col">
+          <div className={`w-[92vw] max-w-sm sm:w-96 h-[75vh] sm:h-[70vh] max-h-[520px] rounded-2xl border shadow-2xl p-4 flex flex-col ${isLight ? 'bg-white border-slate-200' : 'bg-[#0b1220] border-white/10'}`}>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold">สร้างห้องแชทใหม่</h3>
               <button
@@ -140,26 +143,25 @@ export default function ChatSidebar({
 
             <form className="space-y-3 flex-1 overflow-y-auto" onSubmit={handleSubmitCreate}>
               <div>
-                <label className="block text-[11px] mb-1 text-slate-300">
+                <label className={`block text-[11px] sm:text-xs mb-1 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
                   ชื่อห้อง
                 </label>
                 <input
                   value={roomName}
                   onChange={e => setRoomName(e.target.value)}
-                  className="w-full rounded-md bg-white/5 border border-white/10 px-3 py-1.5 text-xs
+                  className="w-full rounded-md bg-white/5 border border-white/10 px-3 py-1.5 text-[11px] sm:text-xs
                              focus:outline-none focus:ring-1 focus:ring-violet-400"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] mb-1 text-slate-300">
+                <label className={`block text-[11px] sm:text-xs mb-1 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
                   ประเภทห้อง
                 </label>
                 <select
                   value={roomType}
                   onChange={e => setRoomType(e.target.value)}
-                  className="w-full rounded-md bg-white/5 border border-white/10 px-3 py-1.5 text-xs
-                             focus:outline-none focus:ring-1 focus:ring-violet-400"
+                  className={`w-full rounded-md border px-3 py-1.5 text-[11px] sm:text-xs focus:outline-none focus:ring-1 focus:ring-violet-400 ${isLight ? 'bg-white border-slate-200' : 'bg-white/5 border-white/10'}`}
                 >
                   <option value="class">Class Room</option>
                   <option value="group">Group Project</option>
@@ -168,15 +170,14 @@ export default function ChatSidebar({
               </div>
 
               <div>
-                <label className="block text-[11px] mb-1 text-slate-300">
+                <label className={`block text-[11px] sm:text-xs mb-1 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
                   รายละเอียด (ไม่บังคับ)
                 </label>
                 <textarea
                   value={roomDesc}
                   onChange={e => setRoomDesc(e.target.value)}
                   rows={2}
-                  className="w-full rounded-md bg-white/5 border border-white/10 px-3 py-1.5 text-[11px]
-                             resize-none focus:outline-none focus:ring-1 focus:ring-violet-400"
+                  className={`w-full rounded-md border px-3 py-1.5 text-[11px] sm:text-xs resize-none focus:outline-none focus:ring-1 focus:ring-violet-400 ${isLight ? 'bg-white border-slate-200' : 'bg-white/5 border-white/10'}`}
                 />
               </div>
 
@@ -184,14 +185,14 @@ export default function ChatSidebar({
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
-                  className="px-3 py-1.5 rounded-md text-[11px] text-slate-300 hover:bg-white/5"
+                  className="px-3 py-1.5 rounded-md text-[11px] sm:text-xs text-slate-300 hover:bg-white/5"
                 >
                   ยกเลิก
                 </button>
                 <button
                   type="submit"
                   disabled={!roomName.trim()}
-                  className="px-4 py-1.5 rounded-md text-[11px] font-medium bg-gradient-to-br from-violet-500 to-indigo-600 text-white
+                  className="px-4 py-1.5 rounded-md text-[11px] sm:text-xs font-medium bg-gradient-to-br from-violet-500 to-indigo-600 text-white
                              hover:from-violet-400 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   สร้างห้อง

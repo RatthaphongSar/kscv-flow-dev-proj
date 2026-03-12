@@ -49,17 +49,23 @@ export const login = async (req, res) => {
     )
 
     // Set cookies
+    const envSameSite = String(process.env.COOKIE_SAMESITE || '').toLowerCase()
+    const sameSite = (envSameSite === 'lax' || envSameSite === 'strict' || envSameSite === 'none')
+      ? envSameSite
+      : (process.env.NODE_ENV === 'production' ? 'strict' : 'lax')
+    const secure = sameSite === 'none' || process.env.NODE_ENV === 'production' || process.env.FORCE_SECURE_COOKIES === 'true'
+
     res.cookie('access_token', accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production' || process.env.FORCE_SECURE_COOKIES === 'true',
-      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+      secure,
+      sameSite,
       maxAge: 60 * 60 * 1000 // 1 hour
     })
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production' || process.env.FORCE_SECURE_COOKIES === 'true',
-      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+      secure,
+      sameSite,
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     })
 

@@ -24,5 +24,6 @@ router.get('/activities/csv', ctrl.exportActivitiesCSV)
  * GET /api/export/attendance/csv
  */
 router.get('/attendance/csv', ctrl.exportAttendanceCSV)
+router.get('/dashboard/excel', ctrl.exportDashboardExcel)
 
 export default router

@@ -10,6 +10,74 @@ export default function Organization() {
   const [leaders, setLeaders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const fallbackChain = [
+    {
+      level: "ที่ปรึกษา",
+      role: "ครูที่ปรึกษา",
+      name: "อ.ณัฐวุฒิ จันทร์ศรี",
+      unit: "สาขาเทคโนโลยีสารสนเทศ",
+    },
+    {
+      level: "หัวหน้าแผนก",
+      role: "หัวหน้าแผนก IT",
+      name: "อ.สุภาวดี อินทร์ชัย",
+      unit: "แผนกเทคโนโลยีสารสนเทศ",
+    },
+    {
+      level: "หัวหน้างาน",
+      role: "หัวหน้างานวิชาการ",
+      name: "อ.กุลวดี สารสุข",
+      unit: "ฝ่ายวิชาการ",
+    },
+    {
+      level: "ผู้บริหาร",
+      role: "รองผู้อำนวยการฝ่ายวิชาการ",
+      name: "อ.พิชญา วรากร",
+      unit: "ทีมบริหาร",
+    },
+  ]
+  const fallbackLeaders = [
+    {
+      id: "director-1",
+      name: "ผอ.กิตติพงษ์ วัฒนชัย",
+      role: "ผู้อำนวยการวิทยาลัย",
+      type: "director",
+      highlight: true,
+      photo: "/images/org/director.png",
+    },
+    {
+      id: "deputy-1",
+      name: "อ.ปรียานุช ศรีอ่อน",
+      role: "รองผู้อำนวยการฝ่ายวิชาการ",
+      type: "deputy",
+      highlight: false,
+      photo: "/images/org/dep1.png",
+    },
+    {
+      id: "deputy-2",
+      name: "อ.กมลวรรณ คำภา",
+      role: "รองผู้อำนวยการฝ่ายบริหารทรัพยากร",
+      type: "deputy",
+      highlight: false,
+      photo: "/images/org/dep2.png",
+    },
+    {
+      id: "deputy-3",
+      name: "อ.ธนภัทร สุวรรณ",
+      role: "รองผู้อำนวยการฝ่ายพัฒนากิจการนักเรียน",
+      type: "deputy",
+      highlight: false,
+      photo: "/images/org/dep3.png",
+    },
+    {
+      id: "deputy-4",
+      name: "อ.จารุวรรณ สุขสันต์",
+      role: "รองผู้อำนวยการฝ่ายแผนงานและความร่วมมือ",
+      type: "deputy",
+      highlight: false,
+      photo: "/images/org/dep4.png",
+    },
+  ]
 
   useEffect(() => {
     fetchOrganization()
@@ -25,16 +93,22 @@ export default function Organization() {
 
       // API returns object with chain and leaders directly
       if (response && typeof response === 'object') {
-        setChain(response.chain || [])
-        setLeaders(response.leaders || [])
+        const nextChain = Array.isArray(response.chain) && response.chain.length > 0
+          ? response.chain
+          : fallbackChain
+        const nextLeaders = Array.isArray(response.leaders) && response.leaders.length > 0
+          ? response.leaders
+          : fallbackLeaders
+        setChain(nextChain)
+        setLeaders(nextLeaders)
       } else {
         throw new Error("Invalid organization data received")
       }
     } catch (err) {
       console.error("Error fetching organization:", err)
-      setError("ไม่สามารถโหลดโครงสร้างองค์กรได้")
-      setChain([])
-      setLeaders([])
+      setError("")
+      setChain(fallbackChain)
+      setLeaders(fallbackLeaders)
     } finally {
       setLoading(false)
     }

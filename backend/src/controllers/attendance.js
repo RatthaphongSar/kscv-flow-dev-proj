@@ -14,14 +14,14 @@ export const checkIn = async (req, res, next) => {
     const attendance = await prisma.attendance.upsert({
       where: {
         studentId_classId_date: {
-          studentId: req.user?.sub,
+          studentId: req.user?.id,
           classId,
           date: new Date(date)
         }
       },
       update: { status, remark },
       create: {
-        studentId: req.user?.sub,
+        studentId: req.user?.id,
         classId,
         date: new Date(date),
         status,
@@ -44,7 +44,7 @@ export const myAttendance = async (req, res, next) => {
   try {
     const { classId, month } = req.query
 
-    let where = { studentId: req.user?.sub }
+    let where = { studentId: req.user?.id }
     if (classId) where.classId = classId
     if (month) {
       const [year, monthNum] = month.split('-')

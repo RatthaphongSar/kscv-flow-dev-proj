@@ -52,18 +52,39 @@ export const createSchedule = async (req, res, next) => {
  */
 export const mySchedule = async (req, res, next) => {
   try {
+    const userId = req.user?.id
+    if (!userId) return res.json([])
+
     const user = await prisma.user.findUnique({
-      where: { id: req.user?.id },
-      select: { classId: true }
+      where: { id: userId },
+      select: { role: true }
     })
 
-    if (!user?.classId) {
+    let classIds = []
+
+    if (user?.role === 'TEACHER' || user?.role === 'ADMIN') {
+      // Teachers: get classes they teach
+      const classes = await prisma.class.findMany({
+        where: { teacherId: userId },
+        select: { id: true }
+      })
+      classIds = classes.map(c => c.id)
+    } else {
+      // Students: get classes they are enrolled in
+      const enrollments = await prisma.enrollment.findMany({
+        where: { studentId: userId, status: 'active' },
+        select: { classId: true }
+      })
+      classIds = enrollments.map(e => e.classId)
+    }
+
+    if (classIds.length === 0) {
       return res.json([])
     }
 
     const schedules = await prisma.schedule.findMany({
-      where: { classId: user.classId },
-      include: { class: { select: { name: true, code: true, section: true } } },
+      where: { classId: { in: classIds } },
+      include: { class: { select: { name: true, code: true, section: true, teacherId: true, teacher: { select: { fullname: true, username: true } } } } },
       orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }]
     })
 

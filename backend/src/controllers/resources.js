@@ -1,4 +1,5 @@
 import { prisma } from "../db.js"
+import { parsePagination, buildOrderBy, buildSearch } from '../utils/query.js'
 
 /**
  * Resources / Materials list
@@ -11,14 +12,24 @@ export const listResources = async (req, res, next) => {
     let where = {}
     if (classId) where.classId = classId
     if (fileType) where.fileType = fileType
+    const search = buildSearch(req.query, ['title', 'description'])
+    if (search) where.OR = search.OR
 
-    const resources = await prisma.resource.findMany({
-      where,
-      include: { class: { select: { name: true } } },
-      orderBy: { createdAt: 'desc' }
-    })
+    const pagination = parsePagination(req.query, { defaultPageSize: 20, maxPageSize: 100 })
+    const orderBy = buildOrderBy(req.query, ['createdAt', 'title', 'size'], 'createdAt', 'desc')
 
-    res.json(resources)
+    const [total, resources] = await prisma.$transaction([
+      prisma.resource.count({ where }),
+      prisma.resource.findMany({
+        where,
+        include: { class: { select: { name: true } } },
+        orderBy,
+        skip: pagination.skip,
+        take: pagination.take
+      })
+    ])
+
+    res.json({ data: resources, pagination: { ...pagination, total } })
   } catch (err) {
     next(err)
   }

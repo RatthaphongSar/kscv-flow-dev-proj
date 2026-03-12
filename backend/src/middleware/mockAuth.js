@@ -21,6 +21,7 @@ export const mockAuthMiddleware = (req, res, next) => {
     if (token.includes('teacher')) {
       req.user = {
         id: 'teacher-001',
+        sub: 'teacher-001',
         username: 'teacher',
         email: 'teacher@university.edu',
         role: 'TEACHER',
@@ -29,6 +30,7 @@ export const mockAuthMiddleware = (req, res, next) => {
     } else if (token.includes('student')) {
       req.user = {
         id: 'student-001',
+        sub: 'student-001',
         username: 'student',
         email: 'student@university.edu',
         role: 'STUDENT',
@@ -37,6 +39,7 @@ export const mockAuthMiddleware = (req, res, next) => {
     } else if (token.includes('admin')) {
       req.user = {
         id: 'admin-001',
+        sub: 'admin-001',
         username: 'admin',
         email: 'admin@university.edu',
         role: 'ADMIN',
@@ -51,6 +54,7 @@ export const mockAuthMiddleware = (req, res, next) => {
   if (token.includes('teacher')) {
     req.user = {
       id: 'teacher-001',
+      sub: 'teacher-001',
       username: 'teacher',
       email: 'teacher@university.edu',
       role: 'TEACHER',
@@ -58,6 +62,7 @@ export const mockAuthMiddleware = (req, res, next) => {
   } else if (token.includes('student')) {
     req.user = {
       id: 'student-001',
+      sub: 'student-001',
       username: 'student',
       email: 'student@university.edu',
       role: 'STUDENT',
@@ -65,6 +70,7 @@ export const mockAuthMiddleware = (req, res, next) => {
   } else if (token.includes('admin')) {
     req.user = {
       id: 'admin-001',
+      sub: 'admin-001',
       username: 'admin',
       email: 'admin@university.edu',
       role: 'ADMIN',

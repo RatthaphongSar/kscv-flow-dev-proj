@@ -1,6 +1,7 @@
 import { prisma } from '../db.js'
 import { stringify } from 'csv-stringify/sync'
 import PDFDocument from 'pdfkit'
+import ExcelJS from 'exceljs'
 
 /**
  * Export academic transcript as PDF
@@ -243,5 +244,147 @@ export const exportAttendanceCSV = async (req, res) => {
   } catch (error) {
     console.error('Error exporting attendance CSV:', error)
     res.status(500).json({ error: 'Failed to export attendance' })
+  }
+}
+
+export const exportDashboardExcel = async (req, res) => {
+  try {
+    const userId = req.user?.id
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' })
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        username: true,
+        fullname: true,
+        studentId: true,
+        year: true,
+        major: true,
+        clubMembers: {
+          include: {
+            club: { select: { id: true, name: true } }
+          }
+        },
+        communities: {
+          include: {
+            community: { select: { id: true, name: true } }
+          }
+        }
+      }
+    })
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    const grades = await prisma.grade.findMany({
+      where: { studentId: userId },
+      include: {
+        exam: {
+          include: { class: { select: { name: true, code: true, section: true } } }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    const attendances = await prisma.attendance.findMany({
+      where: { userId },
+      include: {
+        class: { select: { id: true, name: true, code: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    const gpa = grades.length > 0
+      ? (grades.reduce((sum, g) => sum + (g.score * (g.maxScore || 100) / 100), 0) / grades.length).toFixed(2)
+      : '0.00'
+
+    const presentCount = attendances.filter((a) => a.status === 'present').length
+    const attendancePercent = attendances.length > 0
+      ? Math.round((presentCount / attendances.length) * 100)
+      : 0
+
+    const activityCount = (user.clubMembers?.length || 0) + (user.communities?.length || 0)
+
+    const workbook = new ExcelJS.Workbook()
+    workbook.creator = 'KVC Connect'
+    workbook.created = new Date()
+
+    const summarySheet = workbook.addWorksheet('Summary')
+    summarySheet.addRow(['Dashboard Report'])
+    summarySheet.addRow(['Generated At', new Date().toLocaleString('th-TH')])
+    summarySheet.addRow([])
+    summarySheet.addRow(['Student Name', user.fullname || user.username || ''])
+    summarySheet.addRow(['Student ID', user.studentId || ''])
+    summarySheet.addRow(['Year', user.year || ''])
+    summarySheet.addRow(['Major', user.major || ''])
+    summarySheet.addRow([])
+    summarySheet.addRow(['Attendance %', attendancePercent])
+    summarySheet.addRow(['GPA', gpa])
+    summarySheet.addRow(['Activities Joined', activityCount])
+    summarySheet.addRow(['Total Grades', grades.length])
+
+    const gradesSheet = workbook.addWorksheet('Grades')
+    gradesSheet.addRow(['Exam', 'Class', 'Score', 'Max Score', 'Grade', 'Date'])
+    grades.forEach((g) => {
+      const classLabel = g.exam?.class
+        ? `${g.exam.class.code || ''} ${g.exam.class.name || ''}`.trim()
+        : ''
+      gradesSheet.addRow([
+        g.exam?.title || g.exam?.name || 'Exam',
+        classLabel,
+        g.score ?? '',
+        g.maxScore ?? '',
+        g.grade ?? '',
+        g.createdAt ? new Date(g.createdAt).toLocaleDateString() : ''
+      ])
+    })
+
+    const attendanceSheet = workbook.addWorksheet('Attendance')
+    attendanceSheet.addRow(['Class Code', 'Class Name', 'Date', 'Time', 'Status', 'Remarks'])
+    attendances.forEach((att) => {
+      attendanceSheet.addRow([
+        att.class?.code || '',
+        att.class?.name || '',
+        att.createdAt ? new Date(att.createdAt).toLocaleDateString() : '',
+        att.createdAt ? new Date(att.createdAt).toLocaleTimeString() : '',
+        att.status || '',
+        att.remarks || ''
+      ])
+    })
+
+    const activitiesSheet = workbook.addWorksheet('Activities')
+    activitiesSheet.addRow(['Type', 'Name', 'Joined Date', 'Status'])
+    if (user.clubMembers?.length) {
+      user.clubMembers.forEach((cm) => {
+        activitiesSheet.addRow([
+          'Club',
+          cm.club?.name || '',
+          cm.joinedAt ? new Date(cm.joinedAt).toLocaleDateString() : '',
+          cm.status || 'Active'
+        ])
+      })
+    }
+    if (user.communities?.length) {
+      user.communities.forEach((com) => {
+        activitiesSheet.addRow([
+          'Community',
+          com.community?.name || '',
+          com.joinedAt ? new Date(com.joinedAt).toLocaleDateString() : '',
+          com.status || 'Active'
+        ])
+      })
+    }
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    res.setHeader('Content-Disposition', `attachment; filename="dashboard-${user.studentId || user.username}.xlsx"`)
+    await workbook.xlsx.write(res)
+    res.end()
+  } catch (error) {
+    console.error('Error exporting dashboard excel:', error)
+    res.status(500).json({ error: 'Failed to export dashboard excel' })
   }
 }

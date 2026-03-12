@@ -5,6 +5,8 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ChatSocketProvider } from './context/ChatSocketContext'
+import { ThemeProvider } from './components/ThemeProvider'
+import { I18nProvider } from './context/I18nContext'
 import "./styles/index.css";
 
 // Development mode: Auto-login with test teacher credentials
@@ -23,11 +25,15 @@ const router = {
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter {...router}>
-      <AuthProvider>
-        <ChatSocketProvider>
-          <App />
-        </ChatSocketProvider>
-      </AuthProvider>
+      <ThemeProvider defaultTheme="dark" storageKey="kvc-theme">
+        <I18nProvider>
+          <AuthProvider>
+            <ChatSocketProvider>
+              <App />
+            </ChatSocketProvider>
+          </AuthProvider>
+        </I18nProvider>
+      </ThemeProvider>
     </BrowserRouter>
   </React.StrictMode>
 )

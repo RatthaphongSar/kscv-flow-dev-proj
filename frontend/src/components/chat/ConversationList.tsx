@@ -1,5 +1,6 @@
 import { useUnreadCounts } from '../../hooks/useUnreadCounts'
 import { Pin } from 'lucide-react'
+import { useTheme } from '../ThemeProvider'
 
 interface Room {
   id: string
@@ -25,6 +26,9 @@ export default function ConversationList({
   unreadCounts,
 }: ConversationListProps) {
   const { getUnreadCount } = useUnreadCounts()
+  const { theme } = useTheme()
+  const prefersLight = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: light)').matches
+  const isLight = theme === 'light' || (theme === 'system' && prefersLight)
 
   if (!rooms.length) {
     return (
@@ -35,7 +39,7 @@ export default function ConversationList({
   }
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto px-2 py-3 space-y-1 bg-[#111827]">
+    <div className={`flex-1 min-h-0 overflow-y-auto px-2 py-3 space-y-1 ${isLight ? 'bg-slate-50' : 'bg-[#111827]'}`}>
       {rooms.map((room) => {
         const isActive = activeRoom?.id === room.id
         const unreadCount =
@@ -55,20 +59,20 @@ export default function ConversationList({
               ${
                 isActive
                   ? 'bg-[#0A4DAD] text-white shadow-md'
-                  : 'text-gray-700 hover:bg-white'
+                  : isLight ? 'text-slate-700 hover:bg-white' : 'text-gray-300 hover:bg-white/5'
               }`}
             >
               <div className="w-2 h-2 rounded-full bg-current" />
               <div className="flex-1 min-w-0">
                 <div className={`text-sm font-medium truncate ${
-                  unreadCount > 0 && !isActive ? 'font-bold text-gray-900' : ''
+                  unreadCount > 0 && !isActive ? (isLight ? 'font-bold text-slate-900' : 'font-bold text-gray-100') : ''
                 }`}>
                   {room.name}
                   {isPinned && <Pin size={14} className="ml-1 inline text-amber-400 fill-amber-400" />}
                 </div>
                 <div
                   className={`text-xs truncate ${
-                    isActive ? 'text-blue-100' : 'text-gray-400'
+                    isActive ? 'text-blue-100' : isLight ? 'text-slate-400' : 'text-gray-400'
                   }`}
                 >
                   {room.lastMessagePreview || 'เริ่มการสนทนาได้เลย'}

@@ -26,9 +26,11 @@ function signRefresh(u) {
 }
 function setAuthCookies(res, access, refresh) {
   const isProd = process.env.NODE_ENV === 'production'
-  const secure = isProd || process.env.FORCE_SECURE_COOKIES === 'true'
-  // Dev (HTTP): use 'lax'; Prod (HTTPS): use 'strict'
-  const sameSite = isProd ? 'strict' : 'lax'
+  const envSameSite = String(process.env.COOKIE_SAMESITE || '').toLowerCase()
+  const sameSite = (envSameSite === 'lax' || envSameSite === 'strict' || envSameSite === 'none')
+    ? envSameSite
+    : (isProd ? 'strict' : 'lax')
+  const secure = sameSite === 'none' || isProd || process.env.FORCE_SECURE_COOKIES === 'true'
   
   res.cookie('access_token', access, { 
     httpOnly: true, 

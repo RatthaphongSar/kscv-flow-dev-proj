@@ -3,6 +3,7 @@ import { useState, useEffect } from "react"
 import PageShell from "../components/PageShell"
 import { CalendarDays, User, ClipboardList, Loader } from "lucide-react"
 import { apiClient } from "../utils/api"
+import { useI18n } from "../context/I18nContext"
 
 export default function Schedule() {
   const [schedule, setSchedule] = useState([])
@@ -11,6 +12,7 @@ export default function Schedule() {
   const [viewMode, setViewMode] = useState("weekly")
   const taskCount = schedule.filter((item) => item.task && item.task.trim().length > 0).length
   const dayCount = new Set(schedule.map((item) => item.dayOfWeek ?? item.day)).size
+  const { t } = useI18n()
 
   useEffect(() => {
     fetchSchedule()
@@ -32,7 +34,7 @@ export default function Schedule() {
       }
     } catch (err) {
       console.error("Error fetching schedule:", err)
-      setError("ไม่สามารถโหลดตารางเรียนได้")
+      setError("schedule.error")
       setSchedule([])
     } finally {
       setLoading(false)
@@ -52,9 +54,9 @@ export default function Schedule() {
                 <CalendarDays size={18} className="text-violet-300" />
               </div>
               <div>
-                <div className="text-[11px] text-slate-400">ภาพรวมตารางเรียน</div>
+                <div className="text-[11px] text-slate-400">{t("schedule.overview")}</div>
                 <div className="text-base font-semibold text-gray-100">
-                  {viewMode === "weekly" ? "Weekly View" : "Monthly View"}
+                  {viewMode === "weekly" ? t("schedule.weeklyView") : t("schedule.monthlyView")}
                 </div>
               </div>
             </div>
@@ -69,7 +71,7 @@ export default function Schedule() {
                     : "text-gray-400 hover:text-gray-200"
                 }`}
               >
-                Weekly
+                {t("common.weekly")}
               </button>
               <button
                 type="button"
@@ -80,19 +82,19 @@ export default function Schedule() {
                     : "text-gray-400 hover:text-gray-200"
                 }`}
               >
-                Monthly
+                {t("common.monthly")}
               </button>
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-2 text-[11px]">
             <span className="px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-gray-300">
-              ทั้งหมด {schedule.length} คาบ
+              {t("schedule.totalPeriods", null, { count: schedule.length })}
             </span>
             <span className="px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-200">
-              มีงาน {taskCount} รายการ
+              {t("schedule.tasks", null, { count: taskCount })}
             </span>
             <span className="px-3 py-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 text-sky-200">
-              ใช้ {dayCount || 0} วัน
+              {t("schedule.daysUsed", null, { count: dayCount || 0 })}
             </span>
           </div>
         </div>
@@ -101,16 +103,16 @@ export default function Schedule() {
           <div className="rounded-3xl border border-white/10 bg-[#0b1220]/70 backdrop-blur-xl p-10 text-center">
             <div className="flex items-center justify-center gap-2">
               <Loader size={20} className="animate-spin text-violet-300" />
-              <span className="text-gray-300">โหลดตารางเรียน...</span>
+              <span className="text-gray-300">{t("schedule.loading")}</span>
             </div>
           </div>
         ) : error ? (
           <div className="rounded-2xl border border-red-500/30 bg-red-900/20 p-4 text-center text-red-300">
-            {error}
+            {t(error)}
           </div>
         ) : schedule.length === 0 ? (
           <div className="rounded-2xl border border-yellow-500/30 bg-yellow-900/20 p-4 text-center text-yellow-300">
-            ยังไม่มีตารางเรียน
+            {t("schedule.empty")}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">

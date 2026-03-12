@@ -17,7 +17,7 @@ export const requestLeave = async (req, res, next) => {
         startDate: new Date(startDate),
         endDate: new Date(endDate),
         reason,
-        studentId: req.user?.sub,
+        studentId: req.user?.id,
         status: 'pending'
       },
       include: { student: { select: { username: true } } }
@@ -37,7 +37,7 @@ export const myLeaves = async (req, res, next) => {
   try {
     const { status } = req.query
 
-    let where = { studentId: req.user?.sub }
+    let where = { studentId: req.user?.id }
     if (status) where.status = status
 
     const leaves = await prisma.leave.findMany({
@@ -91,7 +91,7 @@ export const approveOrReject = async (req, res, next) => {
       where: { id },
       data: {
         status,
-        advisorId: req.user?.sub,
+        advisorId: req.user?.id,
         updatedAt: new Date()
       },
       include: { student: { select: { username: true } }, advisor: { select: { id: true } } }

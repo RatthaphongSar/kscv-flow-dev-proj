@@ -6,17 +6,19 @@ import {
   UserCheck,
   ClipboardList,
   Activity,
+  FileSpreadsheet,
+  TrendingUp,
   X,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { apiClient } from '../utils/api'
 
-// Default Mock Data (fallback if API fails)
+// Default fallback data
 const defaultUserAverages = {
-  attendance: 92,
-  assignment: 78,
-  score: 84,
-  activity: 15,
+  attendance: 0,
+  assignment: 0,
+  score: 0,
+  activity: 0,
 }
 
 const teacherOverview = {
@@ -27,27 +29,6 @@ const teacherOverview = {
     'เตรียมสอบกลางภาคในวันที่ 15 เมษายนนี้',
   ],
 }
-
-const attendanceTrend = [
-  { day: 'Mon', value: 92 },
-  { day: 'Tue', value: 88 },
-  { day: 'Wed', value: 95 },
-  { day: 'Thu', value: 90 },
-  { day: 'Fri', value: 93 },
-  { day: 'Sat', value: 80 },
-  { day: 'Sun', value: 85 },
-]
-
-const assignmentTrend = [
-  { name: 'ส่งแล้ว', value: 21 },
-  { name: 'ยังไม่ส่ง', value: 6 },
-]
-
-const activityStats = [
-  { name: 'Clubs', value: 12 },
-  { name: 'Projects', value: 5 },
-  { name: 'Events', value: 3 },
-]
 
 const COLORS = ['#8b5cf6', '#22c55e', '#0ea5e9', '#facc15']
 
@@ -60,7 +41,14 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [userAverages, setUserAverages] = useState(defaultUserAverages)
-  const [attendanceData, setAttendanceData] = useState([])
+  const [attendanceRecords, setAttendanceRecords] = useState([])
+  const [grades, setGrades] = useState([])
+  const [assignmentTrend, setAssignmentTrend] = useState([{ name: 'ส่งแล้ว', value: 0 }, { name: 'ยังไม่ส่ง', value: 0 }])
+  const [activityStats, setActivityStats] = useState([{ name: 'Clubs', value: 0 }, { name: 'Events', value: 0 }])
+  const [attendanceTrend, setAttendanceTrend] = useState([])
+  const [lastSync, setLastSync] = useState(null)
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState('')
   const [popup, setPopup] = useState({
     open: false,
     type: null,
@@ -76,32 +64,60 @@ export default function Dashboard() {
       try {
         setLoading(true)
         setError(null)
-        
-        // Get transcript (grades)
-        const transcript = await apiClient.get('/grades/transcript')
-        
-        // Get attendance
-        const attendanceRecords = await apiClient.get('/attendance/my')
-        
-        // Process transcript data
-        if (transcript?.gpa !== undefined) {
-          setUserAverages(prev => ({
-            ...prev,
-            score: Math.round(transcript.gpa * 100) / 100
-          }))
+
+        // Fetch all data in parallel
+        const [transcript, attRecords, clubsData] = await Promise.allSettled([
+          apiClient.get('/grades/transcript'),
+          apiClient.get('/attendance/my'),
+          apiClient.get('/clubs/my'),
+        ])
+
+        const transcriptData = transcript.status === 'fulfilled' ? transcript.value : null
+        const attendanceData = attRecords.status === 'fulfilled' ? attRecords.value : []
+        const clubs = clubsData.status === 'fulfilled' ? clubsData.value : []
+
+        // --- Grades ---
+        if (transcriptData?.gpa !== undefined) {
+          setUserAverages(prev => ({ ...prev, score: Math.round(transcriptData.gpa * 100) / 100 }))
         }
-        
-        // Process attendance data
-        if (Array.isArray(attendanceRecords) && attendanceRecords.length > 0) {
-          const presentCount = attendanceRecords.filter(a => a.status === 'present').length
-          const totalCount = attendanceRecords.length
-          const attendancePercent = Math.round((presentCount / totalCount) * 100)
-          setUserAverages(prev => ({
-            ...prev,
-            attendance: attendancePercent
-          }))
+        if (Array.isArray(transcriptData?.grades)) {
+          setGrades(transcriptData.grades)
         }
-        
+
+        // --- Attendance ---
+        const attArr = Array.isArray(attendanceData) ? attendanceData : []
+        setAttendanceRecords(attArr)
+        if (attArr.length > 0) {
+          const presentCount = attArr.filter(a => a.status === 'present').length
+          const attendancePercent = Math.round((presentCount / attArr.length) * 100)
+          setUserAverages(prev => ({ ...prev, attendance: attendancePercent }))
+
+          // Build per-day attendance trend from real data
+          const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+          const dayBuckets = {}
+          attArr.forEach(a => {
+            const d = new Date(a.date || a.createdAt).getDay()
+            if (!dayBuckets[d]) dayBuckets[d] = { total: 0, present: 0 }
+            dayBuckets[d].total++
+            if (a.status === 'present') dayBuckets[d].present++
+          })
+          const trend = Object.entries(dayBuckets).map(([d, v]) => ({
+            day: dayNames[d],
+            value: v.total > 0 ? Math.round((v.present / v.total) * 100) : 0,
+          }))
+          if (trend.length > 0) setAttendanceTrend(trend)
+        }
+
+        // --- Clubs / Activities ---
+        const clubArr = Array.isArray(clubs) ? clubs : []
+        const actCount = clubArr.reduce((sum, c) => sum + (c.club?.activities?.length || 0), 0)
+        setActivityStats([
+          { name: 'Clubs', value: clubArr.length },
+          { name: 'Events', value: actCount },
+        ])
+        setUserAverages(prev => ({ ...prev, activity: clubArr.length + actCount }))
+
+        setLastSync(new Date())
         setLoading(false)
       } catch (err) {
         console.error('Failed to load dashboard data:', err)
@@ -109,7 +125,7 @@ export default function Dashboard() {
         setLoading(false)
       }
     }
-    
+
     if (user) {
       loadDashboardData()
     }
@@ -174,23 +190,86 @@ export default function Dashboard() {
     )
   }
 
+  const handleExportExcel = async () => {
+    try {
+      setExporting(true)
+      setExportError('')
+      const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:4001/api'
+      const token = localStorage.getItem('access_token')
+      const headers = {}
+      if (token) {
+        headers.Authorization = token.toLowerCase().startsWith('bearer ') ? token : `Bearer ${token}`
+      }
+      const response = await fetch(`${API_BASE}/export/dashboard/excel`, {
+        method: 'GET',
+        headers,
+        credentials: 'include',
+      })
+      if (!response.ok) {
+        throw new Error('ดาวน์โหลดรายงานไม่สำเร็จ')
+      }
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `dashboard-report-${user?.username || 'user'}.xlsx`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      setExportError(err.message || 'ดาวน์โหลดรายงานไม่สำเร็จ')
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const attendancePercent = userAverages.attendance || 0
+  const scoreAverage = userAverages.score || 0
+  const recentGrades = grades.slice(0, 5)
+  const recentAttendance = attendanceRecords.slice(0, 5)
+  const healthStatus = attendancePercent >= 85 ? 'ดีมาก' : attendancePercent >= 75 ? 'พอใช้' : 'ต้องปรับปรุง'
+  const healthColor = attendancePercent >= 85 ? 'text-emerald-300' : attendancePercent >= 75 ? 'text-amber-300' : 'text-rose-300'
+  const scoreStatus = scoreAverage >= 3 ? 'ยอดเยี่ยม' : scoreAverage >= 2 ? 'อยู่ในเกณฑ์ดี' : 'ต้องติดตาม'
+  const scoreColor = scoreAverage >= 3 ? 'text-violet-300' : scoreAverage >= 2 ? 'text-sky-300' : 'text-rose-300'
+
   return (
     <div className="h-[calc(100vh-112px)] w-full bg-[#020617] text-gray-100 px-4 py-4">
       <div className="h-full rounded-2xl border border-[#1f2937] bg-[#020617] overflow-y-auto p-6 space-y-6">
 
         {/* Header */}
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h1 className="text-xl font-semibold">Dashboard</h1>
             <p className="text-xs text-gray-400 mt-1">
               ข้อมูลภาพรวมการเรียนของคุณ
             </p>
           </div>
-          <div className="text-right text-xs text-gray-400">
-            <div>Term: 2 / 2025</div>
-            <div>Last sync: 5 mins ago</div>
+          <div className="flex flex-col items-start lg:items-end gap-2">
+            <div className="text-right text-xs text-gray-400">
+              <div>Term: 2 / 2025</div>
+              <div>
+                {loading ? 'กำลังอัปเดตข้อมูล...' : `Last sync: ${lastSync ? new Date(lastSync).toLocaleString('th-TH') : '-'}`}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleExportExcel}
+                disabled={exporting}
+                className="px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-60 text-xs flex items-center gap-2"
+              >
+                <FileSpreadsheet size={14} />
+                {exporting ? 'กำลังเตรียมรายงาน...' : 'ดาวน์โหลดรายงาน Excel'}
+              </button>
+            </div>
           </div>
         </div>
+        {exportError && (
+          <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
+            {exportError}
+          </div>
+        )}
 
         {/* KPI Summary */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -198,6 +277,30 @@ export default function Dashboard() {
           <KPI label="Assignments" value={`${userAverages.assignment}%`} color="text-sky-400" icon={<ClipboardList size={14} />} />
           <KPI label="Scores (avg)" value={`${userAverages.score}%`} color="text-violet-400" icon={<Info size={14} />} />
           <KPI label="Activities" value={userAverages.activity} color="text-amber-300" icon={<Activity size={14} />} />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="rounded-xl border border-[#1f2937] bg-[#020617] p-4">
+            <div className="text-[11px] text-gray-400 flex items-center gap-2">
+              <TrendingUp size={14} /> ความสม่ำเสมอการเข้าเรียน
+            </div>
+            <div className={`text-xl font-semibold mt-2 ${healthColor}`}>{attendancePercent}%</div>
+            <div className="text-[11px] text-gray-400 mt-1">สถานะ: {healthStatus}</div>
+          </div>
+          <div className="rounded-xl border border-[#1f2937] bg-[#020617] p-4">
+            <div className="text-[11px] text-gray-400 flex items-center gap-2">
+              <Info size={14} /> แนวโน้มผลการเรียน
+            </div>
+            <div className={`text-xl font-semibold mt-2 ${scoreColor}`}>{scoreAverage}</div>
+            <div className="text-[11px] text-gray-400 mt-1">สถานะ: {scoreStatus}</div>
+          </div>
+          <div className="rounded-xl border border-[#1f2937] bg-[#020617] p-4">
+            <div className="text-[11px] text-gray-400 flex items-center gap-2">
+              <Activity size={14} /> การมีส่วนร่วมกิจกรรม
+            </div>
+            <div className="text-xl font-semibold mt-2 text-amber-300">{userAverages.activity} รายการ</div>
+            <div className="text-[11px] text-gray-400 mt-1">ต่อเทอมปัจจุบัน</div>
+          </div>
         </div>
 
         {/* Teacher Overview + User Avg Panel */}
@@ -265,6 +368,52 @@ export default function Dashboard() {
               วิเคราะห์ผลการเรียนเพิ่มเติม
               <ArrowRight size={14} />
             </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="rounded-xl border border-[#1f2937] bg-[#020617] p-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold">ผลการสอบล่าสุด</h2>
+              <span className="text-[11px] text-gray-400">{grades.length} รายการ</span>
+            </div>
+            <div className="mt-3 space-y-2">
+              {recentGrades.length > 0 ? recentGrades.map((g) => (
+                <div key={g.id} className="flex items-center justify-between rounded-lg border border-[#1f2937] bg-[#0b1220] px-3 py-2">
+                  <div>
+                    <div className="text-xs text-gray-200">{g.exam?.title || g.exam?.name || 'Exam'}</div>
+                    <div className="text-[10px] text-gray-400">
+                      {(g.exam?.class?.code || '')} {g.exam?.class?.name || ''}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-violet-300">{g.score ?? '-'}/{g.maxScore ?? '-'}</div>
+                    <div className="text-[10px] text-gray-500">{g.createdAt ? new Date(g.createdAt).toLocaleDateString('th-TH') : ''}</div>
+                  </div>
+                </div>
+              )) : (
+                <div className="text-xs text-gray-500">ยังไม่มีข้อมูลคะแนนล่าสุด</div>
+              )}
+            </div>
+          </div>
+          <div className="rounded-xl border border-[#1f2937] bg-[#020617] p-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold">การเข้าเรียนล่าสุด</h2>
+              <span className="text-[11px] text-gray-400">{attendanceRecords.length} รายการ</span>
+            </div>
+            <div className="mt-3 space-y-2">
+              {recentAttendance.length > 0 ? recentAttendance.map((att) => (
+                <div key={att.id} className="flex items-center justify-between rounded-lg border border-[#1f2937] bg-[#0b1220] px-3 py-2">
+                  <div>
+                    <div className="text-xs text-gray-200">{att.class?.name || 'Class'}</div>
+                    <div className="text-[10px] text-gray-400">{att.date ? new Date(att.date).toLocaleDateString('th-TH') : new Date(att.createdAt).toLocaleDateString('th-TH')}</div>
+                  </div>
+                  <div className="text-[11px] text-gray-300">{att.status || '-'}</div>
+                </div>
+              )) : (
+                <div className="text-xs text-gray-500">ยังไม่มีข้อมูลการเข้าเรียนล่าสุด</div>
+              )}
+            </div>
           </div>
         </div>
 

@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { Send } from 'lucide-react'
+import { useTheme } from '../ThemeProvider'
 
 interface MessageInputProps {
   text: string
@@ -18,6 +19,9 @@ export default function MessageInput({
 }: MessageInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const disabled = !text.trim() || isLoading
+  const { theme } = useTheme()
+  const prefersLight = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: light)').matches
+  const isLight = theme === 'light' || (theme === 'system' && prefersLight)
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && !disabled) {
@@ -49,14 +53,13 @@ export default function MessageInput({
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex items-center gap-2">
+    <form onSubmit={onSubmit} className="flex items-center gap-2.5 sm:gap-3">
       {/* ช่องพิมพ์ */}
       <div className="flex-1">
         <input
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm
-                     text-slate-100 placeholder:text-slate-500
+          className={`w-full h-11 border rounded-xl px-4 text-[13px] sm:text-sm
                      focus:outline-none focus:ring-1 focus:ring-violet-400 focus:border-violet-400
-                     disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                     disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${isLight ? 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400' : 'bg-white/5 border-white/10 text-slate-100 placeholder:text-slate-500'}`}
           placeholder="พิมพ์ข้อความ... (Enter ส่ง)"
           value={text}
           onChange={e => setText(e.target.value)}
@@ -80,9 +83,8 @@ export default function MessageInput({
       <button
         type="button"
         onClick={handleAttachClick}
-        className="h-9 w-9 flex items-center justify-center rounded-lg bg-white/5 border border-white/10
-                   text-slate-300 hover:bg-white/10 hover:border-white/20 transition-colors
-                   disabled:opacity-50 disabled:cursor-not-allowed"
+        className={`h-11 w-11 flex items-center justify-center rounded-lg border
+                   transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isLight ? 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:border-slate-300' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'}`}
         title="แนบไฟล์"
         disabled={isLoading}
       >
@@ -106,7 +108,7 @@ export default function MessageInput({
       <button
         type="submit"
         disabled={disabled}
-        className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center
+        className="w-11 h-11 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center
                    hover:from-violet-400 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed 
                    transition-colors duration-200 font-semibold"
         title="ส่งข้อความ (Enter)"
